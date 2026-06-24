@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -53,18 +55,26 @@ export default function Home() {
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
         <nav className="flex items-center justify-between">
           <div className="text-xl font-semibold tracking-tight">AidPilot</div>
-          <a
-            href="#waitlist"
-            className="rounded-full border border-black/10 px-5 py-2 text-sm hover:bg-black hover:text-white"
-          >
-            Join waitlist
-          </a>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="hidden rounded-full border border-black/10 px-5 py-2 text-sm hover:bg-white sm:inline"
+            >
+              View demo
+            </Link>
+            <a
+              href="#waitlist"
+              className="rounded-full border border-black/10 px-5 py-2 text-sm hover:bg-black hover:text-white"
+            >
+              Join waitlist
+            </a>
+          </div>
         </nav>
 
         <div className="grid flex-1 items-center gap-12 py-20 md:grid-cols-2">
           <div>
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-black/50">
-              FAFSA · Aid · Scholarships
+              Financial aid copilot for students
             </p>
 
             <h1 className="text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
@@ -72,9 +82,10 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-black/65">
-              AidPilot helps students track FAFSA documents, avoid missed
-              financial aid deadlines, understand aid letters, and receive
-              weekly scholarship recommendations matched to them.
+              AidPilot is your weekly financial aid copilot. We help you avoid
+              FAFSA mistakes, catch missing documents before they cost you aid,
+              understand aid offers in plain language, and discover scholarships
+              matched to you — all in one calm, simple dashboard.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -84,17 +95,18 @@ export default function Home() {
               >
                 Get early access
               </a>
-              <a
-                href="#how"
+              <Link
+                href="/dashboard"
                 className="rounded-full border border-black/10 px-6 py-3 text-center hover:bg-white"
               >
-                See how it works
-              </a>
+                See the demo dashboard
+              </Link>
             </div>
 
             <p className="mt-5 text-sm text-black/50">
-              Built for students who do not want to lose thousands because of
-              one missed form, document, or deadline.
+              Trusted by students who don&apos;t want to lose thousands over one
+              missed form, document, or deadline. We never ask for your SSN, tax
+              returns, or FAFSA login.
             </p>
           </div>
 
@@ -107,10 +119,10 @@ export default function Home() {
 
               <div className="mt-6 space-y-3">
                 {[
-                  "Confirm parent FSA ID is created",
-                  "Upload your financial aid letter",
-                  "Check your state grant deadline",
-                  "Apply to 5 matched scholarships",
+                  "Respond to verification request",
+                  "Compare aid offers before committing",
+                  "Apply to 3 high-fit scholarships",
+                  "Confirm parent FSA ID is active",
                 ].map((item) => (
                   <div
                     key={item}
@@ -124,10 +136,10 @@ export default function Home() {
 
               <div className="mt-6 rounded-2xl bg-black p-5 text-white">
                 <p className="text-sm text-white/60">Potential aid at risk</p>
-                <p className="mt-1 text-3xl font-semibold">$30,000</p>
+                <p className="mt-1 text-3xl font-semibold">$12,400</p>
                 <p className="mt-2 text-sm text-white/60">
-                  Stay on track with reminders, documents, and scholarship
-                  matches.
+                  Stay on track with weekly priorities, checklists, and
+                  scholarship matches.
                 </p>
               </div>
             </div>
@@ -138,22 +150,26 @@ export default function Home() {
       <section id="how" className="border-y border-black/10 bg-white px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            One dashboard for the money side of college.
+            One calm place for the money side of college.
           </h2>
+          <p className="mt-4 max-w-2xl text-lg text-black/60">
+            Financial aid is confusing and high-stakes. AidPilot gives you a clear
+            weekly plan so nothing falls through the cracks.
+          </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {[
               {
-                title: "Track FAFSA docs",
-                body: "Know exactly what you and your parents need before deadlines hit.",
+                title: "Protect your aid",
+                body: "See what's missing, what's due, and what could put your aid at risk — before it's too late.",
               },
               {
-                title: "Protect your aid",
-                body: "Get reminders for missing documents, verification, school deadlines, and renewal tasks.",
+                title: "Avoid FAFSA mistakes",
+                body: "Step-by-step checklists for FAFSA, verification, state grants, and school-specific forms.",
               },
               {
                 title: "Find scholarships weekly",
-                body: "Receive a short report of scholarships ranked by fit, deadline, amount, and effort.",
+                body: "Get a short report of scholarships ranked by fit, deadline, amount, and effort — every week.",
               },
             ].map((card) => (
               <div
@@ -168,15 +184,53 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="waitlist" className="px-6 py-20">
+      <section className="px-6 py-20">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            Built for trust, not hype.
+          </h2>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "No sensitive data",
+                body: "We don't collect SSNs, tax documents, or FAFSA passwords.",
+              },
+              {
+                title: "Independent",
+                body: "Not affiliated with FAFSA, Federal Student Aid, or any school.",
+              },
+              {
+                title: "Plain language",
+                body: "Aid offers and deadlines explained clearly, not in jargon.",
+              },
+              {
+                title: "Weekly rhythm",
+                body: "A short plan every week so you always know what to do next.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-2xl border border-black/10 bg-white p-5">
+                <h3 className="font-semibold">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-black/60">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="waitlist" className="border-t border-black/10 px-6 py-20">
         <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2">
           <div>
             <h2 className="text-4xl font-semibold tracking-tight">
               Join the AidPilot waitlist.
             </h2>
             <p className="mt-4 text-lg leading-8 text-black/60">
-              We are starting with students who want help protecting financial
-              aid, tracking FAFSA documents, and finding better scholarships.
+              Be among the first students to get a weekly aid protection plan,
+              deadline reminders, and scholarship matches — without the stress of
+              figuring it all out alone.
+            </p>
+            <p className="mt-4 text-sm text-black/50">
+              Early access is free. We&apos;ll only email you about AidPilot
+              launch updates.
             </p>
           </div>
 
@@ -247,16 +301,35 @@ export default function Home() {
                 </p>
               )}
 
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs leading-5 text-amber-950">
+                  <strong>Important:</strong> AidPilot is an independent service
+                  and is not affiliated with FAFSA, Federal Student Aid, the U.S.
+                  Department of Education, or any college or university. We
+                  provide educational organization and guidance — not legal, tax,
+                  or official financial aid advice. We do not collect Social
+                  Security numbers, tax documents, FAFSA login credentials, or
+                  sensitive financial documents.
+                </p>
+              </div>
+
               <p className="text-xs leading-5 text-black/40">
-                AidPilot is not affiliated with the U.S. Department of
-                Education, Federal Student Aid, or FAFSA. We provide educational
-                organization and guidance, not legal, tax, or official financial
-                aid advice.
+                By joining, you agree to our{" "}
+                <Link href="/privacy" className="underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                . See our{" "}
+                <Link href="/disclaimer" className="underline underline-offset-2">
+                  Disclaimer
+                </Link>{" "}
+                for more.
               </p>
             </div>
           </form>
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 }
