@@ -2,37 +2,47 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
 import { CheckSVG, PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import {
+  DASHBOARD_SUMMARY,
+  getAttentionCount,
+  getChecklistProgress,
+  getCompletedCount,
+  getScholarshipStats,
+  getUrgentTasks,
+  statusToTone,
+  CHECKLIST_TASKS,
+} from "@/lib/demo-data";
 
 export const metadata: Metadata = {
   title: "Dashboard | AidPilot",
   description: "Maya Chen's weekly aid check-in.",
 };
 
-const PRIORITIES = [
-  { task: "Upload 2024 tax return", status: "Missing", due: "Due July 18", tone: "coral" as const },
-  { task: "Submit FAFSA correction", status: "Due Soon", due: "Due July 15", tone: "amber" as const },
-  { task: "Verify enrollment status", status: "Needs Review", due: "Due July 22", tone: "blue" as const },
-];
-
 export default function DashboardPage() {
+  const progress = getChecklistProgress();
+  const completed = getCompletedCount();
+  const attention = getAttentionCount();
+  const urgent = getUrgentTasks(3);
+  const scholarshipStats = getScholarshipStats();
+
   return (
     <AppShell>
       <div style={{ marginBottom: 32 }}>
         <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 6px" }}>Good morning, Maya.</p>
         <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.1 }}>
-          Your aid is protected this week.
+          {DASHBOARD_SUMMARY.protectedMessage}
         </h1>
         <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          2 tasks need attention before July 15. AidPilot is watching the rest.
+          {attention} tasks need attention before {DASHBOARD_SUMMARY.nextDeadline}. AidPilot is watching the rest.
         </p>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Aid Status" value="Protected" color="#15885A" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Aid at Risk" value="$2,400" color="#C04E57" style={{ flex: "1 1 140px" }} sub="If deadlines are missed" />
-        <StatCard label="Checklist Progress" value="7 of 10" color="#0B5CAD" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Next Deadline" value="July 15" color="#B7791F" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Scholarships" value="12 new matches" color="#0B5CAD" style={{ flex: "1 1 160px" }} />
+        <StatCard label="Aid Status" value={DASHBOARD_SUMMARY.aidStatus} color="#15885A" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Aid at Risk" value={DASHBOARD_SUMMARY.aidAtRisk} color="#C04E57" style={{ flex: "1 1 140px" }} sub="If deadlines are missed" />
+        <StatCard label="Checklist Progress" value={`${completed} of ${CHECKLIST_TASKS.length}`} color="#0B5CAD" style={{ flex: "1 1 140px" }} sub={`${progress}% complete`} />
+        <StatCard label="Next Deadline" value="Jul 15" color="#B7791F" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new matches`} color="#0B5CAD" style={{ flex: "1 1 160px" }} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 22, alignItems: "start" }}>
@@ -43,12 +53,13 @@ export default function DashboardPage() {
                 <CheckSVG size={13} strokeWidth={2.6} />
               </span>
               <PillBadge tone="green">Protected this week</PillBadge>
+              <PillBadge tone="blue">{DASHBOARD_SUMMARY.weeklyCheckIn}</PillBadge>
             </div>
             <h2 className="font-display" style={{ fontSize: 24, fontWeight: 900, margin: "0 0 10px", color: "#15212E", lineHeight: 1.25 }}>
               Your aid is safe this week.
             </h2>
             <p style={{ fontSize: 15.5, fontWeight: 500, color: "#5B6573", margin: "0 0 22px", lineHeight: 1.65 }}>
-              AidPilot is watching your eligibility, enrollment, documents, and deadlines. Two small tasks need attention before July 15.
+              AidPilot is watching your eligibility, enrollment, documents, and deadlines. {attention} tasks need attention before {DASHBOARD_SUMMARY.nextDeadline}.
             </p>
             <Link
               href="/checklist"
@@ -71,17 +82,18 @@ export default function DashboardPage() {
           </ProductCard>
 
           <ProductCard style={{ padding: 26 }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 18px", color: "#15212E" }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
               What needs attention
             </h2>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Top 3 urgent tasks from your {CHECKLIST_TASKS.length}-step checklist</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {PRIORITIES.map((row) => (
+              {urgent.map((row) => (
                 <div
-                  key={row.task}
+                  key={row.id}
                   className="animate-slide-in"
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "space-between",
                     gap: 16,
                     padding: "14px 16px",
@@ -90,14 +102,20 @@ export default function DashboardPage() {
                     border: "1px solid #EAEEF3",
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.task}</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9AA4B2" }}>{row.due}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.title}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, color: "#6B7280", marginBottom: 6, lineHeight: 1.5 }}>{row.description}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                      {row.category} · Due {row.dueDate}
+                    </div>
                   </div>
-                  <PillBadge tone={row.tone}>{row.status}</PillBadge>
+                  <PillBadge tone={statusToTone(row.status)}>{row.status}</PillBadge>
                 </div>
               ))}
             </div>
+            <Link href="/checklist" style={{ display: "inline-block", marginTop: 16, fontSize: 14, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}>
+              View all {CHECKLIST_TASKS.length} tasks →
+            </Link>
           </ProductCard>
         </div>
 
@@ -111,7 +129,7 @@ export default function DashboardPage() {
             </span>
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: "#15212E" }}>Deadline caught</div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Cal Grant, 8 days left</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Cal Grant acceptance, 8 days left</div>
             </div>
           </div>
 
@@ -128,9 +146,9 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
               {[
-                { label: "12 new matches", color: "#0B5CAD" },
-                { label: "$24,500 potential awards", color: "#15885A" },
-                { label: "4 strong matches", color: "#0B5CAD" },
+                { label: `${scholarshipStats.newCount} new matches`, color: "#0B5CAD" },
+                { label: `${scholarshipStats.totalPotentialLabel} potential awards`, color: "#15885A" },
+                { label: `${scholarshipStats.strongMatches} strong matches`, color: "#0B5CAD" },
               ].map((s) => (
                 <div key={s.label} className="font-display" style={{ fontSize: 22, fontWeight: 900, color: s.color }}>
                   {s.label}

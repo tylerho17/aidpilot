@@ -1,26 +1,40 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, ProgressBar, StatCard } from "@/components/ProductUI";
+import {
+  CHECKLIST_TASKS,
+  DOCUMENTS,
+  documentStatusToTone,
+  getAttentionCount,
+  getChecklistProgress,
+  getMissingDocumentCount,
+  getNextDeadline,
+  statusToTone,
+  type ChecklistTask,
+  type TaskStatus,
+} from "@/lib/demo-data";
 
-type TaskTone = "green" | "amber" | "coral" | "blue" | "gray";
+const STATUS_ORDER: Record<TaskStatus, number> = {
+  Missing: 0,
+  "Due Soon": 1,
+  "Needs Review": 2,
+  Optional: 3,
+  Upcoming: 4,
+  Complete: 5,
+};
 
-const TASKS: { task: string; status: string; due: string; tone: TaskTone }[] = [
-  { task: "Submit FAFSA correction", status: "Due Soon", due: "July 15", tone: "amber" },
-  { task: "Upload parent tax return", status: "Missing", due: "July 18", tone: "coral" },
-  { task: "Verify enrollment status", status: "Needs Review", due: "July 22", tone: "blue" },
-  { task: "Review aid offer", status: "Complete", due: "Done", tone: "green" },
-  { task: "Accept work-study", status: "Optional", due: "Aug 1", tone: "gray" },
-];
+const CATEGORIES = [...new Set(CHECKLIST_TASKS.map((t) => t.category))];
 
-const DOCUMENTS: { name: string; status: string; tone: TaskTone }[] = [
-  { name: "Parent tax return", status: "Missing", tone: "coral" },
-  { name: "Proof of enrollment", status: "Uploaded", tone: "green" },
-  { name: "Student ID", status: "Uploaded", tone: "green" },
-  { name: "Dependency form", status: "Needs Review", tone: "blue" },
-  { name: "Cal Grant verification", status: "Uploaded", tone: "green" },
-];
+function sortTasks(tasks: ChecklistTask[]) {
+  return [...tasks].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+}
 
 export default function ChecklistPage() {
+  const progress = getChecklistProgress();
+  const attention = getAttentionCount();
+  const missingDocs = getMissingDocumentCount();
+  const sorted = sortTasks(CHECKLIST_TASKS);
+
   return (
     <AppShell>
       <div style={{ marginBottom: 32 }}>
@@ -28,15 +42,15 @@ export default function ChecklistPage() {
           Aid Checklist
         </h1>
         <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Track every step needed to protect your financial aid.
+          Track every step needed to protect your financial aid. {CHECKLIST_TASKS.length} tasks for Maya&apos;s aid cycle.
         </p>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Progress" value="70% complete" color="#0B5CAD" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Tasks" value="3 need attention" color="#B7791F" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Documents" value="2 missing" color="#C04E57" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Next deadline" value="July 15" color="#B7791F" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Progress" value={`${progress}% complete`} color="#0B5CAD" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Tasks" value={`${attention} need attention`} color="#B7791F" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Documents" value={`${missingDocs} missing`} color="#C04E57" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Next deadline" value={getNextDeadline()} color="#B7791F" style={{ flex: "1 1 140px" }} />
       </div>
 
       <ProductCard style={{ padding: 24, marginBottom: 22 }}>
@@ -44,50 +58,85 @@ export default function ChecklistPage() {
           <span className="font-display" style={{ fontSize: 18, fontWeight: 800, color: "#15212E" }}>
             Overall progress
           </span>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#0B5CAD" }}>70%</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#0B5CAD" }}>{progress}%</span>
         </div>
-        <ProgressBar pct={70} />
+        <ProgressBar pct={progress} color="linear-gradient(90deg,#15885A,#37A877)" />
         <p style={{ fontSize: 14, fontWeight: 700, color: "#15885A", margin: "14px 0 0" }}>
-          Nice work, Maya. You are 70% done.
+          Nice work, Maya. You are {progress}% done with your aid checklist.
         </p>
       </ProductCard>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 22, alignItems: "start" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+        {CATEGORIES.map((cat) => {
+          const count = CHECKLIST_TASKS.filter((t) => t.category === cat).length;
+          const done = CHECKLIST_TASKS.filter((t) => t.category === cat && t.status === "Complete").length;
+          return (
+            <span
+              key={cat}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#0B5CAD",
+                background: "#EAF3FF",
+                padding: "6px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {cat} · {done}/{count}
+            </span>
+          );
+        })}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.15fr .85fr", gap: 22, alignItems: "start" }}>
         <ProductCard style={{ padding: 26 }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 18px", color: "#15212E" }}>
-            Checklist tasks
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
+            All checklist tasks
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            {TASKS.map((item) => (
+          <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 18px" }}>
+            Sorted by urgency. Complete tasks are at the bottom.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {sorted.map((item) => (
               <div
-                key={item.task}
-                className="card-lift animate-slide-in"
+                key={item.id}
+                className="card-lift"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 14,
                   padding: "14px 16px",
                   borderRadius: 14,
                   border: "1px solid #EAEEF3",
                   background: item.status === "Complete" ? "#F5FBF7" : "#fff",
                 }}
               >
-                <div>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
                   <div
                     style={{
                       fontSize: 15,
                       fontWeight: 700,
                       color: item.status === "Complete" ? "#7C9A89" : "#15212E",
                       textDecoration: item.status === "Complete" ? "line-through" : "none",
-                      marginBottom: 4,
                     }}
                   >
-                    {item.task}
+                    {item.title}
                   </div>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9AA4B2" }}>{item.due}</div>
+                  <PillBadge tone={statusToTone(item.status)}>{item.status}</PillBadge>
                 </div>
-                <PillBadge tone={item.tone}>{item.status}</PillBadge>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.55 }}>{item.description}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "#9AA4B2" }}>{item.category}</span>
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#CBD2DA" }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "#9AA4B2" }}>Due {item.dueDate}</span>
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#CBD2DA" }} />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: item.priority === "High" ? "#C04E57" : item.priority === "Medium" ? "#B7791F" : "#9AA4B2",
+                    }}
+                  >
+                    {item.priority} priority
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -104,20 +153,19 @@ export default function ChecklistPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {DOCUMENTS.map((doc) => (
                 <div
-                  key={doc.name}
+                  key={doc.id}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
                     padding: "12px 14px",
                     borderRadius: 12,
                     background: "#F9FAFB",
                     border: "1px solid #EAEEF3",
                   }}
                 >
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#15212E" }}>{doc.name}</span>
-                  <PillBadge tone={doc.tone}>{doc.status}</PillBadge>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#15212E" }}>{doc.name}</span>
+                    <PillBadge tone={documentStatusToTone(doc.status)}>{doc.status}</PillBadge>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>Due {doc.dueDate}</div>
                 </div>
               ))}
             </div>
@@ -134,7 +182,7 @@ export default function ChecklistPage() {
               <div>
                 <p style={{ fontSize: 14, fontWeight: 700, color: "#92600A", margin: "0 0 6px" }}>Action needed</p>
                 <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-                  Upload your parent tax return by July 18 to avoid aid delays.
+                  Upload your parent tax return and non-filing letter by July 20 to avoid aid delays.
                 </p>
               </div>
             </div>
