@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DemoNotice } from "@/components/DemoNotice";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { CheckSVG, PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
+import { getTopRecommendations } from "@/lib/intelligence/recommendations";
 import {
   getDashboardSummary,
   getScholarshipStatsFromDb,
@@ -37,7 +39,21 @@ import {
 } from "@/lib/demo-data";
 
 export default function DashboardClient() {
-  const { loading, isDemo, profile, tasks, documents, scholarships, deadlines, weeklyReport } = useUserData();
+  const {
+    loading,
+    isDemo,
+    profile,
+    tasks,
+    documents,
+    scholarships,
+    deadlines,
+    weeklyReport,
+    recommendations,
+    refreshRecommendations,
+    generateWeeklyReport,
+  } = useUserData();
+  const [refreshing, setRefreshing] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   if (loading) {
     return (
@@ -90,6 +106,38 @@ export default function DashboardClient() {
   const toneFn = (status: string) =>
     isDemo ? demoStatusToTone(status as TaskStatus) : statusToTone(status);
 
+  const topActions = isDemo
+    ? [
+        { title: "Complete your FAFSA", description: "Suggested next step: verify FAFSA status at StudentAid.gov.", category: "FAFSA", priority: "high", due_date: null },
+        { title: "Submit missing verification documents", description: "Suggested next step: check your school portal for requested documents.", category: "Documents", priority: "high", due_date: null },
+        { title: "Apply to more scholarships", description: "Suggested next step: generate matches and start one application.", category: "Scholarships", priority: "medium", due_date: null },
+      ]
+    : getTopRecommendations(recommendations, 3);
+
+  async function handleRefreshRecommendations() {
+    setRefreshing(true);
+    try {
+      await refreshRecommendations();
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  async function handleGenerateReport() {
+    setGeneratingReport(true);
+    try {
+      await generateWeeklyReport();
+    } finally {
+      setGeneratingReport(false);
+    }
+  }
+
+  const priorityTone = (priority: string): "green" | "amber" | "coral" | "blue" | "gray" => {
+    if (priority === "high") return "coral";
+    if (priority === "medium") return "amber";
+    return "blue";
+  };
+
   const reportStatusTone =
     (report?.aid_status ?? summary.aidStatus) === "Protected"
       ? "green"
@@ -121,6 +169,39 @@ export default function DashboardClient() {
         <StatCard label="Next Deadline" value={nextDeadlineLabel} color="#B7791F" style={{ flex: "1 1 140px" }} sub={`${deadlinesThisMonth} this month`} />
         <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new matches`} color="#0B5CAD" style={{ flex: "1 1 160px" }} />
       </div>
+
+      {!isDemo && (
+        <ProductCard style={{ padding: 26, marginBottom: 22 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+            <div>
+              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Top 3 next actions</h2>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>Suggested next steps based on your aid profile. Verify with your school aid office.</p>
+            </div>
+            <button type="button" onClick={() => handleRefreshRecommendations()} disabled={refreshing} style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", border: "none", padding: "8px 14px", borderRadius: 999, cursor: refreshing ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {refreshing ? "Refreshing..." : "Refresh recommendations"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {topActions.length === 0 ? (
+              <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No active recommendations. Click refresh to generate suggestions.</p>
+            ) : (
+              topActions.map((rec) => (
+                <div key={rec.title} style={{ padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{rec.title}</div>
+                    <PillBadge tone={priorityTone(rec.priority)}>{rec.priority} priority</PillBadge>
+                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.55 }}>{rec.description}</p>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                    {rec.category}
+                    {"due_date" in rec && rec.due_date ? ` · Due ${formatDueDate(rec.due_date)}` : ""}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ProductCard>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 22, alignItems: "start", marginBottom: 22 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -216,9 +297,16 @@ export default function DashboardClient() {
                 </div>
               </div>
             </div>
-            <Link href="/report" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}>
-              View weekly report
-            </Link>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Link href="/report" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}>
+                View weekly report
+              </Link>
+              {!isDemo && (
+                <button type="button" onClick={() => handleGenerateReport()} disabled={generatingReport} style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #DCE7F5", padding: "12px 22px", borderRadius: 13, cursor: generatingReport ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                  {generatingReport ? "Generating..." : "Generate report"}
+                </button>
+              )}
+            </div>
           </ProductCard>
 
           <ProductCard style={{ padding: 26, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>

@@ -1,7 +1,7 @@
 export type StudentProfile = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   first_name: string | null;
   email: string | null;
   school: string | null;
@@ -17,7 +17,7 @@ export type StudentProfile = {
 export type AidTask = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   title: string;
   description: string | null;
@@ -30,7 +30,7 @@ export type AidTask = {
 export type DocumentItem = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   title: string;
   status: string;
@@ -42,7 +42,7 @@ export type DocumentItem = {
 export type ScholarshipMatch = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   scholarship_id: string | null;
   name: string;
@@ -59,10 +59,11 @@ export type ScholarshipMatch = {
 export type AidLetter = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   school_name: string | null;
   aid_year: string | null;
+  cost_of_attendance: number | null;
   grants_amount: number | null;
   scholarships_amount: number | null;
   loans_amount: number | null;
@@ -75,7 +76,7 @@ export type AidLetter = {
 export type AppealDraft = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   aid_letter_id: string | null;
   reason: string | null;
@@ -86,7 +87,7 @@ export type AppealDraft = {
 export type School = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   name: string;
   state: string | null;
   system: string | null;
@@ -101,7 +102,7 @@ export type School = {
 export type Deadline = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   school_id: string | null;
   title: string;
@@ -118,7 +119,7 @@ export type Deadline = {
 export type Scholarship = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   source_name: string | null;
   name: string;
   amount_min: number | null;
@@ -152,7 +153,7 @@ export type WeeklyReportRecommendation = {
 export type WeeklyReport = {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   user_id: string;
   report_week_start: string;
   aid_status: string;
@@ -187,4 +188,85 @@ export type OnboardingFormData = {
   fafsa_status: string;
   aid_types: string[];
   main_goals: string[];
+};
+
+export type AidRecommendation = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  user_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  priority: string;
+  status: string;
+  source: string | null;
+  related_table: string | null;
+  related_id: string | null;
+  due_date: string | null;
+  confidence: number;
+};
+
+export type FafsaWorkflowStep = {
+  id: string;
+  created_at: string;
+  step_order: number;
+  title: string;
+  description: string | null;
+  category: string | null;
+  applies_to: string | null;
+  default_priority: string | null;
+  source_url: string | null;
+};
+
+export type UserFafsaStep = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  user_id: string;
+  workflow_step_id: string;
+  status: string;
+  notes: string | null;
+  workflow_step?: FafsaWorkflowStep | null;
+};
+
+export type ScholarshipSource = {
+  id: string;
+  created_at: string;
+  name: string;
+  provider: string | null;
+  amount: number | null;
+  deadline: string | null;
+  url: string | null;
+  eligible_states: string[] | null;
+  education_levels: string[] | null;
+  student_types: string[] | null;
+  major_keywords: string[] | null;
+  tags: string[] | null;
+  need_based: boolean;
+  merit_based: boolean;
+  essay_required: boolean;
+  min_gpa: number | null;
+  source: string | null;
+  active: boolean;
+};
+
+export type IntelligenceUserData = {
+  profile: StudentProfile | null;
+  tasks: AidTask[];
+  documents: DocumentItem[];
+  scholarships: ScholarshipMatch[];
+  deadlines: Deadline[];
+  aidLetters: AidLetter[];
+  weeklyReports: WeeklyReport[];
+  recommendations: AidRecommendation[];
+  userFafsaSteps: UserFafsaStep[];
+  workflowSteps: FafsaWorkflowStep[];
+  scholarshipSources: ScholarshipSource[];
+
+  // Compatibility aliases in case older/newer files use slightly different names.
+  aid_letters?: AidLetter[];
+  weekly_reports?: WeeklyReport[];
+  aidRecommendations?: AidRecommendation[];
+  fafsaSteps?: UserFafsaStep[];
 };

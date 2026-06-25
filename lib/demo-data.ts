@@ -682,6 +682,7 @@ export const DEMO_DEADLINES = [
 export const DEMO_AID_LETTER = {
   school_name: "UC Irvine",
   aid_year: "2026-2027",
+  cost_of_attendance: 33100,
   grants_amount: 18400,
   scholarships_amount: 3500,
   loans_amount: 5500,

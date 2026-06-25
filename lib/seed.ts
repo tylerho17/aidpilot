@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_TASKS, DOCUMENTS, SCHOLARSHIPS } from "@/lib/demo-data";
+import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
 import type { AidTask, DocumentItem, ScholarshipMatch } from "@/lib/types";
 import { getWeekStartMonday } from "@/lib/data-helpers";
 
@@ -171,6 +172,7 @@ function buildAidLetter(userId: string, schoolName?: string) {
     user_id: userId,
     school_name: schoolName || "Your school",
     aid_year: "2026-2027",
+    cost_of_attendance: 33100,
     grants_amount: 18400,
     scholarships_amount: 3500,
     loans_amount: 5500,
@@ -244,17 +246,17 @@ export async function seedUserData(
 
   if (!taskCount) {
     const { error } = await supabase.from("aid_tasks").insert(buildAidTasks(userId));
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   if (!docCount) {
     const { error } = await supabase.from("document_items").insert(buildDocuments(userId));
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   if (!scholarshipCount) {
     const { error } = await supabase.from("scholarship_matches").insert(buildScholarships(userId));
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   const { count: deadlineCount } = await supabase
@@ -270,7 +272,7 @@ export async function seedUserData(
       schoolId = school?.id ?? null;
     }
     const { error } = await supabase.from("deadlines").insert(buildDeadlines(userId, schoolId));
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   const weekStart = getWeekStartMonday();
@@ -298,7 +300,7 @@ export async function seedUserData(
           (scholarshipsRes.data ?? []) as ScholarshipMatch[]
         )
       );
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
 
   const { count: aidLetterCount } = await supabase
@@ -308,6 +310,8 @@ export async function seedUserData(
 
   if (!aidLetterCount) {
     const { error } = await supabase.from("aid_letters").insert(buildAidLetter(userId, options?.schoolName));
-    if (error) throw error;
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
   }
+
+  await seedUserFafsaSteps(supabase, userId);
 }

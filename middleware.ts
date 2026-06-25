@@ -6,6 +6,7 @@ const PROTECTED_ROUTES = [
   "/checklist",
   "/documents",
   "/deadlines",
+  "/fafsa",
   "/scholarships",
   "/aid-letter",
   "/settings",

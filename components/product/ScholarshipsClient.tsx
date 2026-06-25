@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DemoNotice } from "@/components/DemoNotice";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { PillBadge, StatCard } from "@/components/ProductUI";
+import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
 import {
   formatScholarshipDeadline,
@@ -19,7 +20,7 @@ import {
   getWeeklyScholarships,
   type ScholarshipMatch as DemoScholarship,
 } from "@/lib/demo-data";
-import type { ScholarshipMatch } from "@/lib/types";
+import type { ScholarshipMatch, ScholarshipSource } from "@/lib/types";
 
 const BookmarkSVG = () => (
   <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -28,7 +29,8 @@ const BookmarkSVG = () => (
 );
 
 export default function ScholarshipsClient() {
-  const { loading, isDemo, scholarships, saveScholarship, startScholarship } = useUserData();
+  const { loading, isDemo, scholarships, scholarshipSources, saveScholarship, startScholarship, generateScholarshipMatches } = useUserData();
+  const [generating, setGenerating] = useState(false);
 
   if (loading) {
     return (
@@ -45,6 +47,15 @@ export default function ScholarshipsClient() {
   const weeklyDb = scholarships.filter((s) => s.status === "new" && s.id !== featuredDb?.id);
   const savedDemo = SCHOLARSHIPS.filter((s) => !s.newThisWeek);
   const savedDb = scholarships.filter((s) => s.status !== "new");
+
+  async function handleGenerateMatches() {
+    setGenerating(true);
+    try {
+      await generateScholarshipMatches();
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   return (
     <AppShell>
@@ -68,6 +79,38 @@ export default function ScholarshipsClient() {
         <StatCard label="Strong matches" value={String(stats.strongMatches)} color="#0B5CAD" style={{ flex: "1 1 140px" }} />
         <StatCard label="Deadlines this month" value={String(stats.deadlinesThisMonth)} color="#B7791F" style={{ flex: "1 1 140px" }} />
       </div>
+
+      {!isDemo && (
+        <section style={{ marginBottom: 36 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+            <div>
+              <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Scholarship sources</h2>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>{scholarshipSources.length} starter sources available. Verify each scholarship before applying.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleGenerateMatches()}
+              disabled={generating || scholarshipSources.length === 0}
+              style={{ fontSize: 14, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 13, cursor: generating || scholarshipSources.length === 0 ? "not-allowed" : "pointer", opacity: scholarshipSources.length === 0 ? 0.6 : 1, fontFamily: "inherit", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
+            >
+              {generating ? "Generating..." : "Generate matches"}
+            </button>
+          </div>
+          {scholarshipSources.length === 0 ? (
+            <ProductCard style={{ padding: 24, textAlign: "center" }}>
+              <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                No scholarship sources are loaded yet. Ask your project admin to run the global intelligence seed SQL in Supabase.
+              </p>
+            </ProductCard>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+              {scholarshipSources.slice(0, 6).map((source) => (
+                <SourceCard key={source.id} source={source} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {isDemo && featuredDemo && (
         <section style={{ marginBottom: 40 }}>
@@ -108,6 +151,26 @@ export default function ScholarshipsClient() {
 
       <FeedbackWidget page="/scholarships" />
     </AppShell>
+  );
+}
+
+function SourceCard({ source }: { source: ScholarshipSource }) {
+  const amountLabel = source.amount ? `$${source.amount.toLocaleString()}` : "Amount varies";
+  const deadlineLabel = formatScholarshipDeadline(source.deadline);
+  return (
+    <div style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 16, padding: 18 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+        {source.need_based && <PillBadge tone="blue">Need-based</PillBadge>}
+        {source.merit_based && <PillBadge tone="green">Merit</PillBadge>}
+        {!source.essay_required && <PillBadge tone="amber">No essay</PillBadge>}
+      </div>
+      <h4 className="font-display" style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px", color: "#15212E" }}>{source.name}</h4>
+      <div style={{ fontSize: 20, fontWeight: 900, color: "#0B5CAD", marginBottom: 8 }}>{amountLabel}</div>
+      <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 8px" }}>{source.provider ?? "Sample provider"} · {deadlineLabel}</p>
+      {source.tags?.length ? (
+        <p style={{ fontSize: 11, color: "#9AA4B2", margin: 0 }}>{source.tags.slice(0, 3).join(" · ")}</p>
+      ) : null}
+    </div>
   );
 }
 
