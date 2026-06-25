@@ -42,7 +42,31 @@ export function getAttentionCountFromTasks(tasks: AidTask[]) {
 }
 
 export function getMissingDocumentCountFromDocs(docs: DocumentItem[]) {
-  return docs.filter((d) => d.status === "Missing").length;
+  return docs.filter((d) => d.status === "needed" || d.status === "Missing").length;
+}
+
+export function documentStatusToTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
+  switch (status) {
+    case "verified":
+    case "Uploaded":
+    case "Complete":
+      return "green";
+    case "submitted":
+    case "Needs Review":
+      return "amber";
+    case "needed":
+    case "Missing":
+      return "coral";
+    case "not_started":
+    case "Upcoming":
+      return "blue";
+    default:
+      return "gray";
+  }
+}
+
+export function formatDocumentStatus(status: string) {
+  return status.replace(/_/g, " ");
 }
 
 export function getUrgentTasksFromDb(tasks: AidTask[], limit = 3) {
@@ -113,6 +137,7 @@ export function statusToTone(status: string): "green" | "amber" | "coral" | "blu
     case "Complete":
     case "Uploaded":
     case "complete":
+    case "completed":
       return "green";
     case "Due Soon":
     case "due soon":
@@ -146,7 +171,7 @@ export function sortDeadlinesByDate(deadlines: Deadline[]) {
 
 export function getUpcomingDeadlines(deadlines: Deadline[], limit = 3) {
   return sortDeadlinesByDate(deadlines)
-    .filter((d) => d.status !== "complete")
+    .filter((d) => d.status !== "complete" && d.status !== "completed")
     .slice(0, limit);
 }
 
@@ -160,7 +185,7 @@ export function getDeadlinesThisMonthCount(deadlines: Deadline[]) {
   const now = new Date();
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return deadlines.filter((d) => {
-    if (d.status === "complete") return false;
+    if (d.status === "complete" || d.status === "completed") return false;
     const parsed = new Date(d.deadline_date + "T12:00:00");
     return parsed >= now && parsed <= monthEnd;
   }).length;

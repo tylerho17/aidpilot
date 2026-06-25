@@ -26,9 +26,21 @@ const DocSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
+const CalendarSVG = ({ color = "currentColor" }: { color?: string }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 9h18M8 3v4M16 3v4" />
+  </svg>
+);
+
 const StarSVG = ({ color = "currentColor" }: { color?: string }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3l2.4 5.3L20 9l-4 4 1 6-5-2.8L7 19l1-6-4-4 5.6-.7L12 3Z" />
+  </svg>
+);
+
+const LetterSVG = ({ color = "currentColor" }: { color?: string }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /><path d="M8 7h8M8 11h6" />
   </svg>
 );
 
@@ -38,28 +50,14 @@ const GearSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const CalendarSVG = ({ color = "currentColor" }: { color?: string }) => (
-  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 9h18M8 3v4M16 3v4" />
-  </svg>
-);
-
-const ReportSVG = ({ color = "currentColor" }: { color?: string }) => (
-  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /><path d="M8 7h8M8 11h6" />
-  </svg>
-);
-
-const MAIN_NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
+const NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
   { href: "/dashboard", label: "Dashboard", icon: GridSVG },
   { href: "/checklist", label: "Checklist", icon: CheckSVG },
   { href: "/documents", label: "Documents", icon: DocSVG },
-  { href: "/scholarships", label: "Scholarships", icon: StarSVG },
-];
-
-const PLANNING_NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
   { href: "/deadlines", label: "Deadlines", icon: CalendarSVG },
-  { href: "/report", label: "Weekly Report", icon: ReportSVG },
+  { href: "/scholarships", label: "Scholarships", icon: StarSVG },
+  { href: "/aid-letter", label: "Aid Letter", icon: LetterSVG },
+  { href: "/settings", label: "Settings", icon: GearSVG },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -114,8 +112,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
-          {MAIN_NAV.map(({ href, label, icon: Icon }) => {
+        <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3, overflowY: "auto" }}>
+          {NAV.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href;
             return (
               <Link key={href} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
@@ -124,61 +122,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-
-          <div style={{ margin: "10px 4px 6px", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,.4)", textTransform: "uppercase", letterSpacing: ".8px" }}>
-            Planning
-          </div>
-
-          {PLANNING_NAV.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href;
-            return (
-              <Link key={href} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
-                <Icon color={isActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
-                {label}
-              </Link>
-            );
-          })}
-
-          <Link
-            href="/settings"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              borderRadius: 12,
-              textDecoration: "none",
-              background: pathname === "/settings" ? "#fff" : "transparent",
-              color: pathname === "/settings" ? "#0B5CAD" : "rgba(255,255,255,.78)",
-              fontWeight: pathname === "/settings" ? 700 : 600,
-              fontSize: 14,
-            }}
-          >
-            <GearSVG color={pathname === "/settings" ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
-            Settings
-          </Link>
         </nav>
 
         <div style={{ margin: 12, padding: "12px 14px", background: "rgba(255,255,255,.08)", borderRadius: 12, border: "1px solid rgba(255,255,255,.12)" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".8px", marginBottom: 6 }}>
-            {isDemo ? "Demo mode" : "Your plan"}
+            Your plan
           </div>
           <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.6)", margin: "0 0 10px", lineHeight: 1.5 }}>
-            {isDemo ? "Sample data only. Create an account for your real plan." : "Your aid data is saved to your account."}
+            Your aid data is saved to your account.
           </p>
-          {isDemo ? (
-            <Link href="/signup" style={{ display: "block", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, textDecoration: "none" }}>
-              Create account
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => logout()}
-              style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit" }}
-            >
-              Log out
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => logout()}
+            style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            Log out
+          </button>
         </div>
 
         <div style={{ padding: "8px 16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>

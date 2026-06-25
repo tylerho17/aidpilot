@@ -643,22 +643,10 @@ export const DEMO_DEADLINES = [
   },
   {
     id: "demo-d2",
-    title: "Cal Grant priority deadline",
-    description: "California students should confirm Cal Grant requirements before the state priority deadline.",
-    deadline_date: "2026-03-02",
-    category: "State Aid",
-    priority: "High",
-    status: "upcoming",
-    source_type: "State",
-    source_name: "California Student Aid Commission",
-    action_url: null,
-  },
-  {
-    id: "demo-d3",
-    title: "School document review",
-    description: "Check your school aid portal for missing documents and verification requests.",
-    deadline_date: "2026-07-18",
-    category: "School Portal",
+    title: "School verification deadline",
+    description: "Complete verification documents requested by your school aid office.",
+    deadline_date: "2026-07-22",
+    category: "Verification",
     priority: "High",
     status: "due soon",
     source_type: "School",
@@ -666,33 +654,9 @@ export const DEMO_DEADLINES = [
     action_url: null,
   },
   {
-    id: "demo-d4",
-    title: "Verification response deadline",
-    description: "If selected for verification, submit requested forms before aid is delayed.",
-    deadline_date: "2026-07-22",
-    category: "Verification",
-    priority: "High",
-    status: "needs attention",
-    source_type: "School",
-    source_name: "Aid office portal",
-    action_url: null,
-  },
-  {
-    id: "demo-d5",
-    title: "Aid offer review",
-    description: "Review grants, scholarships, work-study, loans, and estimated out-of-pocket cost.",
-    deadline_date: "2026-08-01",
-    category: "Aid Offer",
-    priority: "Medium",
-    status: "upcoming",
-    source_type: "School",
-    source_name: "Aid offer",
-    action_url: null,
-  },
-  {
-    id: "demo-d6",
-    title: "Scholarship application sprint",
-    description: "Review weekly scholarship matches and start the strongest applications.",
+    id: "demo-d3",
+    title: "Scholarship application deadline",
+    description: "Start your strongest weekly scholarship match before the deadline passes.",
     deadline_date: "2026-07-30",
     category: "Scholarships",
     priority: "Medium",
@@ -701,7 +665,31 @@ export const DEMO_DEADLINES = [
     source_name: "Weekly scholarship report",
     action_url: null,
   },
+  {
+    id: "demo-d4",
+    title: "Aid appeal deadline",
+    description: "If you plan to appeal your aid offer, confirm your school appeal deadline.",
+    deadline_date: "2026-08-15",
+    category: "Aid Offer",
+    priority: "Medium",
+    status: "upcoming",
+    source_type: "School",
+    source_name: "Aid office",
+    action_url: null,
+  },
 ];
+
+export const DEMO_AID_LETTER = {
+  school_name: "UC Irvine",
+  aid_year: "2026-2027",
+  grants_amount: 18400,
+  scholarships_amount: 3500,
+  loans_amount: 5500,
+  work_study_amount: 2000,
+  estimated_net_cost: 4200,
+  status: "sample",
+  notes: "Placeholder aid letter for demonstration. Not official financial advice.",
+};
 
 export const DEMO_WEEKLY_REPORT = {
   aid_status: "Protected",
@@ -730,6 +718,7 @@ export const DEMO_WEEKLY_REPORT = {
 export function deadlineStatusToTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
   switch (status) {
     case "complete":
+    case "completed":
       return "green";
     case "due soon":
       return "amber";

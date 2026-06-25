@@ -58,6 +58,19 @@ const SCHOLARSHIP_DEADLINES: Record<string, string | null> = {
   "health-careers": "2026-09-12",
 };
 
+function mapDocumentStatus(status: string) {
+  switch (status) {
+    case "Missing":
+      return "needed";
+    case "Uploaded":
+      return "submitted";
+    case "Needs Review":
+      return "submitted";
+    default:
+      return "not_started";
+  }
+}
+
 function buildAidTasks(userId: string) {
   return CHECKLIST_TASKS.map((task) => ({
     user_id: userId,
@@ -74,7 +87,7 @@ function buildDocuments(userId: string) {
   return DOCUMENTS.map((doc) => ({
     user_id: userId,
     title: doc.name,
-    status: doc.status,
+    status: mapDocumentStatus(doc.status),
     source: "Financial aid office",
     due_date: DOC_DUE_DATES[doc.id] ?? null,
     note: `Linked to task: ${doc.linkedTaskId}`,
@@ -96,9 +109,7 @@ function buildScholarships(userId: string) {
   }));
 }
 
-function buildDeadlines(userId: string, schoolId: string | null, schoolName: string) {
-  const isCommunityCollege = schoolName === "Santa Monica College";
-
+function buildDeadlines(userId: string, schoolId: string | null) {
   return [
     {
       user_id: userId,
@@ -116,38 +127,10 @@ function buildDeadlines(userId: string, schoolId: string | null, schoolName: str
     {
       user_id: userId,
       school_id: schoolId,
-      title: "Cal Grant priority deadline",
-      description: "California students should confirm Cal Grant requirements before the state priority deadline.",
-      deadline_date: "2026-03-02",
-      category: "State Aid",
-      priority: "High",
-      status: "upcoming",
-      source_type: "State",
-      source_name: "California Student Aid Commission",
-      action_url: null,
-    },
-    {
-      user_id: userId,
-      school_id: schoolId,
-      title: "Cal Grant community college deadline",
-      description: isCommunityCollege
-        ? "California community college students may have an additional Cal Grant deadline."
-        : "Informational for California community college students. Confirm if this applies to you.",
-      deadline_date: "2026-09-02",
-      category: "State Aid",
-      priority: isCommunityCollege ? "High" : "Low",
-      status: "upcoming",
-      source_type: "State",
-      source_name: "California Student Aid Commission",
-      action_url: null,
-    },
-    {
-      user_id: userId,
-      school_id: schoolId,
-      title: "School document review",
-      description: "Check your school aid portal for missing documents and verification requests.",
-      deadline_date: "2026-07-18",
-      category: "School Portal",
+      title: "School verification deadline",
+      description: "Complete verification documents requested by your school aid office.",
+      deadline_date: "2026-07-22",
+      category: "Verification",
       priority: "High",
       status: "due soon",
       source_type: "School",
@@ -157,34 +140,8 @@ function buildDeadlines(userId: string, schoolId: string | null, schoolName: str
     {
       user_id: userId,
       school_id: schoolId,
-      title: "Verification response deadline",
-      description: "If selected for verification, submit requested forms before aid is delayed.",
-      deadline_date: "2026-07-22",
-      category: "Verification",
-      priority: "High",
-      status: "needs attention",
-      source_type: "School",
-      source_name: "Aid office portal",
-      action_url: null,
-    },
-    {
-      user_id: userId,
-      school_id: schoolId,
-      title: "Aid offer review",
-      description: "Review grants, scholarships, work-study, loans, and estimated out-of-pocket cost.",
-      deadline_date: "2026-08-01",
-      category: "Aid Offer",
-      priority: "Medium",
-      status: "upcoming",
-      source_type: "School",
-      source_name: "Aid offer",
-      action_url: null,
-    },
-    {
-      user_id: userId,
-      school_id: schoolId,
-      title: "Scholarship application sprint",
-      description: "Review weekly scholarship matches and start the strongest applications.",
+      title: "Scholarship application deadline",
+      description: "Start your strongest weekly scholarship match before the deadline passes.",
       deadline_date: "2026-07-30",
       category: "Scholarships",
       priority: "Medium",
@@ -193,7 +150,35 @@ function buildDeadlines(userId: string, schoolId: string | null, schoolName: str
       source_name: "Weekly scholarship report",
       action_url: null,
     },
+    {
+      user_id: userId,
+      school_id: schoolId,
+      title: "Aid appeal deadline",
+      description: "If you plan to appeal your aid offer, confirm your school appeal deadline.",
+      deadline_date: "2026-08-15",
+      category: "Aid Offer",
+      priority: "Medium",
+      status: "upcoming",
+      source_type: "School",
+      source_name: "Aid office",
+      action_url: null,
+    },
   ];
+}
+
+function buildAidLetter(userId: string, schoolName?: string) {
+  return {
+    user_id: userId,
+    school_name: schoolName || "Your school",
+    aid_year: "2026-2027",
+    grants_amount: 18400,
+    scholarships_amount: 3500,
+    loans_amount: 5500,
+    work_study_amount: 2000,
+    estimated_net_cost: 4200,
+    status: "sample",
+    notes: "Placeholder aid letter for demonstration. Not official financial advice.",
+  };
 }
 
 function countTasksDue(tasks: AidTask[]) {
@@ -201,7 +186,7 @@ function countTasksDue(tasks: AidTask[]) {
 }
 
 function countMissingDocs(docs: DocumentItem[]) {
-  return docs.filter((d) => d.status === "Missing").length;
+  return docs.filter((d) => d.status === "needed" || d.status === "Missing").length;
 }
 
 function sumScholarshipPotential(scholarships: ScholarshipMatch[]) {
@@ -217,21 +202,16 @@ function buildWeeklyReportRow(
   documents: DocumentItem[],
   scholarships: ScholarshipMatch[]
 ) {
-  const tasksDue = countTasksDue(tasks);
-  const missingDocs = countMissingDocs(documents);
-  const scholarshipCount = scholarships.length;
-  const potentialAmount = sumScholarshipPotential(scholarships);
-
   return {
     user_id: userId,
     report_week_start: weekStart,
     aid_status: "Protected",
     summary:
-      "Your aid is protected this week. Two items need attention soon: school document review and verification response.",
-    tasks_due_count: tasksDue,
-    missing_documents_count: missingDocs,
-    scholarship_count: scholarshipCount,
-    potential_scholarship_amount: potentialAmount,
+      "Your aid is protected this week. Review deadlines, documents, and scholarship matches.",
+    tasks_due_count: countTasksDue(tasks),
+    missing_documents_count: countMissingDocs(documents),
+    scholarship_count: scholarships.length,
+    potential_scholarship_amount: sumScholarshipPotential(scholarships),
     top_task_ids: tasks.slice(0, 3).map((t) => t.id),
     top_scholarship_match_ids: scholarships.slice(0, 3).map((s) => s.id),
     recommendations: [
@@ -244,8 +224,8 @@ function buildWeeklyReportRow(
         body: "Pick one strong scholarship match and begin the application.",
       },
       {
-        title: "Confirm Cal Grant status",
-        body: "California students should confirm state aid status before priority deadlines.",
+        title: "Review your aid letter",
+        body: "Understand grants, scholarships, loans, and estimated net cost.",
       },
     ],
   };
@@ -289,7 +269,7 @@ export async function seedUserData(
       const { data: school } = await supabase.from("schools").select("id").eq("name", schoolName).maybeSingle();
       schoolId = school?.id ?? null;
     }
-    const { error } = await supabase.from("deadlines").insert(buildDeadlines(userId, schoolId, schoolName));
+    const { error } = await supabase.from("deadlines").insert(buildDeadlines(userId, schoolId));
     if (error) throw error;
   }
 
@@ -318,6 +298,16 @@ export async function seedUserData(
           (scholarshipsRes.data ?? []) as ScholarshipMatch[]
         )
       );
+    if (error) throw error;
+  }
+
+  const { count: aidLetterCount } = await supabase
+    .from("aid_letters")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (!aidLetterCount) {
+    const { error } = await supabase.from("aid_letters").insert(buildAidLetter(userId, options?.schoolName));
     if (error) throw error;
   }
 }

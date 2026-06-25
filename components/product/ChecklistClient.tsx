@@ -14,12 +14,14 @@ import {
   getChecklistProgressFromTasks,
   getMissingDocumentCountFromDocs,
   getNextDeadlineFromTasks,
+  documentStatusToTone,
+  formatDocumentStatus,
   statusToTone,
 } from "@/lib/data-helpers";
 import {
   CHECKLIST_TASKS,
   DOCUMENTS,
-  documentStatusToTone,
+  documentStatusToTone as demoDocumentStatusToTone,
   getAttentionCount,
   getChecklistProgress,
   getMissingDocumentCount,
@@ -29,6 +31,8 @@ import {
   type TaskStatus,
 } from "@/lib/demo-data";
 import type { AidTask, DocumentItem } from "@/lib/types";
+
+const DOCUMENT_STATUSES = ["not_started", "needed", "submitted", "verified"] as const;
 
 const STATUS_ORDER: Record<string, number> = {
   Missing: 0,
@@ -152,21 +156,25 @@ export default function ChecklistClient() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {isDemo
                 ? DOCUMENTS.map((doc) => (
-                    <DocRow key={doc.id} name={doc.name} status={doc.status} due={doc.dueDate} tone={documentStatusToTone(doc.status)} />
+                    <DocRow key={doc.id} name={doc.name} status={doc.status} due={doc.dueDate} tone={demoDocumentStatusToTone(doc.status)} />
                   ))
                 : documents.map((doc: DocumentItem) => (
                     <DocRow
                       key={doc.id}
                       name={doc.title}
-                      status={doc.status}
+                      status={formatDocumentStatus(doc.status)}
                       due={formatDueDate(doc.due_date, "No date")}
-                      tone={statusToTone(doc.status)}
+                      tone={documentStatusToTone(doc.status)}
                       action={
-                        doc.status === "Missing" ? (
-                          <button type="button" onClick={() => updateDocumentStatus(doc.id, "Uploaded")} style={{ fontSize: 11, fontWeight: 700, color: "#15885A", background: "#EAFBF1", border: "none", padding: "5px 9px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit" }}>
-                            Mark uploaded
-                          </button>
-                        ) : null
+                        <select
+                          value={doc.status}
+                          onChange={(e) => updateDocumentStatus(doc.id, e.target.value)}
+                          style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
+                        >
+                          {DOCUMENT_STATUSES.map((status) => (
+                            <option key={status} value={status}>{formatDocumentStatus(status)}</option>
+                          ))}
+                        </select>
                       }
                     />
                   ))}

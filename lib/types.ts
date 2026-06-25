@@ -56,6 +56,33 @@ export type ScholarshipMatch = {
   is_started: boolean;
 };
 
+export type AidLetter = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  school_name: string | null;
+  aid_year: string | null;
+  grants_amount: number | null;
+  scholarships_amount: number | null;
+  loans_amount: number | null;
+  work_study_amount: number | null;
+  estimated_net_cost: number | null;
+  status: string;
+  notes: string | null;
+};
+
+export type AppealDraft = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  aid_letter_id: string | null;
+  reason: string | null;
+  draft_body: string | null;
+  status: string;
+};
+
 export type School = {
   id: string;
   created_at: string;
