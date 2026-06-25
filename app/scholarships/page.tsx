@@ -88,8 +88,6 @@ export default function ScholarshipsPage() {
         {/* header */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0B5CAD", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 13px", borderRadius: 999, letterSpacing: ".3px", marginBottom: 14 }}>
-            <StarSVG color="#fff" />
-            <svg width={12} height={12} viewBox="0 0 12 12" fill="#fff"><circle cx="6" cy="6" r="6"/></svg>
             This week&apos;s report
           </div>
           <h1 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 38, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.08 }}>Weekly Scholarship Report</h1>
@@ -106,7 +104,7 @@ export default function ScholarshipsPage() {
             { val: "4",       label: "strong matches",       color: "#0B5CAD" },
             { val: "3",       label: "deadlines this month", color: "#B7791F" },
           ].map((s) => (
-            <div key={s.label} style={{ flex: 1, minWidth: 140, background: "#fff", border: "1px solid #E6EDF6", borderRadius: 18, padding: "18px 20px", boxShadow: "0 4px 12px rgba(11,92,173,.05)" }}>
+            <div key={s.label} className="card-lift" style={{ flex: 1, minWidth: 140, background: "#fff", border: "1px solid #E6EDF6", borderRadius: 18, padding: "18px 20px", boxShadow: "0 4px 12px rgba(11,92,173,.05)" }}>
               <div style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 30, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.val}</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#6B7280", marginTop: 6 }}>{s.label}</div>
             </div>
@@ -117,7 +115,7 @@ export default function ScholarshipsPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1.15fr .85fr", gap: 24, alignItems: "start" }}>
 
           {/* featured */}
-          <div style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 24, boxShadow: "0 26px 50px -26px rgba(11,92,173,.26)", padding: 30 }}>
+          <div className="card-lift animate-slide-in" style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 24, boxShadow: "0 26px 50px -26px rgba(11,92,173,.26)", padding: 30 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <span style={{ display: "flex", width: 54, height: 54, borderRadius: 16, background: featured.iconBg, alignItems: "center", justifyContent: "center" }}>{featured.icon}</span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: featured.matchBg, color: featured.matchColor, fontSize: 13, fontWeight: 800, padding: "7px 14px", borderRadius: 999 }}>
@@ -135,7 +133,7 @@ export default function ScholarshipsPage() {
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <a href="/#waitlist" style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "13px 24px", borderRadius: 13, boxShadow: "0 10px 20px rgba(11,92,173,.22)", textDecoration: "none" }}>Start application</a>
-              <button style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "13px 20px", borderRadius: 13, cursor: "pointer", fontFamily: "inherit" }}>
+              <button type="button" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "13px 20px", borderRadius: 13, cursor: "pointer", fontFamily: "inherit" }}>
                 <BookmarkSVG />Save
               </button>
             </div>
@@ -144,7 +142,7 @@ export default function ScholarshipsPage() {
           {/* compact list */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {rest.map((s) => (
-              <div key={s.id} style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 18, boxShadow: "0 16px 34px -24px rgba(11,92,173,.22)", padding: 18 }}>
+              <div key={s.id} className="card-lift animate-slide-in" style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 18, boxShadow: "0 16px 34px -24px rgba(11,92,173,.22)", padding: 18 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <h4 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 16, fontWeight: 800, margin: 0, color: "#15212E" }}>{s.name}</h4>
                   <span style={{ fontSize: 11.5, fontWeight: 800, color: s.matchColor, background: s.matchBg, padding: "4px 9px", borderRadius: 999 }}>{s.match}%</span>

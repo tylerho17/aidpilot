@@ -1,293 +1,168 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import {
-  aidStatus,
-  checklistItems,
-  missingDocuments,
-  scholarshipItems,
-  upcomingDeadlines,
-  weeklyPriorities,
-  type ChecklistStatus,
-} from "@/lib/dashboard-data";
+import { AppShell } from "@/components/AppShell";
+import { CheckSVG, PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 
 export const metadata: Metadata = {
-  title: "Dashboard — AidPilot",
-  description: "Demo dashboard for tracking financial aid, deadlines, and scholarships.",
+  title: "Dashboard | AidPilot",
+  description: "Maya Chen's weekly aid check-in.",
 };
 
-function StatusBadge({ status }: { status: ChecklistStatus }) {
-  const styles = {
-    done: "bg-green-100 text-green-800",
-    in_progress: "bg-amber-100 text-amber-800",
-    todo: "bg-black/5 text-black/50",
-  };
-  const labels = {
-    done: "Done",
-    in_progress: "In progress",
-    todo: "To do",
-  };
-  return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}>
-      {labels[status]}
-    </span>
-  );
-}
-
-function UrgencyDot({ urgency }: { urgency: "high" | "medium" | "low" }) {
-  const colors = {
-    high: "bg-red-500",
-    medium: "bg-amber-500",
-    low: "bg-green-500",
-  };
-  return <span className={`inline-block h-2 w-2 rounded-full ${colors[urgency]}`} />;
-}
+const PRIORITIES = [
+  { task: "Upload 2024 tax return", status: "Missing", due: "Due July 18", tone: "coral" as const },
+  { task: "Submit FAFSA correction", status: "Due Soon", due: "Due July 15", tone: "amber" as const },
+  { task: "Verify enrollment status", status: "Needs Review", due: "Due July 22", tone: "blue" as const },
+];
 
 export default function DashboardPage() {
-  const completedCount = checklistItems.filter((i) => i.status === "done").length;
-
   return (
-    <main className="min-h-screen bg-[#f8f7f3] text-[#171717]">
-      <header className="border-b border-black/10 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              AidPilot
-            </Link>
-            <span className="hidden rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 sm:inline">
-              Demo — sample data only
-            </span>
-          </div>
-          <Link
-            href="/"
-            className="text-sm text-black/50 hover:text-black"
-          >
-            Back to home
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight">Your aid dashboard</h1>
-          <p className="mt-2 text-black/60">
-            Week of June 23, 2026 · Sample student profile
-          </p>
-        </div>
-
-        {/* Aid status summary */}
-        <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-black/10 bg-white p-5">
-            <p className="text-sm text-black/50">Aid status</p>
-            <p className="mt-1 text-lg font-semibold">{aidStatus.overall}</p>
-            <p className="mt-1 text-sm text-black/50">{aidStatus.fafsaStatus}</p>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white p-5">
-            <p className="text-sm text-black/50">Aid at risk</p>
-            <p className="mt-1 text-2xl font-semibold">
-              ${aidStatus.aidAtRisk.toLocaleString()}
-            </p>
-            <p className="mt-1 text-sm text-black/50">If deadlines are missed</p>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white p-5">
-            <p className="text-sm text-black/50">Checklist progress</p>
-            <p className="mt-1 text-2xl font-semibold">
-              {completedCount}/{aidStatus.tasksTotal}
-            </p>
-            <p className="mt-1 text-sm text-black/50">Tasks complete</p>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white p-5">
-            <p className="text-sm text-black/50">Scholarships matched</p>
-            <p className="mt-1 text-2xl font-semibold">{aidStatus.scholarshipsMatched}</p>
-            <p className="mt-1 text-sm text-black/50">This week&apos;s report</p>
-          </div>
-        </section>
-
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
-            {/* This week's priorities */}
-            <section className="rounded-2xl border border-black/10 bg-white p-6">
-              <h2 className="text-lg font-semibold">This week&apos;s priorities</h2>
-              <p className="mt-1 text-sm text-black/50">
-                Focus on these first · Next review {aidStatus.nextReview}
-              </p>
-              <div className="mt-5 space-y-3">
-                {weeklyPriorities.map((priority) => (
-                  <div
-                    key={priority.id}
-                    className="flex gap-3 rounded-xl border border-black/5 bg-[#f8f7f3] p-4"
-                  >
-                    <div className="mt-1.5">
-                      <UrgencyDot urgency={priority.urgency} />
-                    </div>
-                    <div>
-                      <p className="font-medium">{priority.title}</p>
-                      <p className="mt-1 text-sm text-black/60">{priority.detail}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Aid checklist */}
-            <section className="rounded-2xl border border-black/10 bg-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold">Aid checklist</h2>
-                  <p className="mt-1 text-sm text-black/50">
-                    {completedCount} of {checklistItems.length} tasks complete
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 divide-y divide-black/5">
-                {checklistItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`h-4 w-4 shrink-0 rounded-full border-2 ${
-                          item.status === "done"
-                            ? "border-green-600 bg-green-600"
-                            : "border-black/20"
-                        }`}
-                      />
-                      <div className="min-w-0">
-                        <p
-                          className={`text-sm ${
-                            item.status === "done" ? "text-black/40 line-through" : ""
-                          }`}
-                        >
-                          {item.task}
-                        </p>
-                        <p className="text-xs text-black/40">{item.category}</p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {item.dueDate && (
-                        <span className="text-xs text-black/40">{item.dueDate}</span>
-                      )}
-                      <StatusBadge status={item.status} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Weekly scholarship report */}
-            <section className="rounded-2xl border border-black/10 bg-white p-6">
-              <h2 className="text-lg font-semibold">Weekly scholarship report</h2>
-              <p className="mt-1 text-sm text-black/50">
-                {scholarshipItems.length} opportunities ranked by fit, deadline, and effort
-              </p>
-              <div className="mt-5 overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-black/10 text-left text-black/50">
-                      <th className="pb-3 pr-4 font-medium">Scholarship</th>
-                      <th className="pb-3 pr-4 font-medium">Amount</th>
-                      <th className="pb-3 pr-4 font-medium">Deadline</th>
-                      <th className="pb-3 pr-4 font-medium">Effort</th>
-                      <th className="pb-3 font-medium">Fit</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black/5">
-                    {scholarshipItems.map((scholarship) => (
-                      <tr key={scholarship.id}>
-                        <td className="py-3 pr-4">
-                          <p className="font-medium">{scholarship.name}</p>
-                          <p className="text-xs text-black/40">{scholarship.category}</p>
-                        </td>
-                        <td className="py-3 pr-4">{scholarship.amount}</td>
-                        <td className="py-3 pr-4">{scholarship.deadline}</td>
-                        <td className="py-3 pr-4">{scholarship.effort}</td>
-                        <td className="py-3">
-                          <span className="rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                            {scholarship.fit}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
-
-          <div className="space-y-8">
-            {/* Missing documents */}
-            <section className="rounded-2xl border border-black/10 bg-white p-6">
-              <h2 className="text-lg font-semibold">Missing documents</h2>
-              <p className="mt-1 text-sm text-black/50">
-                {missingDocuments.length} items need attention
-              </p>
-              <div className="mt-5 space-y-3">
-                {missingDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="rounded-xl border border-red-100 bg-red-50 p-4"
-                  >
-                    <p className="font-medium text-red-950">{doc.name}</p>
-                    <p className="mt-1 text-sm text-red-900/70">{doc.requestedBy}</p>
-                    <p className="mt-2 text-xs font-medium text-red-800">
-                      Due {doc.dueDate}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-4 text-xs leading-5 text-black/40">
-                AidPilot does not collect tax documents or SSNs. Track what&apos;s
-                needed and submit directly to your school.
-              </p>
-            </section>
-
-            {/* Upcoming deadlines */}
-            <section className="rounded-2xl border border-black/10 bg-white p-6">
-              <h2 className="text-lg font-semibold">Upcoming deadlines</h2>
-              <div className="mt-5 space-y-3">
-                {upcomingDeadlines.map((deadline) => (
-                  <div
-                    key={deadline.id}
-                    className="flex items-start gap-3 rounded-xl border border-black/5 p-4"
-                  >
-                    <div className="mt-1">
-                      <UrgencyDot urgency={deadline.urgency} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{deadline.title}</p>
-                      <p className="mt-0.5 text-xs text-black/50">
-                        {deadline.date} · {deadline.type}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <div className="rounded-2xl border border-black/10 bg-[#f1efe8] p-5 text-sm leading-6 text-black/60">
-              <p className="font-medium text-black">Demo only</p>
-              <p className="mt-2">
-                This dashboard uses sample data. Join the waitlist on the home page
-                for early access to your real aid plan.
-              </p>
-              <Link
-                href="/#waitlist"
-                className="mt-4 inline-block rounded-full bg-black px-4 py-2 text-sm text-white hover:bg-black/80"
-              >
-                Join waitlist
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-10 text-center text-xs leading-5 text-black/40">
-          AidPilot is independent and not affiliated with FAFSA, Federal Student Aid,
-          the Department of Education, or any college.{" "}
-          <Link href="/disclaimer" className="underline underline-offset-2">
-            Read disclaimer
-          </Link>
+    <AppShell>
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 6px" }}>Good morning, Maya.</p>
+        <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.1 }}>
+          Your aid is protected this week.
+        </h1>
+        <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+          2 tasks need attention before July 15. AidPilot is watching the rest.
         </p>
       </div>
-    </main>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
+        <StatCard label="Aid Status" value="Protected" color="#15885A" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Aid at Risk" value="$2,400" color="#C04E57" style={{ flex: "1 1 140px" }} sub="If deadlines are missed" />
+        <StatCard label="Checklist Progress" value="7 of 10" color="#0B5CAD" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Next Deadline" value="July 15" color="#B7791F" style={{ flex: "1 1 140px" }} />
+        <StatCard label="Scholarships" value="12 new matches" color="#0B5CAD" style={{ flex: "1 1 160px" }} />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 22, alignItems: "start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <ProductCard style={{ padding: 28, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ display: "flex", width: 24, height: 24, borderRadius: "50%", background: "#15885A", alignItems: "center", justifyContent: "center" }}>
+                <CheckSVG size={13} strokeWidth={2.6} />
+              </span>
+              <PillBadge tone="green">Protected this week</PillBadge>
+            </div>
+            <h2 className="font-display" style={{ fontSize: 24, fontWeight: 900, margin: "0 0 10px", color: "#15212E", lineHeight: 1.25 }}>
+              Your aid is safe this week.
+            </h2>
+            <p style={{ fontSize: 15.5, fontWeight: 500, color: "#5B6573", margin: "0 0 22px", lineHeight: 1.65 }}>
+              AidPilot is watching your eligibility, enrollment, documents, and deadlines. Two small tasks need attention before July 15.
+            </p>
+            <Link
+              href="/checklist"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#fff",
+                background: "#15885A",
+                padding: "12px 22px",
+                borderRadius: 13,
+                textDecoration: "none",
+                boxShadow: "0 10px 20px rgba(21,136,90,.22)",
+              }}
+            >
+              Review tasks
+            </Link>
+          </ProductCard>
+
+          <ProductCard style={{ padding: 26 }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 18px", color: "#15212E" }}>
+              What needs attention
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {PRIORITIES.map((row) => (
+                <div
+                  key={row.task}
+                  className="animate-slide-in"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    padding: "14px 16px",
+                    borderRadius: 14,
+                    background: "#F9FAFB",
+                    border: "1px solid #EAEEF3",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.task}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9AA4B2" }}>{row.due}</div>
+                  </div>
+                  <PillBadge tone={row.tone}>{row.status}</PillBadge>
+                </div>
+              ))}
+            </div>
+          </ProductCard>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <div className="animate-toast-in" style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: "1px solid #F0E6CC", borderRadius: 14, boxShadow: "0 14px 28px -12px rgba(183,121,31,.22)", padding: "12px 14px" }}>
+            <span style={{ display: "flex", width: 30, height: 30, borderRadius: 9, background: "#FFF7E6", alignItems: "center", justifyContent: "center" }}>
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#B7791F" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+              </svg>
+            </span>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "#15212E" }}>Deadline caught</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Cal Grant, 8 days left</div>
+            </div>
+          </div>
+
+          <ProductCard style={{ padding: 26, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <span style={{ display: "flex", width: 42, height: 42, borderRadius: 12, background: "#fff", alignItems: "center", justifyContent: "center" }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#0B5CAD" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l2.4 5.3L20 9l-4 4 1 6-5-2.8L7 19l1-6-4-4 5.6-.7L12 3Z" />
+                </svg>
+              </span>
+              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: 0, color: "#15212E" }}>
+                We found money for you this week.
+              </h2>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+              {[
+                { label: "12 new matches", color: "#0B5CAD" },
+                { label: "$24,500 potential awards", color: "#15885A" },
+                { label: "4 strong matches", color: "#0B5CAD" },
+              ].map((s) => (
+                <div key={s.label} className="font-display" style={{ fontSize: 22, fontWeight: 900, color: s.color }}>
+                  {s.label}
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/scholarships"
+              style={{
+                display: "inline-flex",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#fff",
+                background: "#0B5CAD",
+                padding: "12px 22px",
+                borderRadius: 13,
+                textDecoration: "none",
+                boxShadow: "0 10px 20px rgba(11,92,173,.22)",
+              }}
+            >
+              View scholarship report
+            </Link>
+          </ProductCard>
+        </div>
+      </div>
+
+      <p style={{ marginTop: 36, fontSize: 12, color: "#9AA4B2", lineHeight: 1.6 }}>
+        Demo data for Maya Chen, sample student persona. AidPilot is independent and not affiliated with FAFSA, Federal Student Aid, or any school.{" "}
+        <Link href="/disclaimer" style={{ color: "#0B5CAD", textDecoration: "underline" }}>
+          Read disclaimer
+        </Link>
+      </p>
+    </AppShell>
   );
 }

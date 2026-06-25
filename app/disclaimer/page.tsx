@@ -26,7 +26,7 @@ export default function DisclaimerPage() {
 
       {/* no guarantee */}
       <SectionCard title="No guarantee of aid or scholarships">
-        <p>AidPilot cannot guarantee that you will receive financial aid, scholarships, or a specific aid amount. Scholarship matches and recommendations are based on available information and are meant to help you discover opportunities -- not to promise outcomes.</p>
+        <p>AidPilot cannot guarantee that you will receive financial aid, scholarships, or a specific aid amount. Scholarship matches and recommendations are based on available information and are meant to help you discover opportunities, not to promise outcomes.</p>
       </SectionCard>
 
       {/* sensitive info callout (green) */}

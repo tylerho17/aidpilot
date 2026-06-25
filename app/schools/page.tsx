@@ -84,7 +84,7 @@ export default function SchoolsPage() {
             Fewer missing documents.<br />Calmer students.
           </h1>
           <p style={{ fontSize: 20, fontWeight: 500, color: "#5B6573", margin: "0 auto 40px", lineHeight: 1.6, maxWidth: 600 }}>
-            AidPilot helps students arrive prepared, submit documents on time, and understand what to do next -- before they ever call your office.
+            AidPilot helps students arrive prepared, submit documents on time, and understand what to do next before they ever call your office.
           </p>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
             <a href="mailto:hello@aidpilot.app" style={{ fontSize: 17, fontWeight: 700, color: "#fff", background: "#1F2937", padding: "15px 28px", borderRadius: 14, boxShadow: "0 12px 24px rgba(31,41,55,.22)", textDecoration: "none" }}>Partner with us</a>

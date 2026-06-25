@@ -37,9 +37,9 @@ export default function PrivacyPage() {
       <SectionCard title="Information we collect">
         <p>We may collect the following types of information:</p>
         <ul style={{ marginTop: 12, paddingLeft: 22, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#15212E" }}>Contact information</strong> -- such as your email address and first name when you join our waitlist.</li>
-          <li><strong style={{ color: "#15212E" }}>Profile details you choose to share</strong> -- such as student type, state, and responses about your financial aid experience.</li>
-          <li><strong style={{ color: "#15212E" }}>Usage information</strong> -- such as pages visited and features used, collected through standard analytics tools.</li>
+          <li><strong style={{ color: "#15212E" }}>Contact information</strong>, such as your email address and first name when you join our waitlist.</li>
+          <li><strong style={{ color: "#15212E" }}>Profile details you choose to share</strong>, such as student type, state, and responses about your financial aid experience.</li>
+          <li><strong style={{ color: "#15212E" }}>Usage information</strong>, such as pages visited and features used, collected through standard analytics tools.</li>
         </ul>
         <p style={{ marginTop: 16, fontWeight: 700, color: "#15212E" }}>We do not collect Social Security numbers, tax documents, FAFSA login credentials, or sensitive financial documents.</p>
       </SectionCard>
