@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
 import { seedUserData } from "@/lib/seed";
-import type { OnboardingFormData } from "@/lib/types";
+import type { OnboardingFormData, School } from "@/lib/types";
 
-const SCHOOL_OPTIONS = [
+const SCHOOL_FALLBACK = [
   { label: "UC Irvine", value: "UC Irvine" },
   { label: "UCLA", value: "UCLA" },
+  { label: "UC Berkeley", value: "UC Berkeley" },
   { label: "Cal State Long Beach", value: "Cal State Long Beach" },
+  { label: "Santa Monica College", value: "Santa Monica College" },
   { label: "Other", value: "Other" },
 ];
 
@@ -29,6 +31,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [schools, setSchools] = useState<School[]>([]);
+  const [schoolsLoaded, setSchoolsLoaded] = useState(false);
+  const [manualSchool, setManualSchool] = useState("");
   const [form, setForm] = useState<OnboardingFormData>({
     first_name: "",
     email: "",
@@ -93,6 +98,25 @@ export default function OnboardingPage() {
     init();
   }, [router, supabase]);
 
+  useEffect(() => {
+    async function loadSchools() {
+      const { data } = await supabase.from("schools").select("*").order("name");
+      if (data?.length) {
+        setSchools(data as School[]);
+      }
+      setSchoolsLoaded(true);
+    }
+    loadSchools();
+  }, [supabase]);
+
+  const schoolOptions =
+    schools.length > 0
+      ? [...schools.map((s) => ({ label: s.name, value: s.name })), { label: "Other", value: "Other" }]
+      : SCHOOL_FALLBACK;
+
+  const resolvedSchool =
+    form.school === "Other" ? manualSchool.trim() : form.school;
+
   function toggleArray(field: "aid_types" | "main_goals", value: string) {
     setForm((prev) => {
       const current = prev[field];
@@ -104,6 +128,10 @@ export default function OnboardingPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!userId) return;
+    if (!resolvedSchool) {
+      setError("Please select or enter your school.");
+      return;
+    }
 
     setSubmitting(true);
     setError("");
@@ -112,7 +140,7 @@ export default function OnboardingPage() {
       id: userId,
       first_name: form.first_name,
       email: form.email,
-      school: form.school,
+      school: resolvedSchool,
       year: form.year,
       state: form.state,
       student_type: form.student_type,
@@ -130,7 +158,7 @@ export default function OnboardingPage() {
     }
 
     try {
-      await seedUserData(supabase, userId);
+      await seedUserData(supabase, userId, { schoolName: resolvedSchool });
     } catch (seedError) {
       setError(seedError instanceof Error ? seedError.message : "Could not set up your aid plan.");
       setSubmitting(false);
@@ -207,10 +235,27 @@ export default function OnboardingPage() {
               <input required style={inputStyle} placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
               <input required type="email" style={inputStyle} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               <select required style={inputStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
-                {SCHOOL_OPTIONS.map((o) => (
+                {schoolOptions.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
+              {form.school === "Other" && (
+                <input
+                  required
+                  style={inputStyle}
+                  placeholder="Enter your school name"
+                  value={manualSchool}
+                  onChange={(e) => setManualSchool(e.target.value)}
+                />
+              )}
+              {!schoolsLoaded && (
+                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>Loading schools...</p>
+              )}
+              {schoolsLoaded && schools.length === 0 && (
+                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>
+                  School list unavailable. Choose Other and enter your school.
+                </p>
+              )}
               <select required style={inputStyle} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
                 {YEAR_OPTIONS.map((y) => (
                   <option key={y} value={y}>{y}</option>

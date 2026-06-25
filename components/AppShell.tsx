@@ -38,17 +38,28 @@ const GearSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const NAV: {
-  href: string;
-  label: string;
-  icon: ({ color }: { color?: string }) => ReactElement;
-  match: string;
-  id?: string;
-}[] = [
-  { href: "/dashboard", label: "Dashboard", icon: GridSVG, match: "/dashboard" },
-  { href: "/checklist", label: "Checklist", icon: CheckSVG, match: "/checklist" },
-  { href: "/checklist", label: "Documents", icon: DocSVG, match: "/checklist", id: "documents" },
-  { href: "/scholarships", label: "Scholarships", icon: StarSVG, match: "/scholarships" },
+const CalendarSVG = ({ color = "currentColor" }: { color?: string }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 9h18M8 3v4M16 3v4" />
+  </svg>
+);
+
+const ReportSVG = ({ color = "currentColor" }: { color?: string }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /><path d="M8 7h8M8 11h6" />
+  </svg>
+);
+
+const MAIN_NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: GridSVG },
+  { href: "/checklist", label: "Checklist", icon: CheckSVG },
+  { href: "/documents", label: "Documents", icon: DocSVG },
+  { href: "/scholarships", label: "Scholarships", icon: StarSVG },
+];
+
+const PLANNING_NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
+  { href: "/deadlines", label: "Deadlines", icon: CalendarSVG },
+  { href: "/report", label: "Weekly Report", icon: ReportSVG },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -104,25 +115,48 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
-          {NAV.map(({ href, label, icon: Icon, match, id }) => {
-            const isActive = pathname === match;
-            const isDocuments = id === "documents";
-            const activeBg = isDocuments && isActive ? "rgba(255,255,255,.12)" : isActive && !isDocuments ? "#fff" : "transparent";
-            const activeColor = isActive && !isDocuments ? "#0B5CAD" : "rgba(255,255,255,.78)";
-            const iconColor = isActive && !isDocuments ? "#0B5CAD" : "rgba(255,255,255,.78)";
-
+          {MAIN_NAV.map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href;
             return (
-              <Link key={id ?? label} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: activeBg, color: activeColor, fontWeight: isActive && !isDocuments ? 700 : 600, fontSize: 14 }}>
-                <Icon color={iconColor} />
+              <Link key={href} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
+                <Icon color={isActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
                 {label}
               </Link>
             );
           })}
 
-          <span style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, color: "rgba(255,255,255,.35)", fontWeight: 600, fontSize: 14, cursor: "not-allowed" }} title="Coming soon">
-            <GearSVG color="rgba(255,255,255,.35)" />
+          <div style={{ margin: "10px 4px 6px", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,.4)", textTransform: "uppercase", letterSpacing: ".8px" }}>
+            Planning
+          </div>
+
+          {PLANNING_NAV.map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href;
+            return (
+              <Link key={href} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
+                <Icon color={isActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
+                {label}
+              </Link>
+            );
+          })}
+
+          <Link
+            href="/settings"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 12px",
+              borderRadius: 12,
+              textDecoration: "none",
+              background: pathname === "/settings" ? "#fff" : "transparent",
+              color: pathname === "/settings" ? "#0B5CAD" : "rgba(255,255,255,.78)",
+              fontWeight: pathname === "/settings" ? 700 : 600,
+              fontSize: 14,
+            }}
+          >
+            <GearSVG color={pathname === "/settings" ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
             Settings
-          </span>
+          </Link>
         </nav>
 
         <div style={{ margin: 12, padding: "12px 14px", background: "rgba(255,255,255,.08)", borderRadius: 12, border: "1px solid rgba(255,255,255,.12)" }}>

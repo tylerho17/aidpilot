@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import type { AidTask, DocumentItem, ScholarshipMatch, StudentProfile } from "@/lib/types";
+import type { AidTask, Deadline, DocumentItem, ScholarshipMatch, StudentProfile, WeeklyReport } from "@/lib/types";
 
 export function useUserData() {
   const [loading, setLoading] = useState(true);
@@ -12,6 +12,8 @@ export function useUserData() {
   const [tasks, setTasks] = useState<AidTask[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [scholarships, setScholarships] = useState<ScholarshipMatch[]>([]);
+  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
   const [isDemo, setIsDemo] = useState(true);
 
   const supabase = useMemo(() => createClient(), []);
@@ -28,6 +30,8 @@ export function useUserData() {
       setTasks([]);
       setDocuments([]);
       setScholarships([]);
+      setDeadlines([]);
+      setWeeklyReport(null);
       setIsDemo(true);
       setLoading(false);
       return;
@@ -36,17 +40,27 @@ export function useUserData() {
     setUser(authUser);
     setIsDemo(false);
 
-    const [profileRes, tasksRes, docsRes, scholarshipsRes] = await Promise.all([
+    const [profileRes, tasksRes, docsRes, scholarshipsRes, deadlinesRes, reportRes] = await Promise.all([
       supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
       supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
       supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
       supabase.from("scholarship_matches").select("*").eq("user_id", authUser.id).order("match_percent", { ascending: false }),
+      supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
+      supabase
+        .from("weekly_reports")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .order("report_week_start", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     setProfile(profileRes.data);
     setTasks(tasksRes.data ?? []);
     setDocuments(docsRes.data ?? []);
     setScholarships(scholarshipsRes.data ?? []);
+    setDeadlines(deadlinesRes.data ?? []);
+    setWeeklyReport(reportRes.data ? (reportRes.data as WeeklyReport) : null);
     setLoading(false);
   }, [supabase]);
 
@@ -86,6 +100,18 @@ export function useUserData() {
     setDocuments((prev) => prev.map((d) => (d.id === docId ? (data as DocumentItem) : d)));
   };
 
+  const updateDeadlineStatus = async (deadlineId: string, status: string) => {
+    const { data, error } = await supabase
+      .from("deadlines")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", deadlineId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    setDeadlines((prev) => prev.map((d) => (d.id === deadlineId ? (data as Deadline) : d)));
+  };
+
   const saveScholarship = async (scholarshipId: string) => {
     const { data, error } = await supabase
       .from("scholarship_matches")
@@ -122,10 +148,13 @@ export function useUserData() {
     tasks,
     documents,
     scholarships,
+    deadlines,
+    weeklyReport,
     isDemo,
     loadData,
     updateTaskStatus,
     updateDocumentStatus,
+    updateDeadlineStatus,
     saveScholarship,
     startScholarship,
     logout,

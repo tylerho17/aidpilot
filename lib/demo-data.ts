@@ -627,3 +627,117 @@ export const DASHBOARD_SUMMARY = {
   weeklyCheckIn: "On track",
   protectedMessage: "Your aid is protected this week.",
 };
+
+export const DEMO_DEADLINES = [
+  {
+    id: "demo-d1",
+    title: "FAFSA priority deadline",
+    description: "Submit FAFSA before your school and state priority deadline.",
+    deadline_date: "2026-03-02",
+    category: "FAFSA",
+    priority: "High",
+    status: "upcoming",
+    source_type: "Federal",
+    source_name: "StudentAid.gov",
+    action_url: null,
+  },
+  {
+    id: "demo-d2",
+    title: "Cal Grant priority deadline",
+    description: "California students should confirm Cal Grant requirements before the state priority deadline.",
+    deadline_date: "2026-03-02",
+    category: "State Aid",
+    priority: "High",
+    status: "upcoming",
+    source_type: "State",
+    source_name: "California Student Aid Commission",
+    action_url: null,
+  },
+  {
+    id: "demo-d3",
+    title: "School document review",
+    description: "Check your school aid portal for missing documents and verification requests.",
+    deadline_date: "2026-07-18",
+    category: "School Portal",
+    priority: "High",
+    status: "due soon",
+    source_type: "School",
+    source_name: "Aid office portal",
+    action_url: null,
+  },
+  {
+    id: "demo-d4",
+    title: "Verification response deadline",
+    description: "If selected for verification, submit requested forms before aid is delayed.",
+    deadline_date: "2026-07-22",
+    category: "Verification",
+    priority: "High",
+    status: "needs attention",
+    source_type: "School",
+    source_name: "Aid office portal",
+    action_url: null,
+  },
+  {
+    id: "demo-d5",
+    title: "Aid offer review",
+    description: "Review grants, scholarships, work-study, loans, and estimated out-of-pocket cost.",
+    deadline_date: "2026-08-01",
+    category: "Aid Offer",
+    priority: "Medium",
+    status: "upcoming",
+    source_type: "School",
+    source_name: "Aid offer",
+    action_url: null,
+  },
+  {
+    id: "demo-d6",
+    title: "Scholarship application sprint",
+    description: "Review weekly scholarship matches and start the strongest applications.",
+    deadline_date: "2026-07-30",
+    category: "Scholarships",
+    priority: "Medium",
+    status: "upcoming",
+    source_type: "AidPilot",
+    source_name: "Weekly scholarship report",
+    action_url: null,
+  },
+];
+
+export const DEMO_WEEKLY_REPORT = {
+  aid_status: "Protected",
+  summary:
+    "Your aid is protected this week. Two items need attention soon: school document review and verification response.",
+  tasks_due_count: 2,
+  missing_documents_count: 1,
+  scholarship_count: 12,
+  potential_scholarship_amount: 24500,
+  recommendations: [
+    {
+      title: "Review school portal",
+      body: "Check for missing documents or verification requests this week.",
+    },
+    {
+      title: "Start one scholarship",
+      body: "Pick one strong scholarship match and begin the application.",
+    },
+    {
+      title: "Confirm Cal Grant status",
+      body: "California students should confirm state aid status before priority deadlines.",
+    },
+  ],
+};
+
+export function deadlineStatusToTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
+  switch (status) {
+    case "complete":
+      return "green";
+    case "due soon":
+      return "amber";
+    case "needs attention":
+      return "coral";
+    case "upcoming":
+      return "blue";
+    default:
+      return "gray";
+  }
+}

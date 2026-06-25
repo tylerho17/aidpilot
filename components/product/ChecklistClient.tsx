@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { DemoNotice } from "@/components/DemoNotice";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, ProductCard, ProgressBar, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
 import {
@@ -183,6 +184,8 @@ export default function ChecklistClient() {
           </Link>
         </div>
       </div>
+
+      <FeedbackWidget page="/checklist" />
     </AppShell>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { DemoNotice } from "@/components/DemoNotice";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
 import {
@@ -104,6 +105,8 @@ export default function ScholarshipsClient() {
         AidPilot is independent and not affiliated with any scholarship provider. Verify each scholarship&apos;s requirements before applying.{" "}
         <Link href="/disclaimer" style={{ color: "#0B5CAD", textDecoration: "underline" }}>Read disclaimer</Link>
       </p>
+
+      <FeedbackWidget page="/scholarships" />
     </AppShell>
   );
 }
