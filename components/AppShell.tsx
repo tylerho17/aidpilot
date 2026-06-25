@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode, ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { PlaneSVG } from "@/components/ProductUI";
+import { useUserData } from "@/hooks/useUserData";
+import { getInitials } from "@/lib/data-helpers";
+import { MAYA } from "@/lib/demo-data";
 
 const GridSVG = ({ color = "currentColor" }: { color?: string }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -46,14 +49,18 @@ const NAV: {
   { href: "/checklist", label: "Checklist", icon: CheckSVG, match: "/checklist" },
   { href: "/checklist", label: "Documents", icon: DocSVG, match: "/checklist", id: "documents" },
   { href: "/scholarships", label: "Scholarships", icon: StarSVG, match: "/scholarships" },
-] ;
+];
 
-interface AppShellProps {
-  children: ReactNode;
-}
-
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { isDemo, profile, logout } = useUserData();
+
+  const displayName = isDemo ? MAYA.name : profile?.first_name ?? "Student";
+  const displaySchool = isDemo
+    ? `${MAYA.year} · ${MAYA.school}`
+    : [profile?.year, profile?.school].filter(Boolean).join(" · ") || "Your school";
+  const displayTag = isDemo ? "Cal Grant recipient" : profile?.student_type ?? "AidPilot student";
+  const initials = isDemo ? "MC" : getInitials(profile?.first_name);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-hanken), system-ui, sans-serif", background: "#F4F8FE" }}>
@@ -72,18 +79,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <span
-              style={{
-                display: "flex",
-                width: 36,
-                height: 36,
-                borderRadius: 11,
-                background: "rgba(255,255,255,.18)",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
+            <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "rgba(255,255,255,.18)", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <PlaneSVG size={18} color="#fff" />
             </span>
             <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-.3px" }}>
@@ -94,29 +90,15 @@ export function AppShell({ children }: AppShellProps) {
 
         <div style={{ padding: "14px 16px", margin: "12px", background: "rgba(255,255,255,.1)", borderRadius: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                display: "flex",
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background: "#EAF3FF",
-                color: "#0B5CAD",
-                fontWeight: 800,
-                fontSize: 12,
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              MC
+            <span style={{ display: "flex", width: 34, height: 34, borderRadius: "50%", background: "#EAF3FF", color: "#0B5CAD", fontWeight: 800, fontSize: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {initials}
             </span>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                Maya Chen
+                {displayName}
               </div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>Sophomore · UC Irvine</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginTop: 2 }}>Cal Grant recipient</div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>{displaySchool}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginTop: 2 }}>{displayTag}</div>
             </div>
           </div>
         </div>
@@ -130,43 +112,14 @@ export function AppShell({ children }: AppShellProps) {
             const iconColor = isActive && !isDocuments ? "#0B5CAD" : "rgba(255,255,255,.78)";
 
             return (
-              <Link
-                key={id ?? label}
-                href={href}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  textDecoration: "none",
-                  background: activeBg,
-                  color: activeColor,
-                  fontWeight: isActive && !isDocuments ? 700 : 600,
-                  fontSize: 14,
-                  transition: "background .15s ease, color .15s ease",
-                }}
-              >
+              <Link key={id ?? label} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: activeBg, color: activeColor, fontWeight: isActive && !isDocuments ? 700 : 600, fontSize: 14 }}>
                 <Icon color={iconColor} />
                 {label}
               </Link>
             );
           })}
 
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              borderRadius: 12,
-              color: "rgba(255,255,255,.35)",
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "not-allowed",
-            }}
-            title="Coming soon"
-          >
+          <span style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, color: "rgba(255,255,255,.35)", fontWeight: 600, fontSize: 14, cursor: "not-allowed" }} title="Coming soon">
             <GearSVG color="rgba(255,255,255,.35)" />
             Settings
           </span>
@@ -174,27 +127,24 @@ export function AppShell({ children }: AppShellProps) {
 
         <div style={{ margin: 12, padding: "12px 14px", background: "rgba(255,255,255,.08)", borderRadius: 12, border: "1px solid rgba(255,255,255,.12)" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".8px", marginBottom: 6 }}>
-            Demo mode
+            {isDemo ? "Demo mode" : "Your plan"}
           </div>
           <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.6)", margin: "0 0 10px", lineHeight: 1.5 }}>
-            Sample data only. Join the waitlist for your real plan.
+            {isDemo ? "Sample data only. Create an account for your real plan." : "Your aid data is saved to your account."}
           </p>
-          <Link
-            href="/#waitlist"
-            style={{
-              display: "block",
-              textAlign: "center",
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#0B5CAD",
-              background: "#fff",
-              padding: "7px 12px",
-              borderRadius: 999,
-              textDecoration: "none",
-            }}
-          >
-            Join waitlist
-          </Link>
+          {isDemo ? (
+            <Link href="/signup" style={{ display: "block", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, textDecoration: "none" }}>
+              Create account
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => logout()}
+              style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Log out
+            </button>
+          )}
         </div>
 
         <div style={{ padding: "8px 16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -202,12 +152,8 @@ export function AppShell({ children }: AppShellProps) {
             ← Back to home
           </Link>
           <div style={{ display: "flex", gap: 16 }}>
-            <Link href="/privacy" style={{ fontSize: 11, color: "rgba(255,255,255,.4)", textDecoration: "none" }}>
-              Privacy
-            </Link>
-            <Link href="/disclaimer" style={{ fontSize: 11, color: "rgba(255,255,255,.4)", textDecoration: "none" }}>
-              Disclaimer
-            </Link>
+            <Link href="/privacy" style={{ fontSize: 11, color: "rgba(255,255,255,.4)", textDecoration: "none" }}>Privacy</Link>
+            <Link href="/disclaimer" style={{ fontSize: 11, color: "rgba(255,255,255,.4)", textDecoration: "none" }}>Disclaimer</Link>
           </div>
         </div>
       </aside>

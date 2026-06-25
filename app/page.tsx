@@ -219,10 +219,11 @@ export default function Home() {
           <a href="#checkin" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Your week</a>
           <a href="#scholarships" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Scholarships</a>
           <Link href="/dashboard" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Demo</Link>
+          <Link href="/login" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Log in</Link>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, whiteSpace: "nowrap" }}>
           <Link href="/dashboard" style={{ fontSize: 15, fontWeight: 700, color: "#1F2937", textDecoration: "none" }}>View demo</Link>
-          <a href="#waitlist" style={{ whiteSpace: "nowrap", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "11px 20px", borderRadius: 999, boxShadow: "0 8px 18px rgba(11,92,173,.24)", textDecoration: "none" }}>Get started free</a>
+          <Link href="/signup" style={{ whiteSpace: "nowrap", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "11px 20px", borderRadius: 999, boxShadow: "0 8px 18px rgba(11,92,173,.24)", textDecoration: "none" }}>Get started free</Link>
         </div>
       </nav>
 
@@ -244,9 +245,12 @@ export default function Home() {
               Your calm coach for college money. AidPilot protects your aid, catches every deadline, and finds scholarships for you with one quiet check-in a week.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-              <a href="#waitlist" style={{ fontSize: 17, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "16px 30px", borderRadius: 14, boxShadow: "0 14px 28px rgba(11,92,173,.28)", textDecoration: "none" }}>Get started free</a>
-              <a href="#checkin" style={{ fontSize: 17, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "16px 26px", borderRadius: 14, textDecoration: "none" }}>See a check-in</a>
+              <Link href="/signup" style={{ fontSize: 17, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "16px 30px", borderRadius: 14, boxShadow: "0 14px 28px rgba(11,92,173,.28)", textDecoration: "none" }}>Get started free</Link>
+              <Link href="/dashboard" style={{ fontSize: 17, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "16px 26px", borderRadius: 14, textDecoration: "none" }}>See a check-in</Link>
             </div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 26px" }}>
+              Prefer the waitlist? <a href="#waitlist" style={{ color: "#0B5CAD", textDecoration: "underline" }}>Join here</a>
+            </p>
             <div style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap", fontSize: 14, fontWeight: 600, color: "#9AA4B2" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><CheckSVG size={14} color="#15885A" strokeWidth={3} />Free for students</span>
               <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#CBD2DA" }} />

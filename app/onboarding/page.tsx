@@ -1,287 +1,286 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
+import { createClient } from "@/lib/supabase/client";
+import { seedUserData } from "@/lib/seed";
+import type { OnboardingFormData } from "@/lib/types";
 
-const CheckSVG = () => (
-  <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="5 13 10 18 19 6" />
-  </svg>
-);
-
-interface Step {
-  question: string;
-  sub: string;
-  options: { label: string; value: string }[];
-  multi?: boolean;
-  defaultValue?: string;
-}
-
-const STEPS: Step[] = [
-  {
-    question: "What school do you attend?",
-    sub: "We use this to match aid and scholarships to your campus.",
-    defaultValue: "uci",
-    options: [
-      { label: "UC Irvine", value: "uci" },
-      { label: "UCLA", value: "ucla" },
-      { label: "Cal State Long Beach", value: "csulb" },
-      { label: "Other", value: "other" },
-    ],
-  },
-  {
-    question: "What year are you?",
-    sub: "Your year helps us know which aid steps apply to you right now.",
-    defaultValue: "sophomore",
-    options: [
-      { label: "Freshman", value: "freshman" },
-      { label: "Sophomore", value: "sophomore" },
-      { label: "Junior", value: "junior" },
-      { label: "Senior", value: "senior" },
-      { label: "Transfer", value: "transfer" },
-      { label: "Graduate", value: "graduate" },
-    ],
-  },
-  {
-    question: "Have you completed FAFSA this year?",
-    sub: "This tells us where you are in the aid timeline.",
-    options: [
-      { label: "Yes", value: "yes" },
-      { label: "Not yet", value: "no" },
-      { label: "I am not sure", value: "unsure" },
-    ],
-  },
-  {
-    question: "Do you currently receive financial aid?",
-    sub: "Select everything that applies.",
-    multi: true,
-    options: [
-      { label: "Cal Grant", value: "cal" },
-      { label: "Pell Grant", value: "pell" },
-      { label: "Work-study", value: "ws" },
-      { label: "Loans", value: "loans" },
-      { label: "I am not sure", value: "unsure" },
-    ],
-  },
-  {
-    question: "What do you want help with most?",
-    sub: "We will personalize your weekly check-in around your priorities.",
-    multi: true,
-    options: [
-      { label: "Protect my aid", value: "protect" },
-      { label: "Catch deadlines", value: "deadlines" },
-      { label: "Upload documents", value: "docs" },
-      { label: "Understand my offer", value: "offers" },
-      { label: "Find scholarships", value: "scholarships" },
-    ],
-  },
+const SCHOOL_OPTIONS = [
+  { label: "UC Irvine", value: "UC Irvine" },
+  { label: "UCLA", value: "UCLA" },
+  { label: "Cal State Long Beach", value: "Cal State Long Beach" },
+  { label: "Other", value: "Other" },
 ];
+
+const YEAR_OPTIONS = ["Freshman", "Sophomore", "Junior", "Senior", "Transfer", "Graduate"];
+const STUDENT_TYPES = ["High school student", "College student", "Parent", "Counselor"];
+const FAFSA_OPTIONS = ["Yes", "Not yet", "I am not sure"];
+const AID_OPTIONS = ["Cal Grant", "Pell Grant", "Work-study", "Loans", "I am not sure"];
+const GOAL_OPTIONS = ["Protect my aid", "Catch deadlines", "Upload documents", "Understand my offer", "Find scholarships"];
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const supabase = createClient();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string[]>>(() => {
-    const initial: Record<number, string[]> = {};
-    STEPS.forEach((s, i) => {
-      if (s.defaultValue) initial[i] = [s.defaultValue];
-    });
-    return initial;
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState<OnboardingFormData>({
+    first_name: "",
+    email: "",
+    school: "UC Irvine",
+    year: "Sophomore",
+    state: "",
+    student_type: "College student",
+    fafsa_status: "Yes",
+    aid_types: [],
+    main_goals: [],
   });
 
-  const current = STEPS[step];
-  const selected = answers[step] ?? (current.defaultValue ? [current.defaultValue] : []);
-  const total = STEPS.length;
-  const pct = Math.round((step / total) * 100);
+  const totalSteps = 4;
+  const pct = Math.round((step / totalSteps) * 100);
 
-  function toggle(value: string) {
-    const prev = answers[step] ?? (current.defaultValue ? [current.defaultValue] : []);
-    if (current.multi) {
-      const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
-      setAnswers((a) => ({ ...a, [step]: next }));
-    } else {
-      setAnswers((a) => ({ ...a, [step]: [value] }));
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setCheckingAuth(false);
+        return;
+      }
+
+      setUserId(user.id);
+      setForm((prev) => ({
+        ...prev,
+        first_name: (user.user_metadata?.first_name as string) ?? prev.first_name,
+        email: user.email ?? prev.email,
+      }));
+
+      const { data: profile } = await supabase
+        .from("student_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile?.is_onboarded) {
+        router.replace("/dashboard");
+        return;
+      }
+
+      if (profile) {
+        setForm((prev) => ({
+          ...prev,
+          first_name: profile.first_name ?? prev.first_name,
+          email: profile.email ?? prev.email,
+          school: profile.school ?? prev.school,
+          year: profile.year ?? prev.year,
+          state: profile.state ?? prev.state,
+          student_type: profile.student_type ?? prev.student_type,
+          fafsa_status: profile.fafsa_status ?? prev.fafsa_status,
+          aid_types: profile.aid_types ?? prev.aid_types,
+          main_goals: profile.main_goals ?? prev.main_goals,
+        }));
+      }
+
+      setCheckingAuth(false);
     }
+    init();
+  }, [router, supabase]);
+
+  function toggleArray(field: "aid_types" | "main_goals", value: string) {
+    setForm((prev) => {
+      const current = prev[field];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      return { ...prev, [field]: next };
+    });
   }
 
-  function next() {
-    if (step < total - 1) {
-      setStep((s) => s + 1);
-    } else {
-      router.push("/dashboard");
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!userId) return;
+
+    setSubmitting(true);
+    setError("");
+
+    const { error: profileError } = await supabase.from("student_profiles").upsert({
+      id: userId,
+      first_name: form.first_name,
+      email: form.email,
+      school: form.school,
+      year: form.year,
+      state: form.state,
+      student_type: form.student_type,
+      fafsa_status: form.fafsa_status,
+      aid_types: form.aid_types,
+      main_goals: form.main_goals,
+      is_onboarded: true,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (profileError) {
+      setError(profileError.message);
+      setSubmitting(false);
+      return;
     }
+
+    try {
+      await seedUserData(supabase, userId);
+    } catch (seedError) {
+      setError(seedError instanceof Error ? seedError.message : "Could not set up your aid plan.");
+      setSubmitting(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   }
 
-  const canContinue = selected.length > 0;
+  if (checkingAuth) {
+    return <div style={{ minHeight: "100vh", background: "#F4F8FE" }} />;
+  }
 
-  return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "18px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", boxShadow: "0 4px 12px rgba(11,92,173,.22)", alignItems: "center", justifyContent: "center" }}>
-            <PlaneSVG size={18} color="#fff" />
-          </span>
-          <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: "-.3px" }}>
-            <span style={{ color: "#1F2937" }}>Aid</span>
-            <span style={{ color: "#0B5CAD" }}>Pilot</span>
-          </span>
-        </Link>
-        <Link href="/dashboard" style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>
-          Skip for now
-        </Link>
-      </div>
-
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 24px 64px" }}>
-        <div style={{ width: "100%", maxWidth: 560 }}>
-          <div style={{ textAlign: "center", marginBottom: 36 }}>
-            <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: 16, background: "#EAF3FF", alignItems: "center", justifyContent: "center", marginBottom: 16, boxShadow: "0 8px 20px rgba(11,92,173,.14)" }}>
-              <PlaneSVG size={24} color="#0B5CAD" />
-            </div>
-            <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.1 }}>
-              {step === 0 ? "Let's build your aid check-in." : current.question}
-            </h1>
-            <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-              {step === 0
-                ? "Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you."
-                : current.sub}
-            </p>
+  if (!userId) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+        <div style={{ maxWidth: 480, textAlign: "center", background: "#fff", borderRadius: 24, padding: 32, border: "1px solid #E9EDF2", boxShadow: "0 24px 48px -20px rgba(11,92,173,.18)" }}>
+          <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>Let&apos;s build your aid check-in</h1>
+          <p style={{ fontSize: 16, color: "#6B7280", lineHeight: 1.6, margin: "0 0 24px" }}>
+            Create a free account to save your aid plan, checklist, and scholarship matches.
+          </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/signup" style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Create account</Link>
+            <Link href="/login" style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Log in</Link>
           </div>
-
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>
-                Step {step + 1} of {total}
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD" }}>{pct}%</span>
-            </div>
-            <ProgressBar pct={pct} />
-          </div>
-
-          <div style={{ background: "#fff", border: "1px solid #E9EDF2", borderRadius: 24, boxShadow: "0 24px 48px -20px rgba(11,92,173,.18)", padding: "32px 28px", marginBottom: 20 }}>
-            {step === 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#15212E", margin: "0 0 4px" }}>{STEPS[0].question}</p>
-                {STEPS[0].options.map((opt) => {
-                  const on = (answers[0] ?? ["uci"]).includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => toggle(opt.value)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "13px 16px",
-                        borderRadius: 14,
-                        border: "1.5px solid " + (on ? "#0B5CAD" : "#E5E7EB"),
-                        background: on ? "#EAF3FF" : "#fff",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                        transition: "all .15s ease",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "flex",
-                          width: 22,
-                          height: 22,
-                          borderRadius: "50%",
-                          border: "1.5px solid " + (on ? "#0B5CAD" : "#D1D5DB"),
-                          background: on ? "#0B5CAD" : "#fff",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {on && <CheckSVG />}
-                      </span>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: on ? "#0B5CAD" : "#374151" }}>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#15212E", margin: "0 0 6px" }}>{current.question}</p>
-                {current.options.map((opt) => {
-                  const on = selected.includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => toggle(opt.value)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "13px 16px",
-                        borderRadius: 14,
-                        border: "1.5px solid " + (on ? "#0B5CAD" : "#E5E7EB"),
-                        background: on ? "#EAF3FF" : "#fff",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                        transition: "all .15s ease",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "flex",
-                          width: 22,
-                          height: 22,
-                          borderRadius: current.multi ? 7 : "50%",
-                          border: "1.5px solid " + (on ? "#0B5CAD" : "#D1D5DB"),
-                          background: on ? "#0B5CAD" : "#fff",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {on && <CheckSVG />}
-                      </span>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: on ? "#0B5CAD" : "#374151" }}>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={next}
-            disabled={!canContinue}
-            style={{
-              width: "100%",
-              padding: "15px 24px",
-              borderRadius: 14,
-              background: !canContinue ? "#E5E7EB" : "#0B5CAD",
-              color: !canContinue ? "#9AA4B2" : "#fff",
-              fontSize: 16,
-              fontWeight: 700,
-              border: "none",
-              cursor: !canContinue ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-              boxShadow: !canContinue ? "none" : "0 10px 24px rgba(11,92,173,.26)",
-            }}
-          >
-            {step === total - 1 ? "Continue to dashboard" : "Continue"}
-          </button>
-
-          {step > 0 && (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s - 1)}
-              style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", fontSize: 14, fontWeight: 600, color: "#9AA4B2", cursor: "pointer", fontFamily: "inherit" }}
-            >
-              Back
-            </button>
-          )}
+          <p style={{ marginTop: 20, fontSize: 13 }}>
+            <Link href="/dashboard" style={{ color: "#9AA4B2", textDecoration: "underline" }}>Or view the demo dashboard</Link>
+          </p>
         </div>
       </div>
+    );
+  }
+
+  const inputStyle = { width: "100%", borderRadius: 14, border: "1.5px solid #E5E7EB", padding: "13px 16px", fontSize: 15, outline: "none", fontFamily: "inherit", boxSizing: "border-box" as const };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+      <div style={{ padding: "18px 40px" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", alignItems: "center", justifyContent: "center" }}>
+            <PlaneSVG size={18} color="#fff" />
+          </span>
+          <span className="font-display" style={{ fontSize: 20, fontWeight: 900 }}>
+            <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
+          </span>
+        </Link>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ maxWidth: 560, margin: "0 auto", padding: "24px 24px 64px" }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: 16, background: "#EAF3FF", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+            <PlaneSVG size={24} color="#0B5CAD" />
+          </div>
+          <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>
+            Let&apos;s build your aid check-in.
+          </h1>
+          <p style={{ fontSize: 16, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+            Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>
+            <span>Step {step + 1} of {totalSteps}</span>
+            <span style={{ color: "#0B5CAD" }}>{pct}%</span>
+          </div>
+          <ProgressBar pct={pct} />
+        </div>
+
+        <div style={{ background: "#fff", border: "1px solid #E9EDF2", borderRadius: 24, padding: "28px 24px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+          {step === 0 && (
+            <>
+              <input required style={inputStyle} placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+              <input required type="email" style={inputStyle} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <select required style={inputStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
+                {SCHOOL_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <select required style={inputStyle} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
+                {YEAR_OPTIONS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+              <input required style={inputStyle} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+              <select required style={inputStyle} value={form.student_type} onChange={(e) => setForm({ ...form, student_type: e.target.value })}>
+                {STUDENT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <select required style={inputStyle} value={form.fafsa_status} onChange={(e) => setForm({ ...form, fafsa_status: e.target.value })}>
+                {FAFSA_OPTIONS.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Do you currently receive financial aid?</p>
+              {AID_OPTIONS.map((o) => (
+                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                  <input type="checkbox" checked={form.aid_types.includes(o)} onChange={() => toggleArray("aid_types", o)} />
+                  {o}
+                </label>
+              ))}
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>What do you want help with most?</p>
+              {GOAL_OPTIONS.map((o) => (
+                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                  <input type="checkbox" checked={form.main_goals.includes(o)} onChange={() => toggleArray("main_goals", o)} />
+                  {o}
+                </label>
+              ))}
+              <p style={{ fontSize: 12, color: "#9AA4B2", lineHeight: 1.6, margin: "8px 0 0" }}>
+                AidPilot is an organizational and educational tool, not official financial aid advice. We never collect FAFSA logins, SSNs, or tax documents.
+              </p>
+            </>
+          )}
+        </div>
+
+        {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 12 }}>{error}</p>}
+
+        {step < totalSteps - 1 ? (
+          <button type="button" onClick={() => setStep((s) => s + 1)} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: "#0B5CAD", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+            Continue
+          </button>
+        ) : (
+          <button type="submit" disabled={submitting} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: submitting ? "#E5E7EB" : "#0B5CAD", color: submitting ? "#9AA4B2" : "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            {submitting ? "Setting up your plan..." : "Continue to dashboard"}
+          </button>
+        )}
+
+        {step > 0 && (
+          <button type="button" onClick={() => setStep((s) => s - 1)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", fontSize: 14, fontWeight: 600, color: "#9AA4B2", cursor: "pointer", fontFamily: "inherit" }}>
+            Back
+          </button>
+        )}
+      </form>
     </div>
   );
 }
