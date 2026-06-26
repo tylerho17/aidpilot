@@ -151,14 +151,20 @@ export function useUserData() {
     setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
     setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
 
-    if ((userStepsRes.data ?? []).length === 0 && (workflowRes.data ?? []).length > 0) {
-      await seedUserFafsaSteps(supabase, authUser.id);
-      const { data: seededSteps } = await supabase
-        .from("user_fafsa_steps")
-        .select("*")
-        .eq("user_id", authUser.id)
-        .order("created_at");
-      setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
+    const workflowCount = (workflowRes.data ?? []).length;
+    const userStepCount = (userStepsRes.data ?? []).length;
+    if (workflowCount > 0 && userStepCount < workflowCount) {
+      try {
+        await seedUserFafsaSteps(supabase, authUser.id);
+        const { data: seededSteps } = await supabase
+          .from("user_fafsa_steps")
+          .select("*")
+          .eq("user_id", authUser.id)
+          .order("created_at");
+        setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
+      } catch (err) {
+        console.error("Failed to seed user FAFSA steps:", err);
+      }
     }
 
     setLoading(false);
@@ -229,6 +235,21 @@ export function useUserData() {
     return data as StudentProfile;
   };
 
+  const ensureUserFafsaSteps = async () => {
+    if (!user) return;
+    try {
+      await seedUserFafsaSteps(supabase, user.id);
+      const { data } = await supabase
+        .from("user_fafsa_steps")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at");
+      setUserFafsaSteps((data ?? []) as UserFafsaStep[]);
+    } catch (err) {
+      console.error("Failed to ensure user FAFSA steps:", err);
+    }
+  };
+
   const updateFafsaStepStatus = async (stepId: string, status: string) => {
     const { data, error } = await supabase
       .from("user_fafsa_steps")
@@ -239,6 +260,35 @@ export function useUserData() {
 
     if (error) throw new Error(error?.message ?? JSON.stringify(error));
     setUserFafsaSteps((prev) => prev.map((s) => (s.id === stepId ? (data as UserFafsaStep) : s)));
+  };
+
+  const updateFafsaStepByWorkflowId = async (workflowStepId: string, status: string) => {
+    if (!user) throw new Error("Not logged in");
+
+    const existing = userFafsaSteps.find((s) => s.workflow_step_id === workflowStepId);
+    if (existing) {
+      return updateFafsaStepStatus(existing.id, status);
+    }
+
+    const { data, error } = await supabase
+      .from("user_fafsa_steps")
+      .upsert(
+        {
+          user_id: user.id,
+          workflow_step_id: workflowStepId,
+          status,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,workflow_step_id", ignoreDuplicates: false }
+      )
+      .select()
+      .single();
+
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    setUserFafsaSteps((prev) => {
+      const without = prev.filter((s) => s.workflow_step_id !== workflowStepId);
+      return [...without, data as UserFafsaStep];
+    });
   };
 
   const saveAidLetter = async (input: {
@@ -282,7 +332,11 @@ export function useUserData() {
 
   const refreshRecommendations = async () => {
     if (!user) throw new Error("Not logged in");
-    await seedUserFafsaSteps(supabase, user.id);
+    try {
+      await seedUserFafsaSteps(supabase, user.id);
+    } catch (err) {
+      console.error("Failed to seed user FAFSA steps before recommendations:", err);
+    }
     const userData = getIntelligenceUserData();
     const recs = await upsertAidRecommendationsForUser(supabase, user.id, userData);
     setRecommendations(recs);
@@ -291,6 +345,7 @@ export function useUserData() {
 
   const generateScholarshipMatches = async () => {
     if (!user) throw new Error("Not logged in");
+    if (!profile) throw new Error("Complete onboarding before generating scholarship matches.");
     const matches = await generateScholarshipMatchesForUser(supabase, user.id, getIntelligenceUserData());
     setScholarships(matches);
     return matches;
@@ -298,7 +353,12 @@ export function useUserData() {
 
   const generateWeeklyReport = async () => {
     if (!user) throw new Error("Not logged in");
-    const recs = await refreshRecommendations();
+    let recs = recommendations;
+    try {
+      recs = await refreshRecommendations();
+    } catch (err) {
+      console.error("Failed to refresh recommendations before weekly report:", err);
+    }
     const userData = { ...getIntelligenceUserData(), recommendations: recs };
     const report = await saveWeeklyReportForUser(supabase, user.id, userData);
     setWeeklyReports((prev) => [report, ...prev.filter((r) => r.id !== report.id)]);
@@ -360,6 +420,8 @@ export function useUserData() {
     updateDocumentStatus,
     updateDeadlineStatus,
     updateFafsaStepStatus,
+    updateFafsaStepByWorkflowId,
+    ensureUserFafsaSteps,
     updateProfile,
     saveAidLetter,
     refreshRecommendations,

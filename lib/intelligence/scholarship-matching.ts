@@ -159,7 +159,8 @@ export async function generateScholarshipMatchesForUser(
   const profile = userData.profile;
 
   if (!profile) {
-    throw new Error("Student profile is required to generate scholarship matches.");
+    console.error("generateScholarshipMatchesForUser: no student profile");
+    return userData.scholarships ?? [];
   }
 
   let sources = userData.scholarshipSources?.filter((source) => source.active !== false) ?? [];

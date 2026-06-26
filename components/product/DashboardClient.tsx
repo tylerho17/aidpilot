@@ -54,6 +54,7 @@ export default function DashboardClient() {
   } = useUserData();
   const [refreshing, setRefreshing] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   if (loading) {
     return (
@@ -114,10 +115,22 @@ export default function DashboardClient() {
       ]
     : getTopRecommendations(recommendations, 3);
 
+  const fafsaLabel = isDemo
+    ? "Submitted"
+    : profile?.fafsa_status === "Yes"
+      ? "Submitted"
+      : profile?.fafsa_status === "Not yet"
+        ? "Not started"
+        : profile?.fafsa_status ?? "Unknown";
+
   async function handleRefreshRecommendations() {
     setRefreshing(true);
+    setActionError("");
     try {
       await refreshRecommendations();
+    } catch (err) {
+      console.error("Failed to refresh recommendations:", err);
+      setActionError(err instanceof Error ? err.message : "Could not refresh recommendations. Please try again.");
     } finally {
       setRefreshing(false);
     }
@@ -125,8 +138,12 @@ export default function DashboardClient() {
 
   async function handleGenerateReport() {
     setGeneratingReport(true);
+    setActionError("");
     try {
       await generateWeeklyReport();
+    } catch (err) {
+      console.error("Failed to generate weekly report:", err);
+      setActionError(err instanceof Error ? err.message : "Could not generate your weekly report. Please try again.");
     } finally {
       setGeneratingReport(false);
     }
@@ -164,11 +181,16 @@ export default function DashboardClient() {
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
         <StatCard label="Aid Status" value={report?.aid_status ?? summary.aidStatus} color="#15885A" style={{ flex: "1 1 140px" }} />
+        <StatCard label="FAFSA Status" value={fafsaLabel} color="#0B5CAD" style={{ flex: "1 1 140px" }} />
         <StatCard label="Missing Documents" value={String(missingDocs)} color="#C04E57" style={{ flex: "1 1 140px" }} />
         <StatCard label="Checklist Progress" value={`${completed} of ${totalTasks}`} color="#0B5CAD" style={{ flex: "1 1 140px" }} sub={`${progress}% complete`} />
         <StatCard label="Next Deadline" value={nextDeadlineLabel} color="#B7791F" style={{ flex: "1 1 140px" }} sub={`${deadlinesThisMonth} this month`} />
         <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new matches`} color="#0B5CAD" style={{ flex: "1 1 160px" }} />
       </div>
+
+      {!isDemo && actionError && (
+        <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
+      )}
 
       {!isDemo && (
         <ProductCard style={{ padding: 26, marginBottom: 22 }}>

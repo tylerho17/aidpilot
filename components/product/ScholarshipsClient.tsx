@@ -31,6 +31,7 @@ const BookmarkSVG = () => (
 export default function ScholarshipsClient() {
   const { loading, isDemo, scholarships, scholarshipSources, saveScholarship, startScholarship, generateScholarshipMatches } = useUserData();
   const [generating, setGenerating] = useState(false);
+  const [matchError, setMatchError] = useState("");
 
   if (loading) {
     return (
@@ -50,8 +51,12 @@ export default function ScholarshipsClient() {
 
   async function handleGenerateMatches() {
     setGenerating(true);
+    setMatchError("");
     try {
       await generateScholarshipMatches();
+    } catch (err) {
+      console.error("Failed to generate scholarship matches:", err);
+      setMatchError(err instanceof Error ? err.message : "Could not generate scholarship matches. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -80,6 +85,10 @@ export default function ScholarshipsClient() {
         <StatCard label="Deadlines this month" value={String(stats.deadlinesThisMonth)} color="#B7791F" style={{ flex: "1 1 140px" }} />
       </div>
 
+      {!isDemo && matchError && (
+        <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{matchError}</p>
+      )}
+
       {!isDemo && (
         <section style={{ marginBottom: 36 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
@@ -99,7 +108,9 @@ export default function ScholarshipsClient() {
           {scholarshipSources.length === 0 ? (
             <ProductCard style={{ padding: 24, textAlign: "center" }}>
               <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                No scholarship sources are loaded yet. Ask your project admin to run the global intelligence seed SQL in Supabase.
+                No scholarship sources are loaded yet. Run{" "}
+                <code style={{ fontSize: 12, background: "#F3F4F6", padding: "2px 6px", borderRadius: 4 }}>supabase/005_seed_global_intelligence_data.sql</code>{" "}
+                in the Supabase SQL Editor.
               </p>
             </ProductCard>
           ) : (
@@ -128,11 +139,19 @@ export default function ScholarshipsClient() {
 
       <section style={{ marginBottom: 40 }}>
         <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 20px", color: "#15212E" }}>New matches this week</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
-          {isDemo
-            ? weeklyDemo.map((s) => <DemoScholarshipCard key={s.id} s={s} />)
-            : weeklyDb.map((s) => <DbScholarshipCard key={s.id} s={s} onSave={saveScholarship} onStart={startScholarship} />)}
-        </div>
+        {!isDemo && weeklyDb.length === 0 ? (
+          <ProductCard style={{ padding: 24, textAlign: "center" }}>
+            <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+              No matches yet. Click &quot;Generate matches&quot; above to create personalized scholarship matches from your profile.
+            </p>
+          </ProductCard>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+            {isDemo
+              ? weeklyDemo.map((s) => <DemoScholarshipCard key={s.id} s={s} />)
+              : weeklyDb.map((s) => <DbScholarshipCard key={s.id} s={s} onSave={saveScholarship} onStart={startScholarship} />)}
+          </div>
+        )}
       </section>
 
       <section style={{ marginBottom: 32 }}>

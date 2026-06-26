@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
-import { seedUserData } from "@/lib/seed";
 import type { OnboardingFormData, School } from "@/lib/types";
 
 const SCHOOL_FALLBACK = [
@@ -29,7 +28,7 @@ export default function OnboardingPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [schools, setSchools] = useState<School[]>([]);
   const [schoolsLoaded, setSchoolsLoaded] = useState(false);
@@ -127,46 +126,75 @@ export default function OnboardingPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!userId) return;
+
     if (!resolvedSchool) {
       setError("Please select or enter your school.");
       return;
     }
 
-    setSubmitting(true);
+    if (form.main_goals.length === 0) {
+      setError("Select at least one goal.");
+      return;
+    }
+
+    setIsSubmitting(true);
     setError("");
 
-    const { error: profileError } = await supabase.from("student_profiles").upsert({
-      id: userId,
-      first_name: form.first_name,
-      email: form.email,
-      school: resolvedSchool,
-      year: form.year,
-      state: form.state,
-      student_type: form.student_type,
-      fafsa_status: form.fafsa_status,
-      aid_types: form.aid_types,
-      main_goals: form.main_goals,
-      is_onboarded: true,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (profileError) {
-      setError(profileError.message);
-      setSubmitting(false);
-      return;
-    }
+    let redirected = false;
 
     try {
-      await seedUserData(supabase, userId, { schoolName: resolvedSchool });
-    } catch (seedError) {
-      setError(seedError instanceof Error ? seedError.message : "Could not set up your aid plan.");
-      setSubmitting(false);
-      return;
-    }
+      console.log("Starting onboarding submit");
 
-    router.push("/dashboard");
-    router.refresh();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(authError?.message ?? JSON.stringify(authError));
+      }
+
+      if (!user) {
+        setError("Please log in again to finish onboarding.");
+        router.replace("/login");
+        return;
+      }
+
+      console.log("Authenticated user:", user.id);
+      console.log("Saving profile");
+
+      const { error: profileError } = await supabase.from("student_profiles").upsert({
+        id: user.id,
+        first_name: form.first_name,
+        email: form.email,
+        school: resolvedSchool,
+        year: form.year,
+        state: form.state,
+        student_type: form.student_type,
+        fafsa_status: form.fafsa_status,
+        aid_types: form.aid_types,
+        main_goals: form.main_goals,
+        is_onboarded: true,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (profileError) {
+        throw new Error(profileError?.message ?? JSON.stringify(profileError));
+      }
+
+      console.log("Profile saved");
+      console.log("Redirecting to dashboard");
+
+      redirected = true;
+      router.replace("/dashboard");
+    } catch (err) {
+      console.error("Onboarding submit failed:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      if (!redirected) {
+        setIsSubmitting(false);
+      }
+    }
   }
 
   if (checkingAuth) {
@@ -196,7 +224,7 @@ export default function OnboardingPage() {
   const inputStyle = { width: "100%", borderRadius: 14, border: "1.5px solid #E5E7EB", padding: "13px 16px", fontSize: 15, outline: "none", fontFamily: "inherit", boxSizing: "border-box" as const };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+    <div className="min-h-screen" style={{ minHeight: "100vh", overflowY: "auto", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
       <div style={{ padding: "18px 40px" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", alignItems: "center", justifyContent: "center" }}>
@@ -208,7 +236,7 @@ export default function OnboardingPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 560, margin: "0 auto", padding: "24px 24px 64px" }}>
+      <form onSubmit={handleSubmit} className="overflow-y-auto" style={{ maxWidth: 560, margin: "0 auto", padding: "24px 24px 120px", overflowY: "auto" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: 16, background: "#EAF3FF", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
             <PlaneSVG size={24} color="#0B5CAD" />
@@ -308,15 +336,19 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 12 }}>{error}</p>}
+        {error && (
+          <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 12, lineHeight: 1.5 }}>
+            {error}
+          </p>
+        )}
 
         {step < totalSteps - 1 ? (
           <button type="button" onClick={() => setStep((s) => s + 1)} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: "#0B5CAD", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
             Continue
           </button>
         ) : (
-          <button type="submit" disabled={submitting} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: submitting ? "#E5E7EB" : "#0B5CAD", color: submitting ? "#9AA4B2" : "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {submitting ? "Setting up your plan..." : "Continue to dashboard"}
+          <button type="submit" disabled={isSubmitting} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: isSubmitting ? "#E5E7EB" : "#0B5CAD", color: isSubmitting ? "#9AA4B2" : "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: isSubmitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            {isSubmitting ? "Setting up your plan..." : "Continue to dashboard"}
           </button>
         )}
 

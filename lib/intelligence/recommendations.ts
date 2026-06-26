@@ -168,7 +168,11 @@ export async function upsertAidRecommendationsForUser(
   userId: string,
   userData: IntelligenceUserData
 ) {
-  await seedUserFafsaSteps(supabase, userId);
+  try {
+    await seedUserFafsaSteps(supabase, userId);
+  } catch (err) {
+    console.error("Failed to seed user FAFSA steps during recommendations:", err);
+  }
 
   const drafts = generateAidRecommendations(userData);
   const now = new Date().toISOString();
@@ -226,7 +230,7 @@ export async function upsertAidRecommendationsForUser(
     .order("priority")
     .order("confidence", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw new Error(error?.message ?? JSON.stringify(error));
   return (data ?? []) as AidRecommendation[];
 }
 

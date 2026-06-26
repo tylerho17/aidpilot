@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CHECKLIST_TASKS, DOCUMENTS, SCHOLARSHIPS } from "@/lib/demo-data";
-import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
 import type { AidTask, DocumentItem, ScholarshipMatch } from "@/lib/types";
 import { getWeekStartMonday } from "@/lib/data-helpers";
 
@@ -214,8 +213,8 @@ function buildWeeklyReportRow(
     missing_documents_count: countMissingDocs(documents),
     scholarship_count: scholarships.length,
     potential_scholarship_amount: sumScholarshipPotential(scholarships),
-    top_task_ids: tasks.slice(0, 3).map((t) => t.id),
-    top_scholarship_match_ids: scholarships.slice(0, 3).map((s) => s.id),
+    top_task_ids: tasks.slice(0, 3).map((t) => t.id).filter(Boolean),
+    top_scholarship_match_ids: scholarships.slice(0, 3).map((s) => s.id).filter(Boolean),
     recommendations: [
       {
         title: "Review school portal",
@@ -233,85 +232,113 @@ function buildWeeklyReportRow(
   };
 }
 
+function logSeedError(step: string, error: unknown) {
+  console.error(`seedUserData: ${step} failed`, error);
+}
+
+async function runSeedStep(step: string, fn: () => Promise<void>) {
+  try {
+    await fn();
+  } catch (error) {
+    logSeedError(step, error);
+  }
+}
+
+/**
+ * Seeds basic user-owned starter data. Never throws.
+ * Does not run Phase 4 intelligence (recommendations, FAFSA steps, scholarship matching).
+ */
 export async function seedUserData(
   supabase: SupabaseClient,
   userId: string,
   options?: { schoolName?: string }
 ) {
-  const [{ count: taskCount }, { count: docCount }, { count: scholarshipCount }] = await Promise.all([
-    supabase.from("aid_tasks").select("*", { count: "exact", head: true }).eq("user_id", userId),
-    supabase.from("document_items").select("*", { count: "exact", head: true }).eq("user_id", userId),
-    supabase.from("scholarship_matches").select("*", { count: "exact", head: true }).eq("user_id", userId),
-  ]);
+  try {
+    await runSeedStep("aid_tasks", async () => {
+      const { count } = await supabase
+        .from("aid_tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (count) return;
+      const { error } = await supabase.from("aid_tasks").insert(buildAidTasks(userId));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
 
-  if (!taskCount) {
-    const { error } = await supabase.from("aid_tasks").insert(buildAidTasks(userId));
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-  }
+    await runSeedStep("document_items", async () => {
+      const { count } = await supabase
+        .from("document_items")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (count) return;
+      const { error } = await supabase.from("document_items").insert(buildDocuments(userId));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
 
-  if (!docCount) {
-    const { error } = await supabase.from("document_items").insert(buildDocuments(userId));
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-  }
+    await runSeedStep("scholarship_matches", async () => {
+      const { count } = await supabase
+        .from("scholarship_matches")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (count) return;
+      const { error } = await supabase.from("scholarship_matches").insert(buildScholarships(userId));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
 
-  if (!scholarshipCount) {
-    const { error } = await supabase.from("scholarship_matches").insert(buildScholarships(userId));
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-  }
+    await runSeedStep("deadlines", async () => {
+      const { count } = await supabase
+        .from("deadlines")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (count) return;
 
-  const { count: deadlineCount } = await supabase
-    .from("deadlines")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
+      let schoolId: string | null = null;
+      const schoolName = options?.schoolName ?? "";
+      if (schoolName) {
+        const { data: school } = await supabase.from("schools").select("id").eq("name", schoolName).maybeSingle();
+        schoolId = school?.id ?? null;
+      }
+      const { error } = await supabase.from("deadlines").insert(buildDeadlines(userId, schoolId));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
 
-  if (!deadlineCount) {
-    let schoolId: string | null = null;
-    const schoolName = options?.schoolName ?? "";
-    if (schoolName) {
-      const { data: school } = await supabase.from("schools").select("id").eq("name", schoolName).maybeSingle();
-      schoolId = school?.id ?? null;
-    }
-    const { error } = await supabase.from("deadlines").insert(buildDeadlines(userId, schoolId));
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-  }
+    await runSeedStep("weekly_reports", async () => {
+      const weekStart = getWeekStartMonday();
+      const { count } = await supabase
+        .from("weekly_reports")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("report_week_start", weekStart);
+      if (count) return;
 
-  const weekStart = getWeekStartMonday();
-  const { count: reportCount } = await supabase
-    .from("weekly_reports")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("report_week_start", weekStart);
+      const [tasksRes, docsRes, scholarshipsRes] = await Promise.all([
+        supabase.from("aid_tasks").select("*").eq("user_id", userId),
+        supabase.from("document_items").select("*").eq("user_id", userId),
+        supabase.from("scholarship_matches").select("*").eq("user_id", userId).order("match_percent", { ascending: false }),
+      ]);
 
-  if (!reportCount) {
-    const [tasksRes, docsRes, scholarshipsRes] = await Promise.all([
-      supabase.from("aid_tasks").select("*").eq("user_id", userId),
-      supabase.from("document_items").select("*").eq("user_id", userId),
-      supabase.from("scholarship_matches").select("*").eq("user_id", userId).order("match_percent", { ascending: false }),
-    ]);
-
-    const { error } = await supabase
-      .from("weekly_reports")
-      .insert(
+      const tasks = (tasksRes.data ?? []) as AidTask[];
+      const { error } = await supabase.from("weekly_reports").insert(
         buildWeeklyReportRow(
           userId,
           weekStart,
-          (tasksRes.data ?? []) as AidTask[],
+          tasks,
           (docsRes.data ?? []) as DocumentItem[],
           (scholarshipsRes.data ?? []) as ScholarshipMatch[]
         )
       );
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
+
+    await runSeedStep("aid_letters", async () => {
+      const { count } = await supabase
+        .from("aid_letters")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (count) return;
+      const { error } = await supabase.from("aid_letters").insert(buildAidLetter(userId, options?.schoolName));
+      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    });
+  } catch (error) {
+    console.error("seedUserData: unexpected failure", error);
   }
-
-  const { count: aidLetterCount } = await supabase
-    .from("aid_letters")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  if (!aidLetterCount) {
-    const { error } = await supabase.from("aid_letters").insert(buildAidLetter(userId, options?.schoolName));
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-  }
-
-  await seedUserFafsaSteps(supabase, userId);
 }
