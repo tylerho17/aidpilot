@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactElement, ReactNode } from "react";
 import { PlaneSVG } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
+import { isAdminEmail } from "@/lib/admin";
 import { getInitials } from "@/lib/data-helpers";
 import { MAYA } from "@/lib/demo-data";
 
@@ -50,6 +51,12 @@ const GearSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
+const ShieldSVG = ({ color = "currentColor" }: { color?: string }) => (
+  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
 const NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
   { href: "/dashboard", label: "Dashboard", icon: GridSVG },
   { href: "/checklist", label: "Checklist", icon: CheckSVG },
@@ -62,7 +69,10 @@ const NAV: { href: string; label: string; icon: ({ color }: { color?: string }) 
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { isDemo, profile, logout } = useUserData();
+  const { isDemo, profile, user, logout } = useUserData();
+  const isAdmin = !isDemo && isAdminEmail(user?.email);
+  const adminHref = "/admin/scholarships";
+  const adminActive = pathname === adminHref || pathname.startsWith("/admin/");
 
   const displayName = isDemo ? MAYA.name : profile?.first_name ?? "Student";
   const displaySchool = isDemo
@@ -122,6 +132,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link href={adminHref} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
+              <ShieldSVG color={adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
+              Admin
+            </Link>
+          )}
         </nav>
 
         <div style={{ margin: 12, padding: "12px 14px", background: "rgba(255,255,255,.08)", borderRadius: 12, border: "1px solid rgba(255,255,255,.12)" }}>
