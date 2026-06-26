@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AidPilot
 
-## Getting Started
+Financial aid copilot for students. Track FAFSA progress, documents, deadlines, scholarships, and aid offers in one place.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local` in the project root:
 
-## Learn More
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-To learn more about Next.js, take a look at the following resources:
+These are the only environment variables required for normal app use. A Supabase service role key is **not** required for the browser app.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Get values from the Supabase dashboard: **Project Settings → API**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Supabase setup
+
+Run migrations in the Supabase SQL Editor (in order):
+
+1. `supabase/schema.sql`
+2. `supabase/002_database_expansion.sql`
+3. `supabase/003_phase_3_completion.sql`
+4. `supabase/004_mvp_intelligence_layer.sql`
+5. `supabase/005_seed_global_intelligence_data.sql` — FAFSA workflow steps and scholarship sources (global read-only data)
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push this repo to GitHub.
+2. Import the project in [Vercel](https://vercel.com/new).
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy. Vercel runs `npm run build` automatically.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+npm run lint    # ESLint
+npm run build   # Production build
+npm run dev     # Development server
+```
+
+## Demo flow
+
+1. Sign up with a test email
+2. Complete onboarding → land on dashboard
+3. FAFSA workflow, Documents, Deadlines, Scholarships, Aid Letter
+4. Log out and log back in — data persists in Supabase

@@ -160,7 +160,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      console.log("Authenticated user:", user.id);
+      console.log("User loaded:", user.id);
       console.log("Saving profile");
 
       const { error: profileError } = await supabase.from("student_profiles").upsert({

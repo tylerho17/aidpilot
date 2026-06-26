@@ -108,9 +108,7 @@ export default function ScholarshipsClient() {
           {scholarshipSources.length === 0 ? (
             <ProductCard style={{ padding: 24, textAlign: "center" }}>
               <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                No scholarship sources are loaded yet. Run{" "}
-                <code style={{ fontSize: 12, background: "#F3F4F6", padding: "2px 6px", borderRadius: 4 }}>supabase/005_seed_global_intelligence_data.sql</code>{" "}
-                in the Supabase SQL Editor.
+                Scholarship sources are not seeded yet. Run supabase/005_seed_global_intelligence_data.sql.
               </p>
             </ProductCard>
           ) : (

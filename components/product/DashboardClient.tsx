@@ -49,6 +49,7 @@ export default function DashboardClient() {
     deadlines,
     weeklyReport,
     recommendations,
+    loadError,
     refreshRecommendations,
     generateWeeklyReport,
   } = useUserData();
@@ -166,6 +167,12 @@ export default function DashboardClient() {
     <AppShell>
       {isDemo && <DemoNotice />}
 
+      {!isDemo && loadError && (
+        <ProductCard style={{ padding: 18, marginBottom: 22, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>{loadError}</p>
+        </ProductCard>
+      )}
+
       <div style={{ marginBottom: 32 }}>
         <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 6px" }}>
           Good morning, {firstName}.
@@ -250,18 +257,24 @@ export default function DashboardClient() {
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>What needs attention</h2>
             <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Top 3 urgent tasks from your {totalTasks}-step checklist</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {urgent.map((row) => (
-                <div key={row.id ?? row.title} className="animate-slide-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.title}</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, color: "#6B7280", marginBottom: 6, lineHeight: 1.5 }}>{row.description}</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
-                      {row.category} · Due {row.dueDate}
+              {urgent.length === 0 ? (
+                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
+                  No urgent tasks yet. Your checklist will populate as you add tasks or run starter setup from Settings.
+                </p>
+              ) : (
+                urgent.map((row) => (
+                  <div key={row.id ?? row.title} className="animate-slide-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.title}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 500, color: "#6B7280", marginBottom: 6, lineHeight: 1.5 }}>{row.description}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                        {row.category} · Due {row.dueDate}
+                      </div>
                     </div>
+                    <PillBadge tone={toneFn(row.status)}>{row.status}</PillBadge>
                   </div>
-                  <PillBadge tone={toneFn(row.status)}>{row.status}</PillBadge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Link href="/checklist" style={{ display: "inline-block", marginTop: 16, fontSize: 14, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}>
               View all {totalTasks} tasks
@@ -272,17 +285,23 @@ export default function DashboardClient() {
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Upcoming deadlines</h2>
             <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Next 3 deadlines from your aid calendar</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {upcomingDeadlines.map((d) => (
-                <div key={d.id} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{d.title}</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
-                      {formatDueDate(d.deadline_date)} · {d.category} · {d.priority} priority
+              {upcomingDeadlines.length === 0 ? (
+                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
+                  No upcoming deadlines yet. Add deadlines from the Deadlines page when you are ready.
+                </p>
+              ) : (
+                upcomingDeadlines.map((d) => (
+                  <div key={d.id} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{d.title}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                        {formatDueDate(d.deadline_date)} · {d.category} · {d.priority} priority
+                      </div>
                     </div>
+                    <PillBadge tone={deadlineStatusToTone(d.status)}>{d.status}</PillBadge>
                   </div>
-                  <PillBadge tone={deadlineStatusToTone(d.status)}>{d.status}</PillBadge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Link href="/deadlines" style={{ display: "inline-block", marginTop: 16, fontSize: 14, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}>
               View all deadlines

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
@@ -63,6 +64,7 @@ function DeadlineCard({
 
 export default function DeadlinesClient() {
   const { loading, deadlines, updateDeadlineStatus } = useUserData();
+  const [error, setError] = useState("");
 
   if (loading) {
     return (
@@ -95,15 +97,33 @@ export default function DeadlinesClient() {
         <StatCard label="Completed" value={String(completed.length)} color="#15885A" style={{ flex: "1 1 120px" }} />
       </div>
 
+      {error && (
+        <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{error}</p>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <ProductCard style={{ padding: 24 }}>
           <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Upcoming deadlines</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {active.length === 0 ? (
-              <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No active deadlines.</p>
+              <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
+                No active deadlines yet. Track FAFSA, school portal, and scholarship deadlines here as you add them.
+              </p>
             ) : (
               active.map((item) => (
-                <DeadlineCard key={item.id} item={item} onComplete={() => updateDeadlineStatus(item.id, "completed")} />
+                <DeadlineCard
+                  key={item.id}
+                  item={item}
+                  onComplete={async () => {
+                    setError("");
+                    try {
+                      await updateDeadlineStatus(item.id, "completed");
+                    } catch (err) {
+                      console.error("Failed to update deadline:", err);
+                      setError(err instanceof Error ? err.message : "Could not mark deadline complete.");
+                    }
+                  }}
+                />
               ))
             )}
           </div>

@@ -53,6 +53,7 @@ export function useUserData() {
   const [workflowSteps, setWorkflowSteps] = useState<FafsaWorkflowStep[]>([]);
   const [scholarshipSources, setScholarshipSources] = useState<ScholarshipSource[]>([]);
   const [isDemo, setIsDemo] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -88,86 +89,113 @@ export function useUserData() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    setLoadError(null);
 
-    if (!authUser) {
-      setUser(null);
-      setProfile(null);
-      setTasks([]);
-      setDocuments([]);
-      setScholarships([]);
-      setDeadlines([]);
-      setAidLetters([]);
-      setWeeklyReports([]);
-      setRecommendations([]);
-      setUserFafsaSteps([]);
-      setWorkflowSteps([]);
-      setScholarshipSources([]);
-      setIsDemo(true);
-      setLoading(false);
-      return;
-    }
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
 
-    setUser(authUser);
-    setIsDemo(false);
-
-    const [
-      profileRes,
-      tasksRes,
-      docsRes,
-      scholarshipsRes,
-      deadlinesRes,
-      aidLettersRes,
-      reportsRes,
-      recsRes,
-      userStepsRes,
-      workflowRes,
-      sourcesRes,
-    ] = await Promise.all([
-      supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
-      supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
-      supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
-      supabase.from("scholarship_matches").select("*").eq("user_id", authUser.id).order("match_percent", { ascending: false }),
-      supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
-      supabase.from("aid_letters").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-      supabase.from("weekly_reports").select("*").eq("user_id", authUser.id).order("report_week_start", { ascending: false }),
-      supabase.from("aid_recommendations").select("*").eq("user_id", authUser.id).eq("status", "active").order("priority"),
-      supabase.from("user_fafsa_steps").select("*").eq("user_id", authUser.id).order("created_at"),
-      supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
-      supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
-    ]);
-
-    setProfile(profileRes.data);
-    setTasks(tasksRes.data ?? []);
-    setDocuments(docsRes.data ?? []);
-    setScholarships(scholarshipsRes.data ?? []);
-    setDeadlines(deadlinesRes.data ?? []);
-    setAidLetters((aidLettersRes.data ?? []) as AidLetter[]);
-    setWeeklyReports((reportsRes.data ?? []) as WeeklyReport[]);
-    setRecommendations((recsRes.data ?? []) as AidRecommendation[]);
-    setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
-    setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
-    setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
-
-    const workflowCount = (workflowRes.data ?? []).length;
-    const userStepCount = (userStepsRes.data ?? []).length;
-    if (workflowCount > 0 && userStepCount < workflowCount) {
-      try {
-        await seedUserFafsaSteps(supabase, authUser.id);
-        const { data: seededSteps } = await supabase
-          .from("user_fafsa_steps")
-          .select("*")
-          .eq("user_id", authUser.id)
-          .order("created_at");
-        setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
-      } catch (err) {
-        console.error("Failed to seed user FAFSA steps:", err);
+      if (!authUser) {
+        setUser(null);
+        setProfile(null);
+        setTasks([]);
+        setDocuments([]);
+        setScholarships([]);
+        setDeadlines([]);
+        setAidLetters([]);
+        setWeeklyReports([]);
+        setRecommendations([]);
+        setUserFafsaSteps([]);
+        setWorkflowSteps([]);
+        setScholarshipSources([]);
+        setIsDemo(true);
+        return;
       }
-    }
 
-    setLoading(false);
+      setUser(authUser);
+      setIsDemo(false);
+
+      const [
+        profileRes,
+        tasksRes,
+        docsRes,
+        scholarshipsRes,
+        deadlinesRes,
+        aidLettersRes,
+        reportsRes,
+        recsRes,
+        userStepsRes,
+        workflowRes,
+        sourcesRes,
+      ] = await Promise.all([
+        supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
+        supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
+        supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
+        supabase.from("scholarship_matches").select("*").eq("user_id", authUser.id).order("match_percent", { ascending: false }),
+        supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
+        supabase.from("aid_letters").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+        supabase.from("weekly_reports").select("*").eq("user_id", authUser.id).order("report_week_start", { ascending: false }),
+        supabase.from("aid_recommendations").select("*").eq("user_id", authUser.id).eq("status", "active").order("priority"),
+        supabase.from("user_fafsa_steps").select("*").eq("user_id", authUser.id).order("created_at"),
+        supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
+        supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
+      ]);
+
+      const errors = [
+        profileRes.error,
+        tasksRes.error,
+        docsRes.error,
+        scholarshipsRes.error,
+        deadlinesRes.error,
+        aidLettersRes.error,
+        reportsRes.error,
+        recsRes.error,
+        userStepsRes.error,
+        workflowRes.error,
+        sourcesRes.error,
+      ].filter(Boolean);
+
+      if (errors.length > 0) {
+        console.error("useUserData: some queries failed", errors);
+        setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+      }
+
+      setProfile(profileRes.data);
+      setTasks(tasksRes.data ?? []);
+      setDocuments(docsRes.data ?? []);
+      setScholarships(scholarshipsRes.data ?? []);
+      setDeadlines(deadlinesRes.data ?? []);
+      setAidLetters((aidLettersRes.data ?? []) as AidLetter[]);
+      setWeeklyReports((reportsRes.data ?? []) as WeeklyReport[]);
+      setRecommendations((recsRes.data ?? []) as AidRecommendation[]);
+      setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
+      setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
+      setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
+
+      const workflowCount = (workflowRes.data ?? []).length;
+      const userStepCount = (userStepsRes.data ?? []).length;
+      if (workflowCount > 0 && userStepCount < workflowCount) {
+        void (async () => {
+          try {
+            await seedUserFafsaSteps(supabase, authUser.id);
+            const { data: seededSteps } = await supabase
+              .from("user_fafsa_steps")
+              .select("*")
+              .eq("user_id", authUser.id)
+              .order("created_at");
+            setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
+          } catch (err) {
+            console.error("Failed to seed user FAFSA steps:", err);
+          }
+        })();
+      }
+    } catch (err) {
+      console.error("useUserData: loadData failed", err);
+      setLoadError(err instanceof Error ? err.message : "Could not load your data. Please refresh the page.");
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
 
   useEffect(() => {
@@ -414,6 +442,7 @@ export function useUserData() {
     workflowSteps,
     scholarshipSources,
     isDemo,
+    loadError,
     loadData,
     getIntelligenceUserData,
     updateTaskStatus,

@@ -124,14 +124,8 @@ export default function FafsaClient() {
 
       {workflowSteps.length === 0 ? (
         <ProductCard style={{ padding: 28, textAlign: "center" }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>
-            FAFSA workflow not available yet
-          </h2>
-          <p style={{ fontSize: 15, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.6 }}>
-            Global FAFSA steps have not been loaded into your database.
-          </p>
-          <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.6 }}>
-            Run <code style={{ fontSize: 12, background: "#F3F4F6", padding: "2px 6px", borderRadius: 4 }}>supabase/005_seed_global_intelligence_data.sql</code> in the Supabase SQL Editor.
+          <p style={{ fontSize: 15, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.6 }}>
+            FAFSA workflow steps are not seeded yet. Run supabase/005_seed_global_intelligence_data.sql.
           </p>
           <button type="button" onClick={() => handleCheckAgain()} disabled={seeding} style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 13, cursor: seeding ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
             {seeding ? "Checking..." : "Check again"}
