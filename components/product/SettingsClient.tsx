@@ -13,6 +13,7 @@ import {
   parseScholarshipPreferences,
   type ScholarshipPreferences,
 } from "@/lib/scholarship-preferences";
+import { joinCommaSeparated, parseCommaSeparated } from "@/lib/data-helpers";
 import type { StudentProfile } from "@/lib/types";
 
 const FAFSA_OPTIONS = ["Yes", "Not yet", "I am not sure"];
@@ -20,6 +21,11 @@ const YEAR_OPTIONS = ["Freshman", "Sophomore", "Junior", "Senior", "Transfer", "
 const STUDENT_TYPES = ["High school student", "College student", "Parent", "Counselor"];
 const AID_OPTIONS = ["Cal Grant", "Pell Grant", "Work-study", "Loans", "I am not sure"];
 const GOAL_OPTIONS = ["Protect my aid", "Catch deadlines", "Upload documents", "Understand my offer", "Find scholarships"];
+const PROFILE_ESSAY_OPTIONS = [
+  { value: "any", label: "Any (essays okay)" },
+  { value: "prefer_no_essay", label: "Prefer no essay" },
+  { value: "okay_with_essay", label: "Okay with essays" },
+];
 
 const inputStyle = {
   width: "100%",
@@ -47,6 +53,14 @@ function profileToForm(profile: StudentProfile) {
     essay_preference: prefs.essay_preference ?? "no_preference",
     effort_preference: prefs.effort_preference ?? "any",
     major_interests: prefs.major_interests ?? "",
+    majors: joinCommaSeparated(profile.majors),
+    interests: joinCommaSeparated(profile.interests),
+    first_gen: profile.first_gen ?? false,
+    transfer_student: profile.transfer_student ?? false,
+    pell_eligible: profile.pell_eligible ?? false,
+    cal_grant_eligible: profile.cal_grant_eligible ?? false,
+    gpa: profile.gpa != null ? String(profile.gpa) : "",
+    profile_essay_preference: profile.essay_preference ?? "any",
   };
 }
 
@@ -93,7 +107,22 @@ function SettingsForm({
     setError("");
     try {
       await updateProfile({
-        ...form,
+        first_name: form.first_name,
+        school: form.school,
+        year: form.year,
+        state: form.state,
+        student_type: form.student_type,
+        fafsa_status: form.fafsa_status,
+        aid_types: form.aid_types,
+        main_goals: form.main_goals,
+        majors: parseCommaSeparated(form.majors),
+        interests: parseCommaSeparated(form.interests),
+        first_gen: form.first_gen,
+        transfer_student: form.transfer_student,
+        pell_eligible: form.pell_eligible,
+        cal_grant_eligible: form.cal_grant_eligible,
+        gpa: form.gpa.trim() ? Number(form.gpa) : null,
+        essay_preference: form.profile_essay_preference,
         scholarship_preferences: buildScholarshipPreferences(form),
       });
       setMessage("Settings saved.");
@@ -184,8 +213,50 @@ function SettingsForm({
         </ProductCard>
 
         <ProductCard style={{ padding: 28, marginBottom: 22 }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>Scholarship preferences</h2>
-          <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 14px" }}>Improves weekly scholarship matching. AidPilot never applies for you.</p>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>Scholarship profile</h2>
+          <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 14px", lineHeight: 1.6 }}>
+            Profile details improve match quality and can be changed any time. Tell us only what helps matching. Never enter SSNs, bank info, or FAFSA passwords.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Majors</span>
+              <input style={inputStyle} placeholder="e.g. computer science, biology" value={form.majors} onChange={(e) => setForm({ ...form, majors: e.target.value })} />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Interests</span>
+              <input style={inputStyle} placeholder="e.g. robotics, public health, entrepreneurship" value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>GPA (optional)</span>
+              <input style={inputStyle} type="number" min={0} max={4} step={0.01} placeholder="3.50" value={form.gpa} onChange={(e) => setForm({ ...form, gpa: e.target.value })} />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Essay preference</span>
+              <select style={inputStyle} value={form.profile_essay_preference} onChange={(e) => setForm({ ...form, profile_essay_preference: e.target.value })}>
+                {PROFILE_ESSAY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600 }}>
+              <input type="checkbox" checked={form.first_gen} onChange={(e) => setForm({ ...form, first_gen: e.target.checked })} />
+              First-generation college student
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600 }}>
+              <input type="checkbox" checked={form.transfer_student} onChange={(e) => setForm({ ...form, transfer_student: e.target.checked })} />
+              Transfer student
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600 }}>
+              <input type="checkbox" checked={form.pell_eligible} onChange={(e) => setForm({ ...form, pell_eligible: e.target.checked })} />
+              Pell Grant eligible
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600 }}>
+              <input type="checkbox" checked={form.cal_grant_eligible} onChange={(e) => setForm({ ...form, cal_grant_eligible: e.target.checked })} />
+              Cal Grant eligible
+            </label>
+          </div>
           <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 8px" }}>Interested categories</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
             {SCHOLARSHIP_CATEGORY_OPTIONS.map((cat) => (

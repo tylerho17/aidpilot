@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { CheckSVG, PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import { CheckSVG, PillBadge, ProductCard, StatCard, PageContentSkeleton } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
+import { getTopAttentionItems, getSeverityLabel, attentionSeverityToTone } from "@/lib/attention";
 import { getTopRecommendations } from "@/lib/intelligence/recommendations";
 import {
   getDashboardSummary,
@@ -33,6 +34,8 @@ export default function DashboardClient() {
     deadlines,
     weeklyReport,
     recommendations,
+    userFafsaSteps,
+    workflowSteps,
     loadError,
     refreshRecommendations,
     generateWeeklyReport,
@@ -40,14 +43,6 @@ export default function DashboardClient() {
   const [refreshing, setRefreshing] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [actionError, setActionError] = useState("");
-
-  if (loading) {
-    return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading your aid check-in...</p>
-      </AppShell>
-    );
-  }
 
   const firstName = profile?.first_name ?? "there";
   const schoolLabel = profile?.school ?? "Your school";
@@ -58,6 +53,19 @@ export default function DashboardClient() {
   const totalTasks = tasks.length;
   const missingDocs = getMissingDocumentCountFromDocs(documents);
   const scholarshipStats = getScholarshipStatsFromDb(scholarships);
+  const protectItems = getTopAttentionItems(
+    { tasks, documents, deadlines, userFafsaSteps, workflowSteps, scholarships },
+    5
+  );
+
+  if (loading) {
+    return (
+      <AppShell>
+        <PageContentSkeleton message="Loading your aid check-in..." />
+      </AppShell>
+    );
+  }
+
   const urgent = getUrgentTasksFromDb(tasks, 3).map((t) => ({
     id: t.id,
     title: t.title,
@@ -166,6 +174,60 @@ export default function DashboardClient() {
       {actionError && (
         <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
       )}
+
+      <ProductCard style={{ padding: 26, marginBottom: 22 }}>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
+          Protect your aid
+        </h2>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.55 }}>
+          These are items AidPilot thinks may affect your aid, deadlines, or money if left unresolved.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {protectItems.length === 0 ? (
+            <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
+              Nothing urgent in AidPilot right now. Keep checking your school, FAFSA, and scholarship portals for official updates.
+            </p>
+          ) : (
+            protectItems.map((item) => (
+              <div
+                key={item.id}
+                style={{ padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{item.title}</div>
+                  <PillBadge tone={attentionSeverityToTone(item.severity)}>{getSeverityLabel(item.severity)}</PillBadge>
+                </div>
+                {item.dueDate ? (
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2", marginBottom: 8 }}>
+                    Due {formatDueDate(item.dueDate)}
+                  </div>
+                ) : null}
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 6px", lineHeight: 1.55 }}>
+                  {item.whyItMatters}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#5B6573", margin: "0 0 12px", lineHeight: 1.55 }}>
+                  Next step: {item.nextStep}
+                </p>
+                <Link
+                  href={item.href}
+                  style={{
+                    display: "inline-flex",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#0B5CAD",
+                    background: "#EAF3FF",
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    textDecoration: "none",
+                  }}
+                >
+                  {item.actionLabel}
+                </Link>
+              </div>
+            ))
+          )}
+        </div>
+      </ProductCard>
 
       <ProductCard style={{ padding: 26, marginBottom: 22 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>

@@ -34,14 +34,41 @@ function isExpired(source: ScholarshipSource) {
   return days !== null && days < 0;
 }
 
-function textIncludes(haystack: string, needle: string) {
-  return haystack.toLowerCase().includes(needle.toLowerCase());
-}
-
 function arrayOverlap(a: string[] | null | undefined, b: string[] | null | undefined) {
   if (!a?.length || !b?.length) return false;
   const normalized = b.map((v) => v.toLowerCase());
   return a.some((value) => normalized.includes(value.toLowerCase()));
+}
+
+function keywordOverlap(studentTerms: string[], keywords: string[] | null | undefined) {
+  if (!keywords?.length || !studentTerms.length) return false;
+  return keywords.some((keyword) => {
+    const kw = keyword.toLowerCase();
+    return studentTerms.some(
+      (term) => term.includes(kw) || kw.includes(term) || term.split(/\s+/).some((part) => part.length > 2 && kw.includes(part))
+    );
+  });
+}
+
+function getStudentAcademicTerms(profile: StudentProfile): string[] {
+  const terms = new Set<string>();
+  for (const value of profile.majors ?? []) {
+    if (value.trim()) terms.add(value.trim().toLowerCase());
+  }
+  for (const value of profile.interests ?? []) {
+    if (value.trim()) terms.add(value.trim().toLowerCase());
+  }
+  const prefs = profile.scholarship_preferences;
+  if (prefs && typeof prefs === "object" && "major_interests" in prefs) {
+    const majorInterests = (prefs as { major_interests?: string }).major_interests;
+    if (majorInterests) {
+      for (const part of majorInterests.split(/[,;]/)) {
+        const trimmed = part.trim().toLowerCase();
+        if (trimmed) terms.add(trimmed);
+      }
+    }
+  }
+  return [...terms];
 }
 
 function buildEssayAngle(source: ScholarshipSource, profile: StudentProfile) {
@@ -87,6 +114,7 @@ export function scoreScholarshipSource(
   const studentType = profile.student_type ?? "";
   const goals = profile.main_goals ?? [];
   const goalText = goals.join(" ").toLowerCase();
+  const academicTerms = getStudentAcademicTerms(profile);
 
   if (source.eligible_states?.length) {
     const stateMatches = state && source.eligible_states.some((s) => s.toUpperCase() === state);
@@ -123,26 +151,52 @@ export function scoreScholarshipSource(
 
   const tagPool = [...(source.tags ?? []), ...(source.interest_tags ?? [])];
   if (tagPool.length && goals.length) {
-    const tagHits = tagPool.filter(
-      (tag) => goalText.includes(tag.toLowerCase()) || tag.toLowerCase().includes("scholarship")
-    );
+    const tagHits = tagPool.filter((tag) => goalText.includes(tag.toLowerCase()));
     if (tagHits.length > 0) {
-      score += 15;
+      score += 10;
       rationale.push("Related to your goals");
     }
   }
 
-  if (source.major_keywords?.length && goals.length) {
-    const interestHits = [...(source.interest_tags ?? []), ...tagPool].some((tag) =>
-      goals.some((goal) => textIncludes(goal, tag))
-    );
-    if (interestHits) {
-      score += 10;
-      rationale.push("May fit your academic interests");
-    }
-  } else if (source.major_keywords?.length) {
+  if (source.major_keywords?.length && keywordOverlap(academicTerms, source.major_keywords)) {
+    score += 12;
+    rationale.push("Matches your major or interests");
+  }
+
+  if (source.interest_tags?.length && keywordOverlap(academicTerms, source.interest_tags)) {
+    score += 10;
+    rationale.push("Matches your stated interests");
+  }
+
+  if (profile.first_gen && tagPool.some((tag) => /first.?gen/i.test(tag))) {
+    score += 8;
+    rationale.push("May fit first-generation students");
+  }
+
+  if (profile.transfer_student && tagPool.some((tag) => /transfer/i.test(tag))) {
+    score += 8;
+    rationale.push("May fit transfer students");
+  }
+
+  if (profile.pell_eligible && source.need_based) {
+    score += 6;
+    rationale.push("May fit Pell-eligible students");
+  }
+
+  if (profile.cal_grant_eligible && arrayOverlap(profile.aid_types, ["Cal Grant"])) {
+    score += 5;
+    rationale.push("May fit Cal Grant students");
+  }
+
+  if (profile.gpa != null && source.min_gpa != null && profile.gpa >= source.min_gpa) {
+    score += 6;
+    rationale.push("Meets listed GPA requirement");
+  }
+
+  const essayPref = (profile.essay_preference ?? "any").toLowerCase();
+  if (essayPref === "prefer_no_essay" && !source.essay_required) {
     score += 4;
-    rationale.push("May align with common academic paths");
+    rationale.push("No essay required — matches your preference");
   }
 
   const days = daysUntil(source.deadline);

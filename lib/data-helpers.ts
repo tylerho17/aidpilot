@@ -1,4 +1,8 @@
 import type { AidTask, Deadline, DocumentItem, ScholarshipMatch, StudentProfile, WeeklyReport } from "@/lib/types";
+import { getChecklistAttentionTasks } from "@/lib/attention";
+import { AID_TASK_STATUSES, DEADLINE_STATUSES, DOCUMENT_STATUSES } from "@/lib/types";
+
+export { AID_TASK_STATUSES, DEADLINE_STATUSES, DOCUMENT_STATUSES };
 
 const STATUS_ORDER: Record<string, number> = {
   Missing: 0,
@@ -10,6 +14,60 @@ const STATUS_ORDER: Record<string, number> = {
 };
 
 const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+
+export function parseCommaSeparated(value: string): string[] {
+  return value
+    .split(/[,;]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function joinCommaSeparated(values: string[] | null | undefined): string {
+  return (values ?? []).join(", ");
+}
+
+export function normalizeAidTaskStatus(status: string): (typeof AID_TASK_STATUSES)[number] {
+  const map: Record<string, (typeof AID_TASK_STATUSES)[number]> = {
+    complete: "Complete",
+    completed: "Complete",
+    in_progress: "Due Soon",
+    "due soon": "Due Soon",
+    due_soon: "Due Soon",
+    missing: "Missing",
+    blocked: "Missing",
+    not_started: "Upcoming",
+    "needs review": "Needs Review",
+    needs_review: "Needs Review",
+    optional: "Optional",
+    upcoming: "Upcoming",
+  };
+  if ((AID_TASK_STATUSES as readonly string[]).includes(status)) return status as (typeof AID_TASK_STATUSES)[number];
+  return map[status.toLowerCase()] ?? "Upcoming";
+}
+
+export function normalizeDeadlineStatus(status: string): (typeof DEADLINE_STATUSES)[number] {
+  const map: Record<string, (typeof DEADLINE_STATUSES)[number]> = {
+    complete: "completed",
+    completed: "completed",
+    in_progress: "due soon",
+    due_soon: "due soon",
+    "due soon": "due soon",
+    missed: "needs attention",
+    "needs attention": "needs attention",
+    needs_attention: "needs attention",
+    upcoming: "upcoming",
+  };
+  if ((DEADLINE_STATUSES as readonly string[]).includes(status)) return status as (typeof DEADLINE_STATUSES)[number];
+  return map[status.toLowerCase()] ?? "upcoming";
+}
+
+export function isAidTaskComplete(status: string) {
+  return normalizeAidTaskStatus(status) === "Complete";
+}
+
+export function isDeadlineCompleted(status: string) {
+  return normalizeDeadlineStatus(status) === "completed";
+}
 
 export function formatDueDate(date: string | null | undefined, fallback = "No date") {
   if (!date) return fallback;
@@ -29,19 +87,28 @@ export function getInitials(name: string | null | undefined) {
 }
 
 export function getCompletedTaskCount(tasks: AidTask[]) {
-  return tasks.filter((t) => t.status === "Complete" || t.status === "complete").length;
+  return tasks.filter((t) => isAidTaskComplete(t.status)).length;
 }
 
 export function getChecklistProgressFromTasks(tasks: AidTask[]) {
   if (!tasks.length) return 0;
-  const done = tasks.filter((t) => t.status === "Complete" || t.status === "complete").length;
+  const done = tasks.filter((t) => isAidTaskComplete(t.status)).length;
   return Math.round((done / tasks.length) * 100);
 }
 
 export function getAttentionCountFromTasks(tasks: AidTask[]) {
-  return tasks.filter((t) =>
-    ["Due Soon", "Missing", "Needs Review", "in_progress", "blocked", "due soon", "needs attention"].includes(t.status)
-  ).length;
+  return tasks.filter((t) => ["Due Soon", "Missing", "Needs Review"].includes(normalizeAidTaskStatus(t.status))).length;
+}
+
+export const CHECKLIST_ATTENTION_STATUSES = ["Due Soon", "Missing", "Needs Review", "Upcoming"] as const;
+
+export function isChecklistAttentionStatus(status: string) {
+  const normalized = normalizeAidTaskStatus(status);
+  return (CHECKLIST_ATTENTION_STATUSES as readonly string[]).includes(normalized);
+}
+
+export function getChecklistItemsNeedingAttention(tasks: AidTask[]) {
+  return getChecklistAttentionTasks(tasks);
 }
 
 export function getMissingDocumentCountFromDocs(docs: DocumentItem[]) {
@@ -74,9 +141,11 @@ export function formatDocumentStatus(status: string) {
 
 export function getUrgentTasksFromDb(tasks: AidTask[], limit = 3) {
   return [...tasks]
-    .filter((t) => t.status !== "Complete")
+    .filter((t) => !isAidTaskComplete(t.status))
     .sort((a, b) => {
-      const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
+      const statusDiff =
+        (STATUS_ORDER[normalizeAidTaskStatus(a.status)] ?? 99) -
+        (STATUS_ORDER[normalizeAidTaskStatus(b.status)] ?? 99);
       if (statusDiff !== 0) return statusDiff;
       return (PRIORITY_ORDER[a.priority ?? "Low"] ?? 99) - (PRIORITY_ORDER[b.priority ?? "Low"] ?? 99);
     })
@@ -165,26 +234,44 @@ export function isDeadlineUrgent(deadline: string | null) {
 }
 
 export function statusToTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
-  switch (status) {
+  const taskStatus = normalizeAidTaskStatus(status);
+  const deadlineStatus = normalizeDeadlineStatus(status);
+
+  switch (taskStatus) {
     case "Complete":
-    case "complete":
-    case "completed":
-    case "Uploaded":
-    case "verified":
       return "green";
     case "Due Soon":
-    case "due soon":
-    case "in_progress":
       return "amber";
     case "Missing":
-    case "needs attention":
-    case "blocked":
-    case "missed":
       return "coral";
     case "Needs Review":
-    case "upcoming":
-    case "not_started":
+    case "Upcoming":
       return "blue";
+    case "Optional":
+      return "gray";
+    default:
+      break;
+  }
+
+  switch (deadlineStatus) {
+    case "completed":
+      return "green";
+    case "due soon":
+      return "amber";
+    case "needs attention":
+      return "coral";
+    case "upcoming":
+      return "blue";
+    default:
+      break;
+  }
+
+  switch (status) {
+    case "verified":
+    case "submitted":
+    case "needed":
+    case "not_started":
+      return status === "verified" ? "green" : status === "submitted" ? "amber" : status === "needed" ? "coral" : "blue";
     default:
       return "gray";
   }
@@ -208,7 +295,7 @@ export function sortDeadlinesByDate(deadlines: Deadline[]) {
 
 export function getUpcomingDeadlines(deadlines: Deadline[], limit = 3) {
   return sortDeadlinesByDate(deadlines)
-    .filter((d) => d.status !== "complete" && d.status !== "completed")
+    .filter((d) => !isDeadlineCompleted(d.status))
     .slice(0, limit);
 }
 
@@ -222,7 +309,7 @@ export function getDeadlinesThisMonthCount(deadlines: Deadline[]) {
   const now = new Date();
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return deadlines.filter((d) => {
-    if (d.status === "complete" || d.status === "completed") return false;
+    if (isDeadlineCompleted(d.status)) return false;
     const parsed = new Date(d.deadline_date + "T12:00:00");
     return parsed >= now && parsed <= monthEnd;
   }).length;
@@ -259,14 +346,16 @@ export function buildClientWeeklyReport(
   scholarships: ScholarshipMatch[],
   deadlines: Deadline[]
 ) {
-  const tasksDue = tasks.filter((t) => ["Due Soon", "Missing", "Needs Review"].includes(t.status)).length;
+  const tasksDue = tasks.filter((t) =>
+    ["Due Soon", "Missing", "Needs Review"].includes(normalizeAidTaskStatus(t.status))
+  ).length;
   const missingDocs = getMissingDocumentCountFromDocs(documents);
   const scholarshipCount = scholarships.length;
   const potentialAmount = scholarships
     .filter((s) => s.status === "new" || s.status === "saved" || s.is_saved)
     .reduce((sum, s) => sum + (s.amount ?? 0), 0);
   const attentionDeadlines = deadlines.filter((d) =>
-    ["due soon", "needs attention"].includes(d.status)
+    ["due soon", "needs attention"].includes(normalizeDeadlineStatus(d.status))
   ).length;
   const aidStatus = attentionDeadlines >= 2 || missingDocs >= 2 ? "Needs attention" : "Protected";
 

@@ -40,6 +40,8 @@ Run migrations in the Supabase SQL Editor **in this order** on a fresh project:
 | 7 | `supabase/007_phase_5_scholarship_engine.sql` | Scholarship engine, admin allowlist, match columns |
 | 8 | `supabase/008_seed_phase_5_scholarships.sql` | Phase 5 starter scholarships |
 | 9 | `supabase/009_phase_5_schema_parity.sql` | Scholarship column parity, indexes, feedback safety net, admin RPC, schema reload |
+| 10 | `supabase/010_status_normalization.sql` | Canonical task, deadline, and document status constraints |
+| 11 | `supabase/011_profile_enrichment.sql` | Scholarship profile fields on student_profiles |
 
 After running 007 and 009, grant scholarship admin access by adding your email to the database allowlist:
 
