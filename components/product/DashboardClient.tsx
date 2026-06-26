@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { DemoNotice } from "@/components/DemoNotice";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { CheckSVG, PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
@@ -21,27 +20,12 @@ import {
   getUpcomingDeadlines,
   getDeadlinesThisMonthCount,
   getNextDeadlineFromDeadlines,
-} from "@/lib/data-helpers";
-import {
-  CHECKLIST_TASKS,
-  DASHBOARD_SUMMARY,
-  DEMO_DEADLINES,
-  DEMO_WEEKLY_REPORT,
-  getAttentionCount,
-  getChecklistProgress,
-  getCompletedCount,
-  getMissingDocumentCount,
-  getScholarshipStats,
-  getUrgentTasks,
-  statusToTone as demoStatusToTone,
   deadlineStatusToTone,
-  type TaskStatus,
-} from "@/lib/demo-data";
+} from "@/lib/data-helpers";
 
 export default function DashboardClient() {
   const {
     loading,
-    isDemo,
     profile,
     tasks,
     documents,
@@ -65,60 +49,46 @@ export default function DashboardClient() {
     );
   }
 
-  const firstName = isDemo ? "Maya" : profile?.first_name ?? "there";
-  const schoolLabel = isDemo ? "UC Irvine" : profile?.school ?? "Your school";
-  const summary = isDemo
-    ? DASHBOARD_SUMMARY
-    : getDashboardSummary(profile, tasks, deadlines, weeklyReport);
-  const attention = isDemo ? getAttentionCount() : getAttentionCountFromTasks(tasks);
-  const progress = isDemo ? getChecklistProgress() : getChecklistProgressFromTasks(tasks);
-  const completed = isDemo ? getCompletedCount() : getCompletedTaskCount(tasks);
-  const totalTasks = isDemo ? CHECKLIST_TASKS.length : tasks.length;
-  const missingDocs = isDemo ? getMissingDocumentCount() : getMissingDocumentCountFromDocs(documents);
-  const scholarshipStats = isDemo ? getScholarshipStats() : getScholarshipStatsFromDb(scholarships);
-  const urgent = isDemo
-    ? getUrgentTasks(3)
-    : getUrgentTasksFromDb(tasks, 3).map((t) => ({
-        id: t.id,
-        title: t.title,
-        description: t.description ?? "",
-        status: t.status,
-        dueDate: formatDueDate(t.due_date, t.status),
-        category: t.category ?? "",
-        priority: t.priority ?? "Medium",
-      }));
+  const firstName = profile?.first_name ?? "there";
+  const schoolLabel = profile?.school ?? "Your school";
+  const summary = getDashboardSummary(profile, tasks, deadlines, weeklyReport);
+  const attention = getAttentionCountFromTasks(tasks);
+  const progress = getChecklistProgressFromTasks(tasks);
+  const completed = getCompletedTaskCount(tasks);
+  const totalTasks = tasks.length;
+  const missingDocs = getMissingDocumentCountFromDocs(documents);
+  const scholarshipStats = getScholarshipStatsFromDb(scholarships);
+  const urgent = getUrgentTasksFromDb(tasks, 3).map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description ?? "",
+    status: t.status,
+    dueDate: formatDueDate(t.due_date, t.status),
+    category: t.category ?? "",
+    priority: t.priority ?? "Medium",
+  }));
 
-  const upcomingDeadlines = isDemo ? DEMO_DEADLINES.slice(0, 3) : getUpcomingDeadlines(deadlines, 3);
-  const deadlinesThisMonth = isDemo ? 3 : getDeadlinesThisMonthCount(deadlines);
-  const nextDeadlineLabel = isDemo ? DASHBOARD_SUMMARY.nextDeadline : getNextDeadlineFromDeadlines(deadlines);
+  const upcomingDeadlines = getUpcomingDeadlines(deadlines, 3);
+  const deadlinesThisMonth = getDeadlinesThisMonthCount(deadlines);
+  const nextDeadlineLabel = getNextDeadlineFromDeadlines(deadlines);
 
-  const report = isDemo
-    ? DEMO_WEEKLY_REPORT
-    : weeklyReport
-      ? {
-          aid_status: weeklyReport.aid_status,
-          summary: weeklyReport.summary ?? "",
-          tasks_due_count: weeklyReport.tasks_due_count,
-          missing_documents_count: weeklyReport.missing_documents_count,
-          scholarship_count: weeklyReport.scholarship_count,
-          potential_scholarship_amount: weeklyReport.potential_scholarship_amount,
-        }
-      : null;
+  const report = weeklyReport
+    ? {
+        aid_status: weeklyReport.aid_status,
+        summary: weeklyReport.summary ?? "",
+        tasks_due_count: weeklyReport.tasks_due_count,
+        missing_documents_count: weeklyReport.missing_documents_count,
+        scholarship_count: weeklyReport.scholarship_count,
+        potential_scholarship_amount: weeklyReport.potential_scholarship_amount,
+      }
+    : null;
 
-  const toneFn = (status: string) =>
-    isDemo ? demoStatusToTone(status as TaskStatus) : statusToTone(status);
+  const toneFn = (status: string) => statusToTone(status);
 
-  const topActions = isDemo
-    ? [
-        { title: "Complete your FAFSA", description: "Suggested next step: verify FAFSA status at StudentAid.gov.", category: "FAFSA", priority: "high", due_date: null },
-        { title: "Submit missing verification documents", description: "Suggested next step: check your school portal for requested documents.", category: "Documents", priority: "high", due_date: null },
-        { title: "Apply to more scholarships", description: "Suggested next step: generate matches and start one application.", category: "Scholarships", priority: "medium", due_date: null },
-      ]
-    : getTopRecommendations(recommendations, 3);
+  const topActions = getTopRecommendations(recommendations, 3);
 
-  const fafsaLabel = isDemo
-    ? "Submitted"
-    : profile?.fafsa_status === "Yes"
+  const fafsaLabel =
+    profile?.fafsa_status === "Yes"
       ? "Submitted"
       : profile?.fafsa_status === "Not yet"
         ? "Not started"
@@ -165,9 +135,7 @@ export default function DashboardClient() {
 
   return (
     <AppShell>
-      {isDemo && <DemoNotice />}
-
-      {!isDemo && loadError && (
+      {loadError && (
         <ProductCard style={{ padding: 18, marginBottom: 22, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
           <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>{loadError}</p>
         </ProductCard>
@@ -195,12 +163,11 @@ export default function DashboardClient() {
         <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new matches`} color="#0B5CAD" style={{ flex: "1 1 160px" }} />
       </div>
 
-      {!isDemo && actionError && (
+      {actionError && (
         <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
       )}
 
-      {!isDemo && (
-        <ProductCard style={{ padding: 26, marginBottom: 22 }}>
+      <ProductCard style={{ padding: 26, marginBottom: 22 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
             <div>
               <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Top 3 next actions</h2>
@@ -230,7 +197,6 @@ export default function DashboardClient() {
             )}
           </div>
         </ProductCard>
-      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 22, alignItems: "start", marginBottom: 22 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -342,11 +308,9 @@ export default function DashboardClient() {
               <Link href="/report" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}>
                 View weekly report
               </Link>
-              {!isDemo && (
-                <button type="button" onClick={() => handleGenerateReport()} disabled={generatingReport} style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #DCE7F5", padding: "12px 22px", borderRadius: 13, cursor: generatingReport ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                  {generatingReport ? "Generating..." : "Generate report"}
-                </button>
-              )}
+              <button type="button" onClick={() => handleGenerateReport()} disabled={generatingReport} style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #DCE7F5", padding: "12px 22px", borderRadius: 13, cursor: generatingReport ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                {generatingReport ? "Generating..." : "Generate report"}
+              </button>
             </div>
           </ProductCard>
 

@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { checkScholarshipAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
+import {
+  formatScholarshipError,
+  isScholarshipSchemaError,
+  SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE,
+} from "@/lib/scholarship-errors";
 import { upsertAidRecommendationsForUser } from "@/lib/intelligence/recommendations";
 import { generateScholarshipMatchesForUser } from "@/lib/intelligence/scholarship-matching";
 import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
@@ -52,7 +58,8 @@ export function useUserData() {
   const [userFafsaSteps, setUserFafsaSteps] = useState<UserFafsaStep[]>([]);
   const [workflowSteps, setWorkflowSteps] = useState<FafsaWorkflowStep[]>([]);
   const [scholarshipSources, setScholarshipSources] = useState<ScholarshipSource[]>([]);
-  const [isDemo, setIsDemo] = useState(true);
+  const [isScholarshipAdmin, setIsScholarshipAdmin] = useState(false);
+  const [scholarshipSchemaError, setScholarshipSchemaError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
@@ -90,6 +97,7 @@ export function useUserData() {
   const loadData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
+    setScholarshipSchemaError(null);
 
     try {
       const {
@@ -109,14 +117,14 @@ export function useUserData() {
         setUserFafsaSteps([]);
         setWorkflowSteps([]);
         setScholarshipSources([]);
-        setIsDemo(true);
+        setIsScholarshipAdmin(false);
         return;
       }
 
       setUser(authUser);
-      setIsDemo(false);
 
       const [
+        adminFlag,
         profileRes,
         tasksRes,
         docsRes,
@@ -129,6 +137,7 @@ export function useUserData() {
         workflowRes,
         sourcesRes,
       ] = await Promise.all([
+        checkScholarshipAdmin(supabase),
         supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
         supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
         supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
@@ -141,6 +150,8 @@ export function useUserData() {
         supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
         supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
       ]);
+
+      setIsScholarshipAdmin(adminFlag);
 
       const errors = [
         profileRes.error,
@@ -158,7 +169,11 @@ export function useUserData() {
 
       if (errors.length > 0) {
         console.error("useUserData: some queries failed", errors);
-        setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+        if (errors.some((err) => isScholarshipSchemaError(err))) {
+          setScholarshipSchemaError(SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE);
+        } else {
+          setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+        }
       }
 
       setProfile(profileRes.data);
@@ -374,7 +389,18 @@ export function useUserData() {
   const generateScholarshipMatches = async () => {
     if (!user) throw new Error("Not logged in");
     if (!profile) throw new Error("Complete onboarding before generating scholarship matches.");
-    const matches = await generateScholarshipMatchesForUser(supabase, user.id, getIntelligenceUserData());
+    try {
+      await generateScholarshipMatchesForUser(supabase, user.id, getIntelligenceUserData());
+    } catch (err) {
+      throw new Error(formatScholarshipError(err, "Could not generate scholarship matches."));
+    }
+    const { data, error } = await supabase
+      .from("scholarship_matches")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("match_percent", { ascending: false });
+    if (error) throw new Error(formatScholarshipError(error));
+    const matches = (data ?? []) as ScholarshipMatch[];
     setScholarships(matches);
     return matches;
   };
@@ -409,7 +435,7 @@ export function useUserData() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(formatScholarshipError(error));
     setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
   };
 
@@ -432,7 +458,7 @@ export function useUserData() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(formatScholarshipError(error));
     setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
   };
 
@@ -450,7 +476,7 @@ export function useUserData() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(formatScholarshipError(error));
     setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
   };
 
@@ -480,7 +506,8 @@ export function useUserData() {
     userFafsaSteps,
     workflowSteps,
     scholarshipSources,
-    isDemo,
+    isScholarshipAdmin,
+    scholarshipSchemaError,
     loadError,
     loadData,
     getIntelligenceUserData,

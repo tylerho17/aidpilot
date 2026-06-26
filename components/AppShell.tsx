@@ -5,9 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactElement, ReactNode } from "react";
 import { PlaneSVG } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
-import { isAdminEmail } from "@/lib/admin";
 import { getInitials } from "@/lib/data-helpers";
-import { MAYA } from "@/lib/demo-data";
 
 const GridSVG = ({ color = "currentColor" }: { color?: string }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -67,19 +65,39 @@ const NAV: { href: string; label: string; icon: ({ color }: { color?: string }) 
   { href: "/settings", label: "Settings", icon: GearSVG },
 ];
 
+function ProfileSkeleton() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span
+        style={{
+          display: "flex",
+          width: 34,
+          height: 34,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,.18)",
+          flexShrink: 0,
+        }}
+      />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ height: 12, width: "72%", borderRadius: 6, background: "rgba(255,255,255,.18)", marginBottom: 8 }} />
+        <div style={{ height: 10, width: "55%", borderRadius: 6, background: "rgba(255,255,255,.12)" }} />
+      </div>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { isDemo, profile, user, logout } = useUserData();
-  const isAdmin = !isDemo && isAdminEmail(user?.email);
+  const { loading, profile, user, logout, isScholarshipAdmin } = useUserData();
   const adminHref = "/admin/scholarships";
   const adminActive = pathname === adminHref || pathname.startsWith("/admin/");
 
-  const displayName = isDemo ? MAYA.name : profile?.first_name ?? "Student";
-  const displaySchool = isDemo
-    ? `${MAYA.year} · ${MAYA.school}`
-    : [profile?.year, profile?.school].filter(Boolean).join(" · ") || "Your school";
-  const displayTag = isDemo ? "Cal Grant recipient" : profile?.student_type ?? "AidPilot student";
-  const initials = isDemo ? "MC" : getInitials(profile?.first_name);
+  const profileReady = !loading && Boolean(user);
+  const displayName = profile?.first_name ?? (user?.email ? user.email.split("@")[0] : "Student");
+  const displaySchool =
+    [profile?.year, profile?.school].filter(Boolean).join(" · ") || "Complete your profile in Settings";
+  const displayTag = profile?.student_type ?? "";
+  const initials = getInitials(profile?.first_name ?? user?.email?.split("@")[0]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-hanken), system-ui, sans-serif", background: "#F4F8FE" }}>
@@ -97,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         }}
       >
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "rgba(255,255,255,.18)", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <PlaneSVG size={18} color="#fff" />
             </span>
@@ -108,18 +126,24 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div style={{ padding: "14px 16px", margin: "12px", background: "rgba(255,255,255,.1)", borderRadius: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ display: "flex", width: 34, height: 34, borderRadius: "50%", background: "#EAF3FF", color: "#0B5CAD", fontWeight: 800, fontSize: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              {initials}
-            </span>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {displayName}
+          {!profileReady ? (
+            <ProfileSkeleton />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "flex", width: 34, height: 34, borderRadius: "50%", background: "#EAF3FF", color: "#0B5CAD", fontWeight: 800, fontSize: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {initials}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {displayName}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>{displaySchool}</div>
+                {displayTag ? (
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginTop: 2 }}>{displayTag}</div>
+                ) : null}
               </div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>{displaySchool}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginTop: 2 }}>{displayTag}</div>
             </div>
-          </div>
+          )}
         </div>
 
         <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3, overflowY: "auto" }}>
@@ -132,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-          {isAdmin && (
+          {isScholarshipAdmin && (
             <Link href={adminHref} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
               <ShieldSVG color={adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
               Admin
@@ -150,7 +174,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => logout()}
-            style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit" }}
+            disabled={!profileReady}
+            style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: profileReady ? "pointer" : "not-allowed", opacity: profileReady ? 1 : 0.6, fontFamily: "inherit" }}
           >
             Log out
           </button>

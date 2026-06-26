@@ -19,7 +19,7 @@ export function formatDueDate(date: string | null | undefined, fallback = "No da
 }
 
 export function getInitials(name: string | null | undefined) {
-  if (!name) return "??";
+  if (!name?.trim()) return "AP";
   return name
     .split(" ")
     .map((part) => part[0])
@@ -29,16 +29,19 @@ export function getInitials(name: string | null | undefined) {
 }
 
 export function getCompletedTaskCount(tasks: AidTask[]) {
-  return tasks.filter((t) => t.status === "Complete").length;
+  return tasks.filter((t) => t.status === "Complete" || t.status === "complete").length;
 }
 
 export function getChecklistProgressFromTasks(tasks: AidTask[]) {
   if (!tasks.length) return 0;
-  return Math.round((getCompletedTaskCount(tasks) / tasks.length) * 100);
+  const done = tasks.filter((t) => t.status === "Complete" || t.status === "complete").length;
+  return Math.round((done / tasks.length) * 100);
 }
 
 export function getAttentionCountFromTasks(tasks: AidTask[]) {
-  return tasks.filter((t) => ["Due Soon", "Missing", "Needs Review"].includes(t.status)).length;
+  return tasks.filter((t) =>
+    ["Due Soon", "Missing", "Needs Review", "in_progress", "blocked", "due soon", "needs attention"].includes(t.status)
+  ).length;
 }
 
 export function getMissingDocumentCountFromDocs(docs: DocumentItem[]) {
@@ -86,20 +89,49 @@ export function getNextDeadlineFromTasks(tasks: AidTask[]) {
   return formatDueDate(urgent.due_date, urgent.status);
 }
 
+export function resolveScholarshipMatches(matches: ScholarshipMatch[]) {
+  const engineMatches = matches.filter((m) => m.scholarship_id);
+  return engineMatches.length > 0 ? engineMatches : matches;
+}
+
+export function isNewScholarshipMatch(match: ScholarshipMatch) {
+  if (match.ignored || match.applied || match.is_saved) return false;
+  if (match.status === "ignored" || match.status === "applied" || match.status === "saved") return false;
+  return true;
+}
+
+export type ScholarshipMatchTab = "new" | "saved" | "applied" | "ignored";
+
+export function filterScholarshipMatchesByTab(matches: ScholarshipMatch[], tab: ScholarshipMatchTab) {
+  switch (tab) {
+    case "saved":
+      return matches.filter((m) => m.is_saved && !m.applied && !m.ignored);
+    case "applied":
+      return matches.filter((m) => m.applied);
+    case "ignored":
+      return matches.filter((m) => m.ignored);
+    default:
+      return matches.filter((m) => isNewScholarshipMatch(m));
+  }
+}
+
 export function getScholarshipStatsFromDb(scholarships: ScholarshipMatch[]) {
-  const weekly = scholarships.filter((s) => s.status === "new" && !s.ignored && !s.applied);
-  const totalPotential = weekly.reduce((sum, s) => sum + (s.amount ?? 0), 0);
-  const strongMatches = weekly.filter((s) => (s.match_percent ?? 0) >= 88).length;
+  const visible = resolveScholarshipMatches(scholarships);
+  const newMatches = visible.filter((m) => isNewScholarshipMatch(m));
+  const active = visible.filter((m) => !m.ignored);
+  const totalPotential = newMatches.reduce((sum, s) => sum + (s.amount ?? 0), 0);
+  const strongMatches = active.filter((s) => (s.match_percent ?? 0) >= 80).length;
   const now = new Date();
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const deadlinesThisMonth = weekly.filter((s) => {
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const deadlinesThisMonth = active.filter((s) => {
     if (!s.deadline) return false;
     const d = new Date(s.deadline + "T12:00:00");
-    return d >= now && d <= monthEnd;
+    return d >= monthStart && d <= monthEnd;
   }).length;
 
   return {
-    newCount: weekly.length,
+    newCount: newMatches.length,
     totalPotential,
     totalPotentialLabel: `$${totalPotential.toLocaleString()}`,
     strongMatches,
@@ -108,11 +140,10 @@ export function getScholarshipStatsFromDb(scholarships: ScholarshipMatch[]) {
 }
 
 export function getFeaturedScholarshipFromDb(scholarships: ScholarshipMatch[]) {
-  const eligible = scholarships.filter((s) => !s.ignored && !s.applied && !s.is_saved);
+  const visible = resolveScholarshipMatches(scholarships);
+  const newMatches = visible.filter((m) => isNewScholarshipMatch(m));
   return (
-    eligible.find((s) => (s.match_percent ?? 0) >= 90) ??
-    eligible[0] ??
-    null
+    [...newMatches].sort((a, b) => (b.match_percent ?? 0) - (a.match_percent ?? 0))[0] ?? null
   );
 }
 
@@ -136,18 +167,23 @@ export function isDeadlineUrgent(deadline: string | null) {
 export function statusToTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
   switch (status) {
     case "Complete":
-    case "Uploaded":
     case "complete":
     case "completed":
+    case "Uploaded":
+    case "verified":
       return "green";
     case "Due Soon":
     case "due soon":
+    case "in_progress":
       return "amber";
     case "Missing":
     case "needs attention":
+    case "blocked":
+    case "missed":
       return "coral";
     case "Needs Review":
     case "upcoming":
+    case "not_started":
       return "blue";
     default:
       return "gray";

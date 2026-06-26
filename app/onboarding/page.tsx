@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
+import {
+  EFFORT_PREFERENCE_OPTIONS,
+  ESSAY_PREFERENCE_OPTIONS,
+  SCHOLARSHIP_CATEGORY_OPTIONS,
+  parseScholarshipPreferences,
+} from "@/lib/scholarship-preferences";
 import type { OnboardingFormData, School } from "@/lib/types";
 
 const SCHOOL_FALLBACK = [
@@ -43,9 +49,13 @@ export default function OnboardingPage() {
     fafsa_status: "Yes",
     aid_types: [],
     main_goals: [],
+    interested_categories: [],
+    essay_preference: "no_preference",
+    effort_preference: "any",
+    major_interests: "",
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const pct = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -78,6 +88,7 @@ export default function OnboardingPage() {
       }
 
       if (profile) {
+        const prefs = parseScholarshipPreferences(profile.scholarship_preferences);
         setForm((prev) => ({
           ...prev,
           first_name: profile.first_name ?? prev.first_name,
@@ -89,6 +100,10 @@ export default function OnboardingPage() {
           fafsa_status: profile.fafsa_status ?? prev.fafsa_status,
           aid_types: profile.aid_types ?? prev.aid_types,
           main_goals: profile.main_goals ?? prev.main_goals,
+          interested_categories: prefs.interested_categories ?? prev.interested_categories,
+          essay_preference: prefs.essay_preference ?? prev.essay_preference,
+          effort_preference: prefs.effort_preference ?? prev.effort_preference,
+          major_interests: prefs.major_interests ?? prev.major_interests,
         }));
       }
 
@@ -116,7 +131,7 @@ export default function OnboardingPage() {
   const resolvedSchool =
     form.school === "Other" ? manualSchool.trim() : form.school;
 
-  function toggleArray(field: "aid_types" | "main_goals", value: string) {
+  function toggleArray(field: "aid_types" | "main_goals" | "interested_categories", value: string) {
     setForm((prev) => {
       const current = prev[field];
       const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
@@ -163,6 +178,14 @@ export default function OnboardingPage() {
       console.log("User loaded:", user.id);
       console.log("Saving profile");
 
+      const scholarshipPreferences = {
+        interested_categories: form.interested_categories,
+        essay_preference: form.essay_preference,
+        effort_preference: form.effort_preference,
+        state_preference: form.state,
+        major_interests: form.major_interests.trim(),
+      };
+
       const { error: profileError } = await supabase.from("student_profiles").upsert({
         id: user.id,
         first_name: form.first_name,
@@ -174,6 +197,7 @@ export default function OnboardingPage() {
         fafsa_status: form.fafsa_status,
         aid_types: form.aid_types,
         main_goals: form.main_goals,
+        scholarship_preferences: scholarshipPreferences,
         is_onboarded: true,
         updated_at: new Date().toISOString(),
       });
@@ -214,7 +238,7 @@ export default function OnboardingPage() {
             <Link href="/login" style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Log in</Link>
           </div>
           <p style={{ marginTop: 20, fontSize: 13 }}>
-            <Link href="/dashboard" style={{ color: "#9AA4B2", textDecoration: "underline" }}>Or view the demo dashboard</Link>
+            <Link href="/" style={{ color: "#9AA4B2", textDecoration: "underline" }}>Back to home</Link>
           </p>
         </div>
       </div>
@@ -245,7 +269,7 @@ export default function OnboardingPage() {
             Let&apos;s build your aid check-in.
           </h1>
           <p style={{ fontSize: 16, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you.
+            Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you. We never ask for SSNs, FAFSA logins, or tax documents.
           </p>
         </div>
 
@@ -260,6 +284,9 @@ export default function OnboardingPage() {
         <div style={{ background: "#fff", border: "1px solid #E9EDF2", borderRadius: 24, padding: "28px 24px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14 }}>
           {step === 0 && (
             <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                We use your name and school to personalize deadlines, documents, and scholarship matches.
+              </p>
               <input required style={inputStyle} placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
               <input required type="email" style={inputStyle} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               <select required style={inputStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
@@ -294,6 +321,9 @@ export default function OnboardingPage() {
 
           {step === 1 && (
             <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                State and student type help us surface relevant aid programs. FAFSA status helps prioritize your checklist — we never access your FAFSA account.
+              </p>
               <input required style={inputStyle} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
               <select required style={inputStyle} value={form.student_type} onChange={(e) => setForm({ ...form, student_type: e.target.value })}>
                 {STUDENT_TYPES.map((t) => (
@@ -310,6 +340,9 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                Knowing your current aid types helps AidPilot tailor reminders and scholarship suggestions. Select all that apply.
+              </p>
               <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Do you currently receive financial aid?</p>
               {AID_OPTIONS.map((o) => (
                 <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
@@ -322,6 +355,9 @@ export default function OnboardingPage() {
 
           {step === 3 && (
             <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                Your goals shape what AidPilot highlights first on your dashboard and weekly report.
+              </p>
               <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>What do you want help with most?</p>
               {GOAL_OPTIONS.map((o) => (
                 <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
@@ -332,6 +368,41 @@ export default function OnboardingPage() {
               <p style={{ fontSize: 12, color: "#9AA4B2", lineHeight: 1.6, margin: "8px 0 0" }}>
                 AidPilot is an organizational and educational tool, not official financial aid advice. We never collect FAFSA logins, SSNs, or tax documents.
               </p>
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                Scholarship preferences improve match quality. You can change these anytime in Settings.
+              </p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Scholarship interests</p>
+              {SCHOLARSHIP_CATEGORY_OPTIONS.map((o) => (
+                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                  <input type="checkbox" checked={form.interested_categories.includes(o)} onChange={() => toggleArray("interested_categories", o)} />
+                  {o}
+                </label>
+              ))}
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
+                <select style={inputStyle} value={form.essay_preference} onChange={(e) => setForm({ ...form, essay_preference: e.target.value })}>
+                  {ESSAY_PREFERENCE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Effort preference</span>
+                <select style={inputStyle} value={form.effort_preference} onChange={(e) => setForm({ ...form, effort_preference: e.target.value })}>
+                  {EFFORT_PREFERENCE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Major or interests (optional)</span>
+                <input style={inputStyle} placeholder="e.g. Computer science, nursing" value={form.major_interests} onChange={(e) => setForm({ ...form, major_interests: e.target.value })} />
+              </label>
             </>
           )}
         </div>

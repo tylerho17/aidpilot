@@ -2,7 +2,7 @@
 -- Safe to rerun. Uses IF NOT EXISTS and DROP POLICY IF EXISTS.
 
 -- ---------------------------------------------------------------------------
--- Admin allowlist (sync emails with NEXT_PUBLIC_ADMIN_EMAILS in the app)
+-- Admin allowlist (source of truth for scholarship admin access)
 -- ---------------------------------------------------------------------------
 create table if not exists public.admin_allowlist (
   email text primary key

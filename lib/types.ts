@@ -1,3 +1,5 @@
+import type { ScholarshipPreferences } from "@/lib/scholarship-preferences";
+
 export type StudentProfile = {
   id: string;
   created_at: string;
@@ -11,6 +13,7 @@ export type StudentProfile = {
   fafsa_status: string | null;
   aid_types: string[] | null;
   main_goals: string[] | null;
+  scholarship_preferences?: ScholarshipPreferences | Record<string, unknown> | null;
   is_onboarded: boolean;
 };
 
@@ -196,6 +199,10 @@ export type OnboardingFormData = {
   fafsa_status: string;
   aid_types: string[];
   main_goals: string[];
+  interested_categories: string[];
+  essay_preference: string;
+  effort_preference: string;
+  major_interests: string;
 };
 
 export type AidRecommendation = {

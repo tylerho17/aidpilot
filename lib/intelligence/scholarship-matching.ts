@@ -89,10 +89,10 @@ export function scoreScholarshipSource(
   const goalText = goals.join(" ").toLowerCase();
 
   if (source.eligible_states?.length) {
-    const stateMatches = source.eligible_states.some((s) => s.toUpperCase() === state);
-    if (state && stateMatches) {
+    const stateMatches = state && source.eligible_states.some((s) => s.toUpperCase() === state);
+    if (stateMatches) {
       score += 20;
-      rationale.push(`Matches your state (${profile.state})`);
+      rationale.push(state ? `Matches your state (${state})` : "Matches your state");
     }
   } else {
     score += 6;
@@ -104,11 +104,11 @@ export function scoreScholarshipSource(
       source.education_levels.includes(yearLevel) || source.education_levels.includes("all");
     if (educationMatches) {
       score += 15;
-      rationale.push(`Matches your education level (${profile.year ?? "student"})`);
+      rationale.push(profile.year ? `Matches your education level (${profile.year})` : "Matches your education level");
     }
   }
 
-  if (source.student_types?.length) {
+  if (source.student_types?.length && studentType) {
     const typeMatches = source.student_types.some(
       (type) => type.toLowerCase() === studentType.toLowerCase()
     );
@@ -116,6 +116,9 @@ export function scoreScholarshipSource(
       score += 15;
       rationale.push("Matches your student type");
     }
+  } else if (source.student_types?.length) {
+    score += 4;
+    rationale.push("May fit your student profile");
   }
 
   const tagPool = [...(source.tags ?? []), ...(source.interest_tags ?? [])];
@@ -129,14 +132,17 @@ export function scoreScholarshipSource(
     }
   }
 
-  if (source.major_keywords?.length) {
+  if (source.major_keywords?.length && goals.length) {
     const interestHits = [...(source.interest_tags ?? []), ...tagPool].some((tag) =>
       goals.some((goal) => textIncludes(goal, tag))
     );
-    if (interestHits || source.major_keywords.length > 0) {
+    if (interestHits) {
       score += 10;
       rationale.push("May fit your academic interests");
     }
+  } else if (source.major_keywords?.length) {
+    score += 4;
+    rationale.push("May align with common academic paths");
   }
 
   const days = daysUntil(source.deadline);
@@ -182,7 +188,7 @@ export function scoreScholarshipSource(
     rationale:
       rationale.length > 0
         ? rationale
-        : ["Starter match based on your profile and available scholarship information"],
+        : ["Based on your profile and available scholarship information"],
     essayAngle,
     effortLevel,
     recommendedAction,
@@ -247,6 +253,27 @@ export async function generateScholarshipMatchesForUser(
     const whyItFits =
       match.rationale.join(". ") + ". Verify eligibility with the scholarship provider.";
     const previous = existingBySourceId.get(match.source.id);
+    const preservedIgnored = previous?.ignored ?? false;
+    const preservedApplied = previous?.applied ?? false;
+    const preservedSaved = previous?.is_saved ?? false;
+    const isStrongNewMatch = match.matchPercent >= 80;
+
+    let status: string;
+    let is_saved: boolean;
+
+    if (preservedIgnored) {
+      status = previous?.status ?? "ignored";
+      is_saved = previous?.is_saved ?? false;
+    } else if (preservedApplied) {
+      status = "applied";
+      is_saved = true;
+    } else if (preservedSaved || !isStrongNewMatch) {
+      status = "saved";
+      is_saved = true;
+    } else {
+      status = "new";
+      is_saved = false;
+    }
 
     const row = {
       user_id: userId,
@@ -260,19 +287,11 @@ export async function generateScholarshipMatchesForUser(
       essay_angle: match.essayAngle,
       effort_level: match.effortLevel,
       recommended_action: match.recommendedAction,
-      status: previous?.ignored
-        ? previous.status
-        : previous?.applied
-          ? "applied"
-          : previous?.is_saved
-            ? "saved"
-            : match.matchPercent >= 80
-              ? "new"
-              : "saved",
-      is_saved: previous?.is_saved ?? match.matchPercent < 80,
+      status,
+      is_saved,
       is_started: previous?.is_started ?? false,
-      ignored: previous?.ignored ?? false,
-      applied: previous?.applied ?? false,
+      ignored: preservedIgnored,
+      applied: preservedApplied,
       saved_at: previous?.saved_at ?? null,
       applied_at: previous?.applied_at ?? null,
       ignored_at: previous?.ignored_at ?? null,

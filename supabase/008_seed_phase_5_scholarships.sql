@@ -2,7 +2,7 @@
 -- Run after 007_phase_5_scholarship_engine.sql
 -- Safe to rerun. Uses ON CONFLICT (name) DO NOTHING.
 
--- Add your admin email (must match NEXT_PUBLIC_ADMIN_EMAILS):
+-- Add your admin email to admin_allowlist:
 -- insert into public.admin_allowlist (email) values ('your@email.com') on conflict do nothing;
 
 insert into public.scholarship_sources (

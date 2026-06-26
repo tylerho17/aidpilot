@@ -18,30 +18,36 @@ Create `.env.local` in the project root:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-NEXT_PUBLIC_ADMIN_EMAILS=your@email.com
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-`NEXT_PUBLIC_ADMIN_EMAILS` is optional for normal student use. Set it to a comma-separated list of emails allowed to access `/admin/scholarships`. The same email(s) must also be inserted into `public.admin_allowlist` in Supabase (see migration 007).
+`SUPABASE_SERVICE_ROLE_KEY` is optional but required for server-side account deletion in Settings. Never expose this key to the client or commit it to git.
 
 Get values from the Supabase dashboard: **Project Settings → API**.
 
 ## Supabase setup
 
-Run migrations in the Supabase SQL Editor (in order):
+Run migrations in the Supabase SQL Editor **in this order** on a fresh project:
 
-1. `supabase/schema.sql`
-2. `supabase/002_database_expansion.sql`
-3. `supabase/003_phase_3_completion.sql`
-4. `supabase/004_mvp_intelligence_layer.sql`
-5. `supabase/005_seed_global_intelligence_data.sql` — FAFSA workflow steps and scholarship sources (global read-only data)
-6. `supabase/007_phase_5_scholarship_engine.sql` — scholarship engine schema, admin RLS, match columns
-7. `supabase/008_seed_phase_5_scholarships.sql` — Phase 5 starter scholarships
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `supabase/schema.sql` | Core tables, RLS, auth-linked profiles |
+| 2 | `supabase/002_database_expansion.sql` | Expanded aid tasks, documents, deadlines |
+| 3 | `supabase/003_phase_3_completion.sql` | Phase 3 schema completion |
+| 4 | `supabase/003_feedback.sql` | In-app feedback table + RLS |
+| 5 | `supabase/004_mvp_intelligence_layer.sql` | Recommendations, weekly reports, intelligence tables |
+| 6 | `supabase/005_seed_global_intelligence_data.sql` | FAFSA workflow steps and scholarship sources (global read-only data) |
+| 7 | `supabase/007_phase_5_scholarship_engine.sql` | Scholarship engine, admin allowlist, match columns |
+| 8 | `supabase/008_seed_phase_5_scholarships.sql` | Phase 5 starter scholarships |
+| 9 | `supabase/009_phase_5_schema_parity.sql` | Scholarship column parity, indexes, feedback safety net, admin RPC, schema reload |
 
-After running 007, add your admin email:
+After running 007 and 009, grant scholarship admin access by adding your email to the database allowlist:
 
 ```sql
 insert into public.admin_allowlist (email) values ('your@email.com') on conflict do nothing;
 ```
+
+Scholarship admin access is enforced server-side via `admin_allowlist` and the `is_current_user_scholarship_admin()` RPC. No client env allowlist is required.
 
 ## Deploy on Vercel
 
@@ -50,7 +56,7 @@ insert into public.admin_allowlist (email) values ('your@email.com') on conflict
 3. Add environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_ADMIN_EMAILS` (optional, for scholarship admin)
+   - `SUPABASE_SERVICE_ROLE_KEY` (optional, for account deletion)
 4. Deploy. Vercel runs `npm run build` automatically.
 
 ## Scripts

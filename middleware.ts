@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { checkScholarshipAdminServer } from "@/lib/admin-server";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
@@ -63,6 +64,13 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdminRoute) {
+    const isAdmin = await checkScholarshipAdminServer(supabase);
+    if (!isAdmin) {
+      const deniedUrl = request.nextUrl.clone();
+      deniedUrl.pathname = "/dashboard";
+      deniedUrl.searchParams.set("admin", "denied");
+      return NextResponse.redirect(deniedUrl);
+    }
     return response;
   }
 

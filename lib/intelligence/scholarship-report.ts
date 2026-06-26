@@ -1,5 +1,5 @@
 import type { ScholarshipMatch, ScholarshipSource, StudentProfile } from "@/lib/types";
-import { formatScholarshipDeadline } from "@/lib/data-helpers";
+import { formatScholarshipDeadline, isNewScholarshipMatch, resolveScholarshipMatches } from "@/lib/data-helpers";
 
 function daysUntil(dateStr: string | null | undefined) {
   if (!dateStr) return 9999;
@@ -19,8 +19,8 @@ export function getApplyUrl(match: ScholarshipMatch, sources: ScholarshipSource[
 }
 
 export function selectWeeklyScholarshipMatches(matches: ScholarshipMatch[], limit = 7) {
-  return [...matches]
-    .filter((m) => !m.ignored && !m.applied && !isExpired(m.deadline))
+  return [...resolveScholarshipMatches(matches)]
+    .filter((m) => isNewScholarshipMatch(m) && !isExpired(m.deadline))
     .sort((a, b) => {
       const matchDiff = (b.match_percent ?? 0) - (a.match_percent ?? 0);
       if (matchDiff !== 0) return matchDiff;

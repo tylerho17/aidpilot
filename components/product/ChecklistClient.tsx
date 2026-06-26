@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { DemoNotice } from "@/components/DemoNotice";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, ProductCard, ProgressBar, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
@@ -18,41 +17,40 @@ import {
   formatDocumentStatus,
   statusToTone,
 } from "@/lib/data-helpers";
-import {
-  CHECKLIST_TASKS,
-  DOCUMENTS,
-  documentStatusToTone as demoDocumentStatusToTone,
-  getAttentionCount,
-  getChecklistProgress,
-  getMissingDocumentCount,
-  getNextDeadline,
-  statusToTone as demoStatusToTone,
-  type ChecklistTask,
-  type TaskStatus,
-} from "@/lib/demo-data";
 import type { AidTask, DocumentItem } from "@/lib/types";
 
 const DOCUMENT_STATUSES = ["not_started", "needed", "submitted", "verified"] as const;
+const TASK_STATUSES = ["not_started", "in_progress", "blocked", "complete"] as const;
+const LEGACY_TASK_STATUSES = ["Missing", "Due Soon", "Needs Review", "Optional", "Upcoming", "Complete"] as const;
 
 const STATUS_ORDER: Record<string, number> = {
+  blocked: 0,
   Missing: 0,
+  in_progress: 1,
   "Due Soon": 1,
+  not_started: 2,
   "Needs Review": 2,
   Optional: 3,
   Upcoming: 4,
+  complete: 5,
   Complete: 5,
 };
 
-function sortDemoTasks(tasks: ChecklistTask[]) {
-  return [...tasks].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+function sortDbTasks(tasks: AidTask[]) {
+  return [...tasks].sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
 }
 
-function sortDbTasks(tasks: AidTask[]) {
-  return [...tasks].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+function formatTaskStatus(status: string) {
+  return status.replace(/_/g, " ");
+}
+
+function isTaskComplete(status: string) {
+  return status === "complete" || status === "Complete";
 }
 
 export default function ChecklistClient() {
-  const { loading, isDemo, tasks, documents, updateTaskStatus, updateDocumentStatus } = useUserData();
+  const { loading, tasks, documents, updateTaskStatus, updateDocumentStatus } = useUserData();
+  const [error, setError] = useState("");
 
   if (loading) {
     return (
@@ -62,32 +60,25 @@ export default function ChecklistClient() {
     );
   }
 
-  const progress = isDemo ? getChecklistProgress() : getChecklistProgressFromTasks(tasks);
-  const attention = isDemo ? getAttentionCount() : getAttentionCountFromTasks(tasks);
-  const missingDocs = isDemo ? getMissingDocumentCount() : getMissingDocumentCountFromDocs(documents);
-  const nextDeadline = isDemo ? getNextDeadline() : getNextDeadlineFromTasks(tasks);
-  const totalTasks = isDemo ? CHECKLIST_TASKS.length : tasks.length;
-  const sortedDemo = sortDemoTasks(CHECKLIST_TASKS);
+  const progress = getChecklistProgressFromTasks(tasks);
+  const attention = getAttentionCountFromTasks(tasks);
+  const missingDocs = getMissingDocumentCountFromDocs(documents);
+  const nextDeadline = getNextDeadlineFromTasks(tasks);
   const sortedDb = sortDbTasks(tasks);
-  const categories = isDemo
-    ? [...new Set(CHECKLIST_TASKS.map((t) => t.category))]
-    : [...new Set(tasks.map((t) => t.category).filter(Boolean))] as string[];
-
-  const toneFn = (status: string) =>
-    isDemo ? demoStatusToTone(status as TaskStatus) : statusToTone(status);
+  const categories = [...new Set(tasks.map((t) => t.category).filter(Boolean))] as string[];
 
   return (
     <AppShell>
-      {isDemo && <DemoNotice />}
-
       <div style={{ marginBottom: 32 }}>
         <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.1 }}>
           Aid Checklist
         </h1>
         <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Track every step needed to protect your financial aid. {totalTasks} tasks in your aid cycle.
+          Track every step needed to protect your financial aid. Change any task status anytime.
         </p>
       </div>
+
+      {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{error}</p>}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
         <StatCard label="Progress" value={`${progress}% complete`} color="#0B5CAD" style={{ flex: "1 1 140px" }} />
@@ -102,82 +93,104 @@ export default function ChecklistClient() {
           <span style={{ fontSize: 15, fontWeight: 800, color: "#0B5CAD" }}>{progress}%</span>
         </div>
         <ProgressBar pct={progress} color="linear-gradient(90deg,#15885A,#37A877)" />
-        <p style={{ fontSize: 14, fontWeight: 700, color: "#15885A", margin: "14px 0 0" }}>
-          Nice work. You are {progress}% done with your aid checklist.
-        </p>
       </ProductCard>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-        {categories.map((cat) => {
-          const catTasks = isDemo ? CHECKLIST_TASKS.filter((t) => t.category === cat) : tasks.filter((t) => t.category === cat);
-          const done = catTasks.filter((t) => t.status === "Complete").length;
-          return (
-            <span key={cat} style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "6px 12px", borderRadius: 999 }}>
-              {cat} · {done}/{catTasks.length}
-            </span>
-          );
-        })}
-      </div>
+      {categories.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+          {categories.map((cat) => {
+            const catTasks = tasks.filter((t) => t.category === cat);
+            const done = catTasks.filter((t) => isTaskComplete(t.status)).length;
+            return (
+              <span key={cat} style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "6px 12px", borderRadius: 999 }}>
+                {cat} · {done}/{catTasks.length}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1.15fr .85fr", gap: 22, alignItems: "start" }}>
         <ProductCard style={{ padding: 26 }}>
           <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 18px", color: "#15212E" }}>All checklist tasks</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {isDemo
-              ? sortedDemo.map((item) => (
-                  <TaskRow key={item.id} title={item.title} description={item.description} status={item.status} due={item.dueDate} category={item.category} priority={item.priority} tone={toneFn(item.status)} />
-                ))
-              : sortedDb.map((item) => (
-                  <TaskRow
-                    key={item.id}
-                    title={item.title}
-                    description={item.description ?? ""}
-                    status={item.status}
-                    due={formatDueDate(item.due_date, item.status)}
-                    category={item.category ?? ""}
-                    priority={item.priority ?? "Medium"}
-                    tone={toneFn(item.status)}
-                    action={
-                      item.status !== "Complete" ? (
-                        <button type="button" onClick={() => updateTaskStatus(item.id, "Complete")} style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", border: "none", padding: "6px 10px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit" }}>
-                          Mark complete
-                        </button>
-                      ) : null
-                    }
-                  />
-                ))}
-          </div>
+          {sortedDb.length === 0 ? (
+            <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No tasks yet. Tasks appear as your aid plan is set up.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {sortedDb.map((item) => (
+                <TaskRow
+                  key={item.id}
+                  title={item.title}
+                  description={item.description ?? ""}
+                  status={item.status}
+                  due={formatDueDate(item.due_date, item.status)}
+                  category={item.category ?? ""}
+                  priority={item.priority ?? "Medium"}
+                  tone={statusToTone(item.status)}
+                  action={
+                    <select
+                      value={[...TASK_STATUSES, ...LEGACY_TASK_STATUSES].includes(item.status as (typeof TASK_STATUSES)[number]) ? item.status : "not_started"}
+                      onChange={async (e) => {
+                        setError("");
+                        try {
+                          await updateTaskStatus(item.id, e.target.value);
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : "Could not update task.");
+                        }
+                      }}
+                      style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
+                    >
+                      {TASK_STATUSES.map((status) => (
+                        <option key={status} value={status}>{formatTaskStatus(status)}</option>
+                      ))}
+                      {LEGACY_TASK_STATUSES.filter((s) => !TASK_STATUSES.includes(s as (typeof TASK_STATUSES)[number])).map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  }
+                />
+              ))}
+            </div>
+          )}
         </ProductCard>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <ProductCard style={{ padding: 26 }}>
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Document tracker</h2>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.5 }}>Status only. No file uploads in AidPilot.</p>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Status only — no file uploads yet. Document upload is coming later.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {isDemo
-                ? DOCUMENTS.map((doc) => (
-                    <DocRow key={doc.id} name={doc.name} status={doc.status} due={doc.dueDate} tone={demoDocumentStatusToTone(doc.status)} />
-                  ))
-                : documents.map((doc: DocumentItem) => (
-                    <DocRow
-                      key={doc.id}
-                      name={doc.title}
-                      status={formatDocumentStatus(doc.status)}
-                      due={formatDueDate(doc.due_date, "No date")}
-                      tone={documentStatusToTone(doc.status)}
-                      action={
-                        <select
-                          value={doc.status}
-                          onChange={(e) => updateDocumentStatus(doc.id, e.target.value)}
-                          style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
-                        >
-                          {DOCUMENT_STATUSES.map((status) => (
-                            <option key={status} value={status}>{formatDocumentStatus(status)}</option>
-                          ))}
-                        </select>
-                      }
-                    />
-                  ))}
+              {documents.length === 0 ? (
+                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No documents tracked yet.</p>
+              ) : (
+                documents.map((doc: DocumentItem) => (
+                  <DocRow
+                    key={doc.id}
+                    name={doc.title}
+                    status={formatDocumentStatus(doc.status)}
+                    due={formatDueDate(doc.due_date, "No date")}
+                    tone={documentStatusToTone(doc.status)}
+                    action={
+                      <select
+                        value={doc.status}
+                        onChange={async (e) => {
+                          setError("");
+                          try {
+                            await updateDocumentStatus(doc.id, e.target.value);
+                          } catch (err) {
+                            setError(err instanceof Error ? err.message : "Could not update document.");
+                          }
+                        }}
+                        style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
+                      >
+                        {DOCUMENT_STATUSES.map((status) => (
+                          <option key={status} value={status}>{formatDocumentStatus(status)}</option>
+                        ))}
+                      </select>
+                    }
+                  />
+                ))
+              )}
             </div>
           </ProductCard>
 
@@ -217,11 +230,12 @@ function TaskRow({
   tone: "green" | "amber" | "coral" | "blue" | "gray";
   action?: ReactNode;
 }) {
+  const complete = isTaskComplete(status);
   return (
-    <div className="card-lift" style={{ padding: "14px 16px", borderRadius: 14, border: "1px solid #EAEEF3", background: status === "Complete" ? "#F5FBF7" : "#fff" }}>
+    <div className="card-lift" style={{ padding: "14px 16px", borderRadius: 14, border: "1px solid #EAEEF3", background: complete ? "#F5FBF7" : "#fff" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: status === "Complete" ? "#7C9A89" : "#15212E", textDecoration: status === "Complete" ? "line-through" : "none" }}>{title}</div>
-        <PillBadge tone={tone}>{status}</PillBadge>
+        <div style={{ fontSize: 15, fontWeight: 700, color: complete ? "#7C9A89" : "#15212E", textDecoration: complete ? "line-through" : "none" }}>{title}</div>
+        <PillBadge tone={tone}>{formatTaskStatus(status)}</PillBadge>
       </div>
       <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.55 }}>{description}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -255,7 +269,7 @@ function DocRow({
         <span style={{ fontSize: 14, fontWeight: 600, color: "#15212E" }}>{name}</span>
         <PillBadge tone={tone}>{status}</PillBadge>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>Due {due}</span>
         {action}
       </div>

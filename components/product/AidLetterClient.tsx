@@ -3,11 +3,35 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
-import { DemoNotice } from "@/components/DemoNotice";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
-import { DEMO_AID_LETTER } from "@/lib/demo-data";
 import type { AidLetter, StudentProfile } from "@/lib/types";
+
+function getSuggestedNextStep({
+  gap,
+  loans,
+  freeMoney,
+  coa,
+}: {
+  gap: number;
+  loans: number;
+  freeMoney: number;
+  coa: number;
+}) {
+  if (coa <= 0) {
+    return "Enter your cost of attendance and aid amounts to see personalized next steps.";
+  }
+  if (gap > 0 && freeMoney < coa * 0.3) {
+    return "Free money covers less than 30% of cost. Consider appealing your aid package and applying to scholarships on AidPilot.";
+  }
+  if (gap > 0) {
+    return `Estimated gap of $${gap.toLocaleString()}. Compare outside scholarships and discuss payment options with your financial aid office.`;
+  }
+  if (loans > freeMoney) {
+    return "Loans make up a large share of your package. Review borrowing limits and repayment estimates with your aid office.";
+  }
+  return "Your listed aid appears to cover costs. Confirm all numbers with your financial aid office before accepting.";
+}
 
 function MoneyRow({ label, amount, color }: { label: string; amount: number; color: string }) {
   return (
@@ -52,6 +76,7 @@ function AidLetterSummary({
   gap,
   estimatedNet,
   notes,
+  suggestedNextStep,
 }: {
   schoolName: string;
   aidYear: string;
@@ -65,6 +90,7 @@ function AidLetterSummary({
   gap: number;
   estimatedNet: number;
   notes?: string | null;
+  suggestedNextStep: string;
 }) {
   return (
     <>
@@ -101,6 +127,15 @@ function AidLetterSummary({
           </div>
         </div>
         {notes && <p style={{ fontSize: 14, color: "#6B7280", margin: "18px 0 0", lineHeight: 1.6 }}>{notes}</p>}
+
+        <div style={{ marginTop: 20, padding: "16px 18px", borderRadius: 14, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#15885A", marginBottom: 6 }}>Suggested next step</div>
+          <p style={{ fontSize: 14, color: "#374151", margin: 0, lineHeight: 1.6 }}>{suggestedNextStep}</p>
+        </div>
+
+        <p style={{ fontSize: 13, color: "#9AA4B2", margin: "16px 0 0", lineHeight: 1.6 }}>
+          Confirm final numbers, eligibility, and deadlines with your school financial aid office. AidPilot does not submit aid decisions for you.
+        </p>
       </ProductCard>
     </>
   );
@@ -244,6 +279,7 @@ function AidLetterForm({
           freeMoney={freeMoney}
           gap={estimatedGap}
           estimatedNet={estimatedGap}
+          suggestedNextStep={getSuggestedNextStep({ gap: estimatedGap, loans, freeMoney, coa })}
         />
       )}
     </>
@@ -251,46 +287,12 @@ function AidLetterForm({
 }
 
 export default function AidLetterClient() {
-  const { loading, isDemo, aidLetter, profile, saveAidLetter } = useUserData();
+  const { loading, aidLetter, profile, saveAidLetter } = useUserData();
 
   if (loading) {
     return (
       <AppShell>
         <p style={{ color: "#9AA4B2" }}>Loading aid letter...</p>
-      </AppShell>
-    );
-  }
-
-  if (isDemo) {
-    const letter = DEMO_AID_LETTER;
-    const freeMoney = (letter.grants_amount ?? 0) + (letter.scholarships_amount ?? 0);
-    const borrowed = letter.loans_amount ?? 0;
-    const workStudy = letter.work_study_amount ?? 0;
-    const coa = letter.cost_of_attendance ?? 0;
-    const gap = coa - freeMoney - borrowed - workStudy;
-
-    return (
-      <AppShell>
-        <DemoNotice />
-        <div style={{ marginBottom: 28 }}>
-          <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
-            Aid Letter
-          </h1>
-        </div>
-        <AidLetterSummary
-          schoolName={letter.school_name ?? "Your school"}
-          aidYear={letter.aid_year ?? "2026-2027"}
-          status={letter.status}
-          coa={coa}
-          grants={letter.grants_amount ?? 0}
-          scholarships={letter.scholarships_amount ?? 0}
-          loans={borrowed}
-          workStudy={workStudy}
-          freeMoney={freeMoney}
-          gap={gap}
-          estimatedNet={letter.estimated_net_cost ?? gap}
-          notes={letter.notes}
-        />
       </AppShell>
     );
   }
@@ -302,7 +304,7 @@ export default function AidLetterClient() {
           Aid Letter
         </h1>
         <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Enter your aid offer numbers manually to see a plain-language breakdown.
+          Enter your aid offer numbers manually. You can edit and save repeatedly. Aid letter scanning is coming later.
         </p>
       </div>
 
@@ -313,7 +315,7 @@ export default function AidLetterClient() {
       </ProductCard>
 
       <AidLetterForm
-        key={aidLetter?.id ?? profile?.id ?? "new"}
+        key={`${aidLetter?.id ?? "new"}-${aidLetter?.updated_at ?? ""}`}
         aidLetter={aidLetter}
         profile={profile}
         saveAidLetter={saveAidLetter}

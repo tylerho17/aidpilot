@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { DemoNotice } from "@/components/DemoNotice";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
@@ -11,11 +10,11 @@ import {
   formatDueDate,
   getUpcomingDeadlines,
   getScholarshipStatsFromDb,
+  resolveScholarshipMatches,
 } from "@/lib/data-helpers";
-import { DEMO_WEEKLY_REPORT, DEMO_DEADLINES, getScholarshipStats, getWeeklyScholarships } from "@/lib/demo-data";
 
 export default function ReportClient() {
-  const { loading, isDemo, profile, tasks, documents, scholarships, deadlines, weeklyReport } = useUserData();
+  const { loading, profile, tasks, documents, scholarships, deadlines, weeklyReport } = useUserData();
 
   if (loading) {
     return (
@@ -25,29 +24,26 @@ export default function ReportClient() {
     );
   }
 
-  const report = isDemo
-    ? DEMO_WEEKLY_REPORT
-    : weeklyReport
-      ? {
-          aid_status: weeklyReport.aid_status,
-          summary: weeklyReport.summary ?? "",
-          tasks_due_count: weeklyReport.tasks_due_count,
-          missing_documents_count: weeklyReport.missing_documents_count,
-          scholarship_count: weeklyReport.scholarship_count,
-          potential_scholarship_amount: weeklyReport.potential_scholarship_amount,
-          recommendations: weeklyReport.recommendations ?? [],
-        }
-      : buildClientWeeklyReport(tasks, documents, scholarships, deadlines);
+  const report = weeklyReport
+    ? {
+        aid_status: weeklyReport.aid_status,
+        summary: weeklyReport.summary ?? "",
+        tasks_due_count: weeklyReport.tasks_due_count,
+        missing_documents_count: weeklyReport.missing_documents_count,
+        scholarship_count: weeklyReport.scholarship_count,
+        potential_scholarship_amount: weeklyReport.potential_scholarship_amount,
+        recommendations: weeklyReport.recommendations ?? [],
+      }
+    : buildClientWeeklyReport(tasks, documents, scholarships, deadlines);
 
-  const scholarshipStats = isDemo ? getScholarshipStats() : getScholarshipStatsFromDb(scholarships);
-  const upcomingDeadlines = isDemo ? DEMO_DEADLINES.slice(0, 3) : getUpcomingDeadlines(deadlines, 3);
-  const topScholarships = isDemo ? getWeeklyScholarships().slice(0, 3) : scholarships.slice(0, 3);
+  const scholarshipStats = getScholarshipStatsFromDb(scholarships);
+  const upcomingDeadlines = getUpcomingDeadlines(deadlines, 3);
+  const topScholarships = resolveScholarshipMatches(scholarships).slice(0, 3);
   const statusTone =
     report.aid_status === "Protected" ? "green" : report.aid_status === "At risk" ? "coral" : "amber";
 
   return (
     <AppShell>
-      {isDemo && <DemoNotice />}
 
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
@@ -58,7 +54,7 @@ export default function ReportClient() {
         </p>
       </div>
 
-      {!isDemo && !weeklyReport && (
+      {!weeklyReport && (
         <ProductCard style={{ padding: 20, marginBottom: 22, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
           <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
             Showing a live summary from your current data. Your first saved weekly report appears after onboarding.
@@ -69,7 +65,7 @@ export default function ReportClient() {
       <ProductCard style={{ padding: 28, marginBottom: 22, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
           <PillBadge tone={statusTone}>{report.aid_status}</PillBadge>
-          {!isDemo && profile?.school && (
+          {profile?.school && (
             <span style={{ fontSize: 13, fontWeight: 600, color: "#6B7280" }}>{profile.school}</span>
           )}
         </div>
@@ -125,16 +121,10 @@ export default function ReportClient() {
           {topScholarships.map((s) => (
             <div key={s.id ?? s.name} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 14px", borderRadius: 12, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#15212E" }}>{"name" in s ? s.name : ""}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
-                  {"amountLabel" in s ? s.amountLabel : `$${(s.amount ?? 0).toLocaleString()}`}
-                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#15212E" }}>{s.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>${(s.amount ?? 0).toLocaleString()}</div>
               </div>
-              {"match" in s ? (
-                <PillBadge tone="blue">{s.match}% match</PillBadge>
-              ) : (
-                <PillBadge tone="blue">{s.match_percent}% match</PillBadge>
-              )}
+              <PillBadge tone="blue">{s.match_percent ?? 0}% match</PillBadge>
             </div>
           ))}
         </div>
