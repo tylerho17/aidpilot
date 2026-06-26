@@ -7,15 +7,51 @@ export type StudentProfile = {
   first_name: string | null;
   email: string | null;
   school: string | null;
+  school_id: string | null;
   year: string | null;
   state: string | null;
   student_type: string | null;
   fafsa_status: string | null;
   aid_types: string[] | null;
   main_goals: string[] | null;
+  majors: string[] | null;
+  interests: string[] | null;
+  first_gen: boolean | null;
+  transfer_student: boolean | null;
+  pell_eligible: boolean | null;
+  cal_grant_eligible: boolean | null;
+  gpa: number | null;
+  essay_preference: string | null;
   scholarship_preferences?: ScholarshipPreferences | Record<string, unknown> | null;
   is_onboarded: boolean;
 };
+
+export const AID_TASK_STATUSES = [
+  "Complete",
+  "Due Soon",
+  "Missing",
+  "Needs Review",
+  "Optional",
+  "Upcoming",
+] as const;
+
+export const DEADLINE_STATUSES = [
+  "upcoming",
+  "due soon",
+  "needs attention",
+  "completed",
+] as const;
+
+export const DOCUMENT_STATUSES = [
+  "not_started",
+  "needed",
+  "submitted",
+  "verified",
+] as const;
+
+export type AidTaskStatus = (typeof AID_TASK_STATUSES)[number];
+export type DeadlineStatus = (typeof DEADLINE_STATUSES)[number];
+export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 
 export type AidTask = {
   id: string;
@@ -24,7 +60,7 @@ export type AidTask = {
   user_id: string;
   title: string;
   description: string | null;
-  status: string;
+  status: AidTaskStatus | string;
   due_date: string | null;
   category: string | null;
   priority: string | null;
@@ -36,7 +72,7 @@ export type DocumentItem = {
   updated_at: string | null;
   user_id: string;
   title: string;
-  status: string;
+  status: DocumentStatus | string;
   source: string | null;
   due_date: string | null;
   note: string | null;
@@ -121,7 +157,7 @@ export type Deadline = {
   deadline_date: string;
   category: string | null;
   priority: string | null;
-  status: string;
+  status: DeadlineStatus | string;
   source_type: string | null;
   source_name: string | null;
   action_url: string | null;
@@ -193,6 +229,7 @@ export type OnboardingFormData = {
   first_name: string;
   email: string;
   school: string;
+  school_id: string | null;
   year: string;
   state: string;
   student_type: string;
@@ -203,6 +240,14 @@ export type OnboardingFormData = {
   essay_preference: string;
   effort_preference: string;
   major_interests: string;
+  majors: string[];
+  interests: string[];
+  first_gen: boolean;
+  transfer_student: boolean;
+  pell_eligible: boolean;
+  cal_grant_eligible: boolean;
+  gpa: string;
+  profile_essay_preference: string;
 };
 
 export type AidRecommendation = {

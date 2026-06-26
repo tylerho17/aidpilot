@@ -11,7 +11,14 @@ import {
   SCHOLARSHIP_CATEGORY_OPTIONS,
   parseScholarshipPreferences,
 } from "@/lib/scholarship-preferences";
+import { joinCommaSeparated, parseCommaSeparated } from "@/lib/data-helpers";
 import type { OnboardingFormData, School } from "@/lib/types";
+
+const PROFILE_ESSAY_OPTIONS = [
+  { value: "any", label: "Any (essays okay)" },
+  { value: "prefer_no_essay", label: "Prefer no essay" },
+  { value: "okay_with_essay", label: "Okay with essays" },
+];
 
 const SCHOOL_FALLBACK = [
   { label: "UC Irvine", value: "UC Irvine" },
@@ -53,9 +60,18 @@ export default function OnboardingPage() {
     essay_preference: "no_preference",
     effort_preference: "any",
     major_interests: "",
+    school_id: null,
+    majors: [],
+    interests: [],
+    first_gen: false,
+    transfer_student: false,
+    pell_eligible: false,
+    cal_grant_eligible: false,
+    gpa: "",
+    profile_essay_preference: "any",
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const pct = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -104,6 +120,15 @@ export default function OnboardingPage() {
           essay_preference: prefs.essay_preference ?? prev.essay_preference,
           effort_preference: prefs.effort_preference ?? prev.effort_preference,
           major_interests: prefs.major_interests ?? prev.major_interests,
+          school_id: profile.school_id ?? prev.school_id,
+          majors: profile.majors ?? prev.majors,
+          interests: profile.interests ?? prev.interests,
+          first_gen: profile.first_gen ?? prev.first_gen,
+          transfer_student: profile.transfer_student ?? prev.transfer_student,
+          pell_eligible: profile.pell_eligible ?? prev.pell_eligible,
+          cal_grant_eligible: profile.cal_grant_eligible ?? prev.cal_grant_eligible,
+          gpa: profile.gpa != null ? String(profile.gpa) : prev.gpa,
+          profile_essay_preference: profile.essay_preference ?? prev.profile_essay_preference,
         }));
       }
 
@@ -186,17 +211,28 @@ export default function OnboardingPage() {
         major_interests: form.major_interests.trim(),
       };
 
+      const matchedSchool = schools.find((s) => s.name === resolvedSchool);
+
       const { error: profileError } = await supabase.from("student_profiles").upsert({
         id: user.id,
         first_name: form.first_name,
         email: form.email,
         school: resolvedSchool,
+        school_id: matchedSchool?.id ?? form.school_id,
         year: form.year,
         state: form.state,
         student_type: form.student_type,
         fafsa_status: form.fafsa_status,
         aid_types: form.aid_types,
         main_goals: form.main_goals,
+        majors: form.majors.length ? form.majors : parseCommaSeparated(form.major_interests),
+        interests: form.interests,
+        first_gen: form.first_gen,
+        transfer_student: form.transfer_student,
+        pell_eligible: form.pell_eligible,
+        cal_grant_eligible: form.cal_grant_eligible,
+        gpa: form.gpa.trim() ? Number(form.gpa) : null,
+        essay_preference: form.profile_essay_preference,
         scholarship_preferences: scholarshipPreferences,
         is_onboarded: true,
         updated_at: new Date().toISOString(),
@@ -374,7 +410,7 @@ export default function OnboardingPage() {
           {step === 4 && (
             <>
               <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Scholarship preferences improve match quality. You can change these anytime in Settings.
+                Scholarship categories and effort preferences improve match quality. You can change these anytime in Settings.
               </p>
               <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Scholarship interests</p>
               {SCHOLARSHIP_CATEGORY_OPTIONS.map((o) => (
@@ -399,9 +435,49 @@ export default function OnboardingPage() {
                   ))}
                 </select>
               </label>
+            </>
+          )}
+
+          {step === 5 && (
+            <>
+              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+                Tell us only what helps matching. Never enter SSNs, bank info, or FAFSA passwords.
+              </p>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Major or interests (optional)</span>
-                <input style={inputStyle} placeholder="e.g. Computer science, nursing" value={form.major_interests} onChange={(e) => setForm({ ...form, major_interests: e.target.value })} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Majors</span>
+                <input style={inputStyle} placeholder="e.g. computer science, nursing" value={joinCommaSeparated(form.majors)} onChange={(e) => setForm({ ...form, majors: parseCommaSeparated(e.target.value) })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Interests</span>
+                <input style={inputStyle} placeholder="e.g. robotics, community service" value={joinCommaSeparated(form.interests)} onChange={(e) => setForm({ ...form, interests: parseCommaSeparated(e.target.value) })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>GPA (optional)</span>
+                <input style={inputStyle} type="number" min={0} max={4} step={0.01} placeholder="3.50" value={form.gpa} onChange={(e) => setForm({ ...form, gpa: e.target.value })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
+                <select style={inputStyle} value={form.profile_essay_preference} onChange={(e) => setForm({ ...form, profile_essay_preference: e.target.value })}>
+                  {PROFILE_ESSAY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                <input type="checkbox" checked={form.first_gen} onChange={(e) => setForm({ ...form, first_gen: e.target.checked })} />
+                First-generation college student
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                <input type="checkbox" checked={form.transfer_student} onChange={(e) => setForm({ ...form, transfer_student: e.target.checked })} />
+                Transfer student
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                <input type="checkbox" checked={form.pell_eligible} onChange={(e) => setForm({ ...form, pell_eligible: e.target.checked })} />
+                Pell Grant eligible
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                <input type="checkbox" checked={form.cal_grant_eligible} onChange={(e) => setForm({ ...form, cal_grant_eligible: e.target.checked })} />
+                Cal Grant eligible
               </label>
             </>
           )}

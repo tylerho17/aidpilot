@@ -92,7 +92,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const adminHref = "/admin/scholarships";
   const adminActive = pathname === adminHref || pathname.startsWith("/admin/");
 
-  const profileReady = !loading && Boolean(user);
+  const profileReady = Boolean(user);
+  const showProfileSkeleton = loading && !user;
   const displayName = profile?.first_name ?? (user?.email ? user.email.split("@")[0] : "Student");
   const displaySchool =
     [profile?.year, profile?.school].filter(Boolean).join(" · ") || "Complete your profile in Settings";
@@ -126,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div style={{ padding: "14px 16px", margin: "12px", background: "rgba(255,255,255,.1)", borderRadius: 14 }}>
-          {!profileReady ? (
+          {!showProfileSkeleton ? (
             <ProfileSkeleton />
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -150,14 +151,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           {NAV.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href;
             return (
-              <Link key={href} href={href} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
+              <Link key={href} href={href} prefetch style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
                 <Icon color={isActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
                 {label}
               </Link>
             );
           })}
           {isScholarshipAdmin && (
-            <Link href={adminHref} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
+            <Link href={adminHref} prefetch style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
               <ShieldSVG color={adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
               Admin
             </Link>

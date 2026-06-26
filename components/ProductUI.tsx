@@ -105,3 +105,13 @@ export function ProgressBar({ pct, color = "linear-gradient(90deg,#0B5CAD,#3E86D
     </div>
   );
 }
+
+export function PageContentSkeleton({ message }: { message?: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {message ? <p style={{ color: "#9AA4B2", margin: 0 }}>{message}</p> : null}
+      <div style={{ height: 120, borderRadius: 16, background: "#E9EDF2" }} />
+      <div style={{ height: 120, borderRadius: 16, background: "#E9EDF2" }} />
+    </div>
+  );
+}

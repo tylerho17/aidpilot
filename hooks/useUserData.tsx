@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { checkScholarshipAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +37,10 @@ import type {
   WeeklyReport,
 } from "@/lib/types";
 
+type UserDataContextValue = ReturnType<typeof useUserDataState>;
+
+const UserDataContext = createContext<UserDataContextValue | null>(null);
+
 function buildIntelligenceUserData(state: {
   profile: StudentProfile | null;
   tasks: AidTask[];
@@ -44,7 +57,7 @@ function buildIntelligenceUserData(state: {
   return { ...state };
 }
 
-export function useUserData() {
+function useUserDataState() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -63,6 +76,9 @@ export function useUserData() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
+  const hasLoadedOnceRef = useRef(false);
+  const adminCacheRef = useRef<{ userId: string; isAdmin: boolean } | null>(null);
+  const loadInFlightRef = useRef<Promise<void> | null>(null);
 
   const getIntelligenceUserData = useCallback(
     (): IntelligenceUserData =>
@@ -94,134 +110,170 @@ export function useUserData() {
     ]
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    setScholarshipSchemaError(null);
-
-    try {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      if (!authUser) {
-        setUser(null);
-        setProfile(null);
-        setTasks([]);
-        setDocuments([]);
-        setScholarships([]);
-        setDeadlines([]);
-        setAidLetters([]);
-        setWeeklyReports([]);
-        setRecommendations([]);
-        setUserFafsaSteps([]);
-        setWorkflowSteps([]);
-        setScholarshipSources([]);
-        setIsScholarshipAdmin(false);
+  const loadData = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (loadInFlightRef.current) {
+        await loadInFlightRef.current;
         return;
       }
 
-      setUser(authUser);
-
-      const [
-        adminFlag,
-        profileRes,
-        tasksRes,
-        docsRes,
-        scholarshipsRes,
-        deadlinesRes,
-        aidLettersRes,
-        reportsRes,
-        recsRes,
-        userStepsRes,
-        workflowRes,
-        sourcesRes,
-      ] = await Promise.all([
-        checkScholarshipAdmin(supabase),
-        supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
-        supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
-        supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
-        supabase.from("scholarship_matches").select("*").eq("user_id", authUser.id).order("match_percent", { ascending: false }),
-        supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
-        supabase.from("aid_letters").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-        supabase.from("weekly_reports").select("*").eq("user_id", authUser.id).order("report_week_start", { ascending: false }),
-        supabase.from("aid_recommendations").select("*").eq("user_id", authUser.id).eq("status", "active").order("priority"),
-        supabase.from("user_fafsa_steps").select("*").eq("user_id", authUser.id).order("created_at"),
-        supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
-        supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
-      ]);
-
-      setIsScholarshipAdmin(adminFlag);
-
-      const errors = [
-        profileRes.error,
-        tasksRes.error,
-        docsRes.error,
-        scholarshipsRes.error,
-        deadlinesRes.error,
-        aidLettersRes.error,
-        reportsRes.error,
-        recsRes.error,
-        userStepsRes.error,
-        workflowRes.error,
-        sourcesRes.error,
-      ].filter(Boolean);
-
-      if (errors.length > 0) {
-        console.error("useUserData: some queries failed", errors);
-        if (errors.some((err) => isScholarshipSchemaError(err))) {
-          setScholarshipSchemaError(SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE);
-        } else {
-          setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+      const run = async () => {
+        const isInitialLoad = !hasLoadedOnceRef.current;
+        if (isInitialLoad && !options?.silent) {
+          setLoading(true);
         }
-      }
 
-      setProfile(profileRes.data);
-      setTasks(tasksRes.data ?? []);
-      setDocuments(docsRes.data ?? []);
-      setScholarships(scholarshipsRes.data ?? []);
-      setDeadlines(deadlinesRes.data ?? []);
-      setAidLetters((aidLettersRes.data ?? []) as AidLetter[]);
-      setWeeklyReports((reportsRes.data ?? []) as WeeklyReport[]);
-      setRecommendations((recsRes.data ?? []) as AidRecommendation[]);
-      setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
-      setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
-      setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
+        if (!options?.silent) {
+          setLoadError(null);
+          setScholarshipSchemaError(null);
+        }
 
-      const workflowCount = (workflowRes.data ?? []).length;
-      const userStepCount = (userStepsRes.data ?? []).length;
-      if (workflowCount > 0 && userStepCount < workflowCount) {
-        void (async () => {
-          try {
-            await seedUserFafsaSteps(supabase, authUser.id);
-            const { data: seededSteps } = await supabase
-              .from("user_fafsa_steps")
+        try {
+          const {
+            data: { user: authUser },
+          } = await supabase.auth.getUser();
+
+          if (!authUser) {
+            setUser(null);
+            setProfile(null);
+            setTasks([]);
+            setDocuments([]);
+            setScholarships([]);
+            setDeadlines([]);
+            setAidLetters([]);
+            setWeeklyReports([]);
+            setRecommendations([]);
+            setUserFafsaSteps([]);
+            setWorkflowSteps([]);
+            setScholarshipSources([]);
+            setIsScholarshipAdmin(false);
+            adminCacheRef.current = null;
+            return;
+          }
+
+          setUser(authUser);
+
+          const cachedAdmin = adminCacheRef.current;
+          const adminPromise =
+            cachedAdmin?.userId === authUser.id
+              ? Promise.resolve(cachedAdmin.isAdmin)
+              : checkScholarshipAdmin(supabase).then((isAdmin) => {
+                  adminCacheRef.current = { userId: authUser.id, isAdmin };
+                  return isAdmin;
+                });
+
+          const [
+            adminFlag,
+            profileRes,
+            tasksRes,
+            docsRes,
+            scholarshipsRes,
+            deadlinesRes,
+            aidLettersRes,
+            reportsRes,
+            recsRes,
+            userStepsRes,
+            workflowRes,
+            sourcesRes,
+          ] = await Promise.all([
+            adminPromise,
+            supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
+            supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
+            supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
+            supabase
+              .from("scholarship_matches")
               .select("*")
               .eq("user_id", authUser.id)
-              .order("created_at");
-            setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
-          } catch (err) {
-            console.error("Failed to seed user FAFSA steps:", err);
+              .order("match_percent", { ascending: false }),
+            supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
+            supabase.from("aid_letters").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
+            supabase.from("weekly_reports").select("*").eq("user_id", authUser.id).order("report_week_start", { ascending: false }),
+            supabase.from("aid_recommendations").select("*").eq("user_id", authUser.id).eq("status", "active").order("priority"),
+            supabase.from("user_fafsa_steps").select("*").eq("user_id", authUser.id).order("created_at"),
+            supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
+            supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
+          ]);
+
+          setIsScholarshipAdmin(adminFlag);
+
+          const errors = [
+            profileRes.error,
+            tasksRes.error,
+            docsRes.error,
+            scholarshipsRes.error,
+            deadlinesRes.error,
+            aidLettersRes.error,
+            reportsRes.error,
+            recsRes.error,
+            userStepsRes.error,
+            workflowRes.error,
+            sourcesRes.error,
+          ].filter(Boolean);
+
+          if (errors.length > 0) {
+            console.error("useUserData: some queries failed", errors);
+            if (errors.some((err) => isScholarshipSchemaError(err))) {
+              setScholarshipSchemaError(SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE);
+            } else if (!options?.silent) {
+              setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+            }
           }
-        })();
-      }
-    } catch (err) {
-      console.error("useUserData: loadData failed", err);
-      setLoadError(err instanceof Error ? err.message : "Could not load your data. Please refresh the page.");
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+
+          setProfile(profileRes.data);
+          setTasks(tasksRes.data ?? []);
+          setDocuments(docsRes.data ?? []);
+          setScholarships(scholarshipsRes.data ?? []);
+          setDeadlines(deadlinesRes.data ?? []);
+          setAidLetters((aidLettersRes.data ?? []) as AidLetter[]);
+          setWeeklyReports((reportsRes.data ?? []) as WeeklyReport[]);
+          setRecommendations((recsRes.data ?? []) as AidRecommendation[]);
+          setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
+          setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
+          setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
+
+          const workflowCount = (workflowRes.data ?? []).length;
+          const userStepCount = (userStepsRes.data ?? []).length;
+          if (workflowCount > 0 && userStepCount < workflowCount) {
+            void (async () => {
+              try {
+                await seedUserFafsaSteps(supabase, authUser.id);
+                const { data: seededSteps } = await supabase
+                  .from("user_fafsa_steps")
+                  .select("*")
+                  .eq("user_id", authUser.id)
+                  .order("created_at");
+                setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
+              } catch (err) {
+                console.error("Failed to seed user FAFSA steps:", err);
+              }
+            })();
+          }
+        } catch (err) {
+          console.error("useUserData: loadData failed", err);
+          if (!options?.silent) {
+            setLoadError(err instanceof Error ? err.message : "Could not load your data. Please refresh the page.");
+          }
+        } finally {
+          hasLoadedOnceRef.current = true;
+          setLoading(false);
+          loadInFlightRef.current = null;
+        }
+      };
+
+      loadInFlightRef.current = run();
+      await loadInFlightRef.current;
+    },
+    [supabase]
+  );
 
   useEffect(() => {
-    void supabase.auth.getSession().then(() => {
-      loadData();
-    });
+    void loadData();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      loadData();
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
+      void loadData({ silent: true });
     });
 
     return () => subscription.unsubscribe();
@@ -484,6 +536,8 @@ export function useUserData() {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    hasLoadedOnceRef.current = false;
+    adminCacheRef.current = null;
     await loadData();
   };
 
@@ -528,4 +582,17 @@ export function useUserData() {
     startScholarship,
     logout,
   };
+}
+
+export function UserDataProvider({ children }: { children: ReactNode }) {
+  const value = useUserDataState();
+  return <UserDataContext.Provider value={value}>{children}</UserDataContext.Provider>;
+}
+
+export function useUserData() {
+  const context = useContext(UserDataContext);
+  if (!context) {
+    throw new Error("useUserData must be used within UserDataProvider");
+  }
+  return context;
 }

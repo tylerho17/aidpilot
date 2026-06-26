@@ -6,7 +6,7 @@ import { useUserData } from "@/hooks/useUserData";
 export function AdminGate({ children }: { children: React.ReactNode }) {
   const { loading, user, isScholarshipAdmin } = useUserData();
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div style={{ minHeight: "100vh", padding: 40, fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
         <p style={{ color: "#9AA4B2" }}>Checking admin access...</p>

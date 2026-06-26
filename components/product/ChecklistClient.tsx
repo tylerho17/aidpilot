@@ -8,44 +8,36 @@ import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, ProductCard, ProgressBar, StatCard } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
 import {
+  AID_TASK_STATUSES,
+  DOCUMENT_STATUSES,
   formatDueDate,
+  formatDocumentStatus,
   getAttentionCountFromTasks,
   getChecklistProgressFromTasks,
   getMissingDocumentCountFromDocs,
   getNextDeadlineFromTasks,
   documentStatusToTone,
-  formatDocumentStatus,
+  isAidTaskComplete,
+  normalizeAidTaskStatus,
   statusToTone,
 } from "@/lib/data-helpers";
 import type { AidTask, DocumentItem } from "@/lib/types";
 
-const DOCUMENT_STATUSES = ["not_started", "needed", "submitted", "verified"] as const;
-const TASK_STATUSES = ["not_started", "in_progress", "blocked", "complete"] as const;
-const LEGACY_TASK_STATUSES = ["Missing", "Due Soon", "Needs Review", "Optional", "Upcoming", "Complete"] as const;
-
 const STATUS_ORDER: Record<string, number> = {
-  blocked: 0,
   Missing: 0,
-  in_progress: 1,
   "Due Soon": 1,
-  not_started: 2,
   "Needs Review": 2,
   Optional: 3,
   Upcoming: 4,
-  complete: 5,
   Complete: 5,
 };
 
 function sortDbTasks(tasks: AidTask[]) {
-  return [...tasks].sort((a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99));
-}
-
-function formatTaskStatus(status: string) {
-  return status.replace(/_/g, " ");
-}
-
-function isTaskComplete(status: string) {
-  return status === "complete" || status === "Complete";
+  return [...tasks].sort(
+    (a, b) =>
+      (STATUS_ORDER[normalizeAidTaskStatus(a.status)] ?? 99) -
+      (STATUS_ORDER[normalizeAidTaskStatus(b.status)] ?? 99)
+  );
 }
 
 export default function ChecklistClient() {
@@ -74,7 +66,7 @@ export default function ChecklistClient() {
           Aid Checklist
         </h1>
         <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Track every step needed to protect your financial aid. Change any task status anytime.
+          Track every step needed to protect your financial aid. You can change any task status anytime.
         </p>
       </div>
 
@@ -99,7 +91,7 @@ export default function ChecklistClient() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {categories.map((cat) => {
             const catTasks = tasks.filter((t) => t.category === cat);
-            const done = catTasks.filter((t) => isTaskComplete(t.status)).length;
+            const done = catTasks.filter((t) => isAidTaskComplete(t.status)).length;
             return (
               <span key={cat} style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "6px 12px", borderRadius: 999 }}>
                 {cat} · {done}/{catTasks.length}
@@ -111,7 +103,8 @@ export default function ChecklistClient() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1.15fr .85fr", gap: 22, alignItems: "start" }}>
         <ProductCard style={{ padding: 26 }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 18px", color: "#15212E" }}>All checklist tasks</h2>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>All checklist tasks</h2>
+          <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.5 }}>You can change this later.</p>
           {sortedDb.length === 0 ? (
             <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No tasks yet. Tasks appear as your aid plan is set up.</p>
           ) : (
@@ -121,31 +114,31 @@ export default function ChecklistClient() {
                   key={item.id}
                   title={item.title}
                   description={item.description ?? ""}
-                  status={item.status}
+                  status={normalizeAidTaskStatus(item.status)}
                   due={formatDueDate(item.due_date, item.status)}
                   category={item.category ?? ""}
                   priority={item.priority ?? "Medium"}
                   tone={statusToTone(item.status)}
                   action={
-                    <select
-                      value={[...TASK_STATUSES, ...LEGACY_TASK_STATUSES].includes(item.status as (typeof TASK_STATUSES)[number]) ? item.status : "not_started"}
-                      onChange={async (e) => {
-                        setError("");
-                        try {
-                          await updateTaskStatus(item.id, e.target.value);
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : "Could not update task.");
-                        }
-                      }}
-                      style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
-                    >
-                      {TASK_STATUSES.map((status) => (
-                        <option key={status} value={status}>{formatTaskStatus(status)}</option>
-                      ))}
-                      {LEGACY_TASK_STATUSES.filter((s) => !TASK_STATUSES.includes(s as (typeof TASK_STATUSES)[number])).map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
+                    <label style={{ display: "inline-flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#9AA4B2", textTransform: "uppercase", letterSpacing: ".4px" }}>Update status</span>
+                      <select
+                        value={normalizeAidTaskStatus(item.status)}
+                        onChange={async (e) => {
+                          setError("");
+                          try {
+                            await updateTaskStatus(item.id, e.target.value);
+                          } catch (err) {
+                            setError(err instanceof Error ? err.message : "Could not update task.");
+                          }
+                        }}
+                        style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
+                      >
+                        {AID_TASK_STATUSES.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </label>
                   }
                 />
               ))}
@@ -230,12 +223,12 @@ function TaskRow({
   tone: "green" | "amber" | "coral" | "blue" | "gray";
   action?: ReactNode;
 }) {
-  const complete = isTaskComplete(status);
+  const complete = isAidTaskComplete(status);
   return (
     <div className="card-lift" style={{ padding: "14px 16px", borderRadius: 14, border: "1px solid #EAEEF3", background: complete ? "#F5FBF7" : "#fff" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: complete ? "#7C9A89" : "#15212E", textDecoration: complete ? "line-through" : "none" }}>{title}</div>
-        <PillBadge tone={tone}>{formatTaskStatus(status)}</PillBadge>
+        <PillBadge tone={tone}>{status}</PillBadge>
       </div>
       <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.55 }}>{description}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
