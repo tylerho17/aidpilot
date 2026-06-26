@@ -88,17 +88,18 @@ function ProfileSkeleton() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { loading, profile, user, logout, isScholarshipAdmin } = useUserData();
+  const { authReady, profile, user, logout, isScholarshipAdmin } = useUserData();
   const adminHref = "/admin/scholarships";
   const adminActive = pathname === adminHref || pathname.startsWith("/admin/");
 
-  const profileReady = Boolean(user);
-  const showProfileSkeleton = loading && !user;
-  const displayName = profile?.first_name ?? (user?.email ? user.email.split("@")[0] : "Student");
+  const isSignedIn = Boolean(user);
+  const showProfileSkeleton = !authReady;
+  const displayName = profile?.first_name?.trim() || (user?.email ? user.email.split("@")[0] : "Student");
+  const displayEmail = user?.email?.trim() || profile?.email?.trim() || "";
   const displaySchool =
-    [profile?.year, profile?.school].filter(Boolean).join(" · ") || "Complete your profile in Settings";
-  const displayTag = profile?.student_type ?? "";
-  const initials = getInitials(profile?.first_name ?? user?.email?.split("@")[0]);
+    [profile?.year, profile?.school].filter(Boolean).join(" · ") || null;
+  const displayTag = profile?.student_type?.trim() || "";
+  const initials = getInitials(profile?.first_name?.trim() || user?.email?.split("@")[0]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-hanken), system-ui, sans-serif", background: "#F4F8FE" }}>
@@ -127,9 +128,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div style={{ padding: "14px 16px", margin: "12px", background: "rgba(255,255,255,.1)", borderRadius: 14 }}>
-          {!showProfileSkeleton ? (
+          {showProfileSkeleton ? (
             <ProfileSkeleton />
-          ) : (
+          ) : isSignedIn ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ display: "flex", width: 34, height: 34, borderRadius: "50%", background: "#EAF3FF", color: "#0B5CAD", fontWeight: 800, fontSize: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {initials}
@@ -138,13 +139,26 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {displayName}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>{displaySchool}</div>
+                {displayEmail ? (
+                  <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {displayEmail}
+                  </div>
+                ) : null}
+                {displaySchool ? (
+                  <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: displayEmail ? 2 : 0 }}>
+                    {displaySchool}
+                  </div>
+                ) : !displayEmail ? (
+                  <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,.6)" }}>
+                    Complete your profile in Settings
+                  </div>
+                ) : null}
                 {displayTag ? (
                   <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginTop: 2 }}>{displayTag}</div>
                 ) : null}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3, overflowY: "auto" }}>
@@ -175,8 +189,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => logout()}
-            disabled={!profileReady}
-            style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: profileReady ? "pointer" : "not-allowed", opacity: profileReady ? 1 : 0.6, fontFamily: "inherit" }}
+            disabled={!isSignedIn}
+            style={{ display: "block", width: "100%", textAlign: "center", fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#fff", padding: "7px 12px", borderRadius: 999, border: "none", cursor: isSignedIn ? "pointer" : "not-allowed", opacity: isSignedIn ? 1 : 0.6, fontFamily: "inherit" }}
           >
             Log out
           </button>

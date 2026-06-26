@@ -59,6 +59,7 @@ function buildIntelligenceUserData(state: {
 
 function useUserDataState() {
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [tasks, setTasks] = useState<AidTask[]>([]);
@@ -130,10 +131,19 @@ function useUserDataState() {
 
         try {
           const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const sessionUser = session?.user ?? null;
+          if (sessionUser) {
+            setUser(sessionUser);
+          }
+
+          const {
             data: { user: authUser },
           } = await supabase.auth.getUser();
+          const resolvedUser = authUser ?? sessionUser;
 
-          if (!authUser) {
+          if (!resolvedUser) {
             setUser(null);
             setProfile(null);
             setTasks([]);
@@ -148,17 +158,19 @@ function useUserDataState() {
             setScholarshipSources([]);
             setIsScholarshipAdmin(false);
             adminCacheRef.current = null;
+            setAuthReady(true);
             return;
           }
 
-          setUser(authUser);
+          setUser(resolvedUser);
+          setAuthReady(true);
 
           const cachedAdmin = adminCacheRef.current;
           const adminPromise =
-            cachedAdmin?.userId === authUser.id
+            cachedAdmin?.userId === resolvedUser.id
               ? Promise.resolve(cachedAdmin.isAdmin)
               : checkScholarshipAdmin(supabase).then((isAdmin) => {
-                  adminCacheRef.current = { userId: authUser.id, isAdmin };
+                  adminCacheRef.current = { userId: resolvedUser.id, isAdmin };
                   return isAdmin;
                 });
 
@@ -177,19 +189,19 @@ function useUserDataState() {
             sourcesRes,
           ] = await Promise.all([
             adminPromise,
-            supabase.from("student_profiles").select("*").eq("id", authUser.id).maybeSingle(),
-            supabase.from("aid_tasks").select("*").eq("user_id", authUser.id).order("created_at"),
-            supabase.from("document_items").select("*").eq("user_id", authUser.id).order("created_at"),
+            supabase.from("student_profiles").select("*").eq("id", resolvedUser.id).maybeSingle(),
+            supabase.from("aid_tasks").select("*").eq("user_id", resolvedUser.id).order("created_at"),
+            supabase.from("document_items").select("*").eq("user_id", resolvedUser.id).order("created_at"),
             supabase
               .from("scholarship_matches")
               .select("*")
-              .eq("user_id", authUser.id)
+              .eq("user_id", resolvedUser.id)
               .order("match_percent", { ascending: false }),
-            supabase.from("deadlines").select("*").eq("user_id", authUser.id).order("deadline_date"),
-            supabase.from("aid_letters").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }),
-            supabase.from("weekly_reports").select("*").eq("user_id", authUser.id).order("report_week_start", { ascending: false }),
-            supabase.from("aid_recommendations").select("*").eq("user_id", authUser.id).eq("status", "active").order("priority"),
-            supabase.from("user_fafsa_steps").select("*").eq("user_id", authUser.id).order("created_at"),
+            supabase.from("deadlines").select("*").eq("user_id", resolvedUser.id).order("deadline_date"),
+            supabase.from("aid_letters").select("*").eq("user_id", resolvedUser.id).order("created_at", { ascending: false }),
+            supabase.from("weekly_reports").select("*").eq("user_id", resolvedUser.id).order("report_week_start", { ascending: false }),
+            supabase.from("aid_recommendations").select("*").eq("user_id", resolvedUser.id).eq("status", "active").order("priority"),
+            supabase.from("user_fafsa_steps").select("*").eq("user_id", resolvedUser.id).order("created_at"),
             supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
             supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
           ]);
@@ -236,11 +248,11 @@ function useUserDataState() {
           if (workflowCount > 0 && userStepCount < workflowCount) {
             void (async () => {
               try {
-                await seedUserFafsaSteps(supabase, authUser.id);
+                await seedUserFafsaSteps(supabase, resolvedUser.id);
                 const { data: seededSteps } = await supabase
                   .from("user_fafsa_steps")
                   .select("*")
-                  .eq("user_id", authUser.id)
+                  .eq("user_id", resolvedUser.id)
                   .order("created_at");
                 setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
               } catch (err) {
@@ -255,6 +267,7 @@ function useUserDataState() {
           }
         } finally {
           hasLoadedOnceRef.current = true;
+          setAuthReady(true);
           setLoading(false);
           loadInFlightRef.current = null;
         }
@@ -271,8 +284,15 @@ function useUserDataState() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
+      if (event === "INITIAL_SESSION") {
+        if (session?.user) {
+          setUser(session.user);
+          setAuthReady(true);
+        }
+        return;
+      }
       void loadData({ silent: true });
     });
 
@@ -538,6 +558,7 @@ function useUserDataState() {
     await supabase.auth.signOut();
     hasLoadedOnceRef.current = false;
     adminCacheRef.current = null;
+    setAuthReady(false);
     await loadData();
   };
 
@@ -546,6 +567,7 @@ function useUserDataState() {
 
   return {
     loading,
+    authReady,
     user,
     profile,
     tasks,
