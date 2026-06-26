@@ -87,7 +87,7 @@ export function getNextDeadlineFromTasks(tasks: AidTask[]) {
 }
 
 export function getScholarshipStatsFromDb(scholarships: ScholarshipMatch[]) {
-  const weekly = scholarships.filter((s) => s.status === "new");
+  const weekly = scholarships.filter((s) => s.status === "new" && !s.ignored && !s.applied);
   const totalPotential = weekly.reduce((sum, s) => sum + (s.amount ?? 0), 0);
   const strongMatches = weekly.filter((s) => (s.match_percent ?? 0) >= 88).length;
   const now = new Date();
@@ -108,9 +108,10 @@ export function getScholarshipStatsFromDb(scholarships: ScholarshipMatch[]) {
 }
 
 export function getFeaturedScholarshipFromDb(scholarships: ScholarshipMatch[]) {
+  const eligible = scholarships.filter((s) => !s.ignored && !s.applied && !s.is_saved);
   return (
-    scholarships.find((s) => s.status === "new" && (s.match_percent ?? 0) >= 90) ??
-    scholarships[0] ??
+    eligible.find((s) => (s.match_percent ?? 0) >= 90) ??
+    eligible[0] ??
     null
   );
 }

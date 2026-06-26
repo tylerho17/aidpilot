@@ -394,9 +394,17 @@ export function useUserData() {
   };
 
   const saveScholarship = async (scholarshipId: string) => {
+    const now = new Date().toISOString();
     const { data, error } = await supabase
       .from("scholarship_matches")
-      .update({ is_saved: true, status: "saved", updated_at: new Date().toISOString() })
+      .update({
+        is_saved: true,
+        status: "saved",
+        saved_at: now,
+        ignored: false,
+        ignored_at: null,
+        updated_at: now,
+      })
       .eq("id", scholarshipId)
       .select()
       .single();
@@ -405,10 +413,21 @@ export function useUserData() {
     setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
   };
 
-  const startScholarship = async (scholarshipId: string) => {
+  const applyScholarship = async (scholarshipId: string) => {
+    const now = new Date().toISOString();
     const { data, error } = await supabase
       .from("scholarship_matches")
-      .update({ is_started: true, status: "started", updated_at: new Date().toISOString() })
+      .update({
+        applied: true,
+        is_started: true,
+        is_saved: true,
+        applied_at: now,
+        saved_at: now,
+        status: "applied",
+        ignored: false,
+        ignored_at: null,
+        updated_at: now,
+      })
       .eq("id", scholarshipId)
       .select()
       .single();
@@ -416,6 +435,26 @@ export function useUserData() {
     if (error) throw new Error(error?.message ?? JSON.stringify(error));
     setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
   };
+
+  const ignoreScholarship = async (scholarshipId: string) => {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("scholarship_matches")
+      .update({
+        ignored: true,
+        ignored_at: now,
+        status: "ignored",
+        updated_at: now,
+      })
+      .eq("id", scholarshipId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    setScholarships((prev) => prev.map((s) => (s.id === scholarshipId ? (data as ScholarshipMatch) : s)));
+  };
+
+  const startScholarship = async (scholarshipId: string) => applyScholarship(scholarshipId);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -457,6 +496,8 @@ export function useUserData() {
     generateScholarshipMatches,
     generateWeeklyReport,
     saveScholarship,
+    applyScholarship,
+    ignoreScholarship,
     startScholarship,
     logout,
   };

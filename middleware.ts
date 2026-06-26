@@ -11,6 +11,7 @@ const PROTECTED_ROUTES = [
   "/aid-letter",
   "/settings",
   "/report",
+  "/report/scholarships",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -45,7 +46,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isProtected =
+    isAdminRoute ||
+    PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   if (!isProtected) {
     return response;
@@ -56,6 +60,10 @@ export async function middleware(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (isAdminRoute) {
+    return response;
   }
 
   if (pathname !== "/onboarding") {

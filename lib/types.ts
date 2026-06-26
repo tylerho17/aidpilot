@@ -54,6 +54,14 @@ export type ScholarshipMatch = {
   status: string;
   is_saved: boolean;
   is_started: boolean;
+  essay_angle: string | null;
+  effort_level: string | null;
+  recommended_action: string | null;
+  ignored: boolean;
+  applied: boolean;
+  saved_at: string | null;
+  applied_at: string | null;
+  ignored_at: string | null;
 };
 
 export type AidLetter = {
@@ -233,21 +241,28 @@ export type UserFafsaStep = {
 export type ScholarshipSource = {
   id: string;
   created_at: string;
+  updated_at?: string | null;
   name: string;
   provider: string | null;
   amount: number | null;
   deadline: string | null;
+  eligibility?: string | null;
   url: string | null;
+  application_url?: string | null;
+  source_url?: string | null;
   eligible_states: string[] | null;
   education_levels: string[] | null;
   student_types: string[] | null;
   major_keywords: string[] | null;
+  interest_tags?: string[] | null;
   tags: string[] | null;
   need_based: boolean;
   merit_based: boolean;
   essay_required: boolean;
+  effort_level?: string | null;
   min_gpa: number | null;
   source: string | null;
+  verified_date?: string | null;
   active: boolean;
 };
 
