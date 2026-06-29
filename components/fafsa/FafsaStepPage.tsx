@@ -10,6 +10,7 @@ import { useFafsaProgress } from "@/hooks/useFafsaProgress";
 import { FafsaSyncBanner } from "@/components/fafsa/FafsaSyncBanner";
 import {
   getFafsaStepHref,
+  getFollowUpTrackerHref,
   getOfficialStudentAidUrl,
   type FafsaStep,
   type FafsaRiskLevel,
@@ -235,6 +236,18 @@ export default function FafsaStepPage({ step }: FafsaStepPageProps) {
                 {step.primaryCtaLabel}
               </Link>
             )}
+
+            {step.followUpCtaLabel ? (
+              <Link href={getFollowUpTrackerHref()} style={secondaryBtn}>
+                {step.followUpCtaLabel}
+              </Link>
+            ) : null}
+
+            {step.aidDecoderCtaLabel ? (
+              <Link href="/aid-letter" style={secondaryBtn}>
+                {step.aidDecoderCtaLabel}
+              </Link>
+            ) : null}
 
             <button
               type="button"

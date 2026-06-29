@@ -8,11 +8,14 @@ const USER_TABLES = [
   "aid_recommendations",
   "weekly_reports",
   "aid_letters",
+  "user_aid_offers",
   "deadlines",
   "document_items",
   "aid_tasks",
   "user_fafsa_steps",
   "fafsa_step_progress",
+  "user_school_aid_tasks",
+  "user_school_aid_statuses",
   "student_profiles",
 ] as const;
 

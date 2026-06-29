@@ -1,5 +1,5 @@
-import AidLetterClient from "@/components/product/AidLetterClient";
+import AidOfferDecoderClient from "@/components/aid-letter/AidOfferDecoderClient";
 
 export default function AidLetterPage() {
-  return <AidLetterClient />;
+  return <AidOfferDecoderClient />;
 }

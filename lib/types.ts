@@ -391,6 +391,120 @@ export type ScholarshipSource = {
   active: boolean;
 };
 
+export const FAFSA_RECEIVED_STATUSES = [
+  "unknown",
+  "received",
+  "not_received",
+  "action_needed",
+] as const;
+
+export const PORTAL_CHECKED_STATUSES = ["not_checked", "checked", "action_needed"] as const;
+
+export const DOCUMENTS_REQUESTED_STATUSES = [
+  "unknown",
+  "none",
+  "requested",
+  "submitted",
+  "completed",
+] as const;
+
+export const VERIFICATION_STATUSES = [
+  "not_requested",
+  "requested",
+  "submitted",
+  "approved",
+  "action_needed",
+] as const;
+
+export const AID_OFFER_STATUSES = [
+  "not_received",
+  "estimated",
+  "official",
+  "reviewed",
+  "accepted_or_declined",
+] as const;
+
+export const SCHOOL_AID_TASK_TYPES = [
+  "portal_check",
+  "document_request",
+  "verification",
+  "aid_offer",
+  "general",
+] as const;
+
+export const SCHOOL_AID_TASK_STATUSES = ["todo", "done", "skipped"] as const;
+
+export const SCHOOL_AID_TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+
+export type FafsaReceivedStatus = (typeof FAFSA_RECEIVED_STATUSES)[number];
+export type PortalCheckedStatus = (typeof PORTAL_CHECKED_STATUSES)[number];
+export type DocumentsRequestedStatus = (typeof DOCUMENTS_REQUESTED_STATUSES)[number];
+export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+export type AidOfferStatus = (typeof AID_OFFER_STATUSES)[number];
+export type SchoolAidTaskType = (typeof SCHOOL_AID_TASK_TYPES)[number];
+export type SchoolAidTaskStatus = (typeof SCHOOL_AID_TASK_STATUSES)[number];
+export type SchoolAidTaskPriority = (typeof SCHOOL_AID_TASK_PRIORITIES)[number];
+
+export type UserSchoolAidStatus = {
+  id: string;
+  user_id: string;
+  school_name: string;
+  portal_url: string | null;
+  school_email: string | null;
+  fafsa_received_status: FafsaReceivedStatus;
+  portal_checked_status: PortalCheckedStatus;
+  documents_requested_status: DocumentsRequestedStatus;
+  verification_status: VerificationStatus;
+  aid_offer_status: AidOfferStatus;
+  last_checked_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserSchoolAidTask = {
+  id: string;
+  user_id: string;
+  school_aid_status_id: string;
+  title: string;
+  description: string | null;
+  task_type: SchoolAidTaskType;
+  status: SchoolAidTaskStatus;
+  priority: SchoolAidTaskPriority;
+  due_date: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserAidOffer = {
+  id: string;
+  user_id: string;
+  school_name: string;
+  offer_status: AidOfferRecordStatus;
+  academic_year: string | null;
+  cost_of_attendance: number;
+  tuition_and_fees: number;
+  housing_and_food: number;
+  books_and_supplies: number;
+  transportation: number;
+  personal_expenses: number;
+  grants_and_scholarships: number;
+  work_study: number;
+  federal_student_loans: number;
+  parent_plus_loans: number;
+  private_loans: number;
+  other_aid: number;
+  renewal_notes: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const AID_OFFER_RECORD_STATUSES = ["draft", "estimated", "official", "reviewed"] as const;
+
+export type AidOfferRecordStatus = (typeof AID_OFFER_RECORD_STATUSES)[number];
+
 export type IntelligenceUserData = {
   profile: StudentProfile | null;
   tasks: AidTask[];

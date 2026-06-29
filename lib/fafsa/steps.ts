@@ -17,6 +17,8 @@ export type FafsaStep = {
   primaryCtaLabel: string;
   nextPlanKey: string | null;
   previousPlanKey: string | null;
+  followUpCtaLabel?: string;
+  aidDecoderCtaLabel?: string;
 };
 
 export const FAFSA_STEPS: FafsaStep[] = [
@@ -282,6 +284,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     privacyReminder:
       "Use official school portals only. Do not send SSNs or tax documents through AidPilot.",
     primaryCtaLabel: "Open school portals",
+    followUpCtaLabel: "Track school portals",
     nextPlanKey: "respond-verification",
     previousPlanKey: "review-submit",
   },
@@ -319,6 +322,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     privacyReminder:
       "Verification documents go to your school or federal systems — never upload them to AidPilot.",
     primaryCtaLabel: "Check verification status",
+    followUpCtaLabel: "Track verification requests",
     nextPlanKey: "understand-aid-offers",
     previousPlanKey: "check-school-portals",
   },
@@ -356,6 +360,8 @@ export const FAFSA_STEPS: FafsaStep[] = [
     privacyReminder:
       "Enter dollar amounts from aid letters in AidPilot's decoder only — never SSNs, account numbers, or passwords.",
     primaryCtaLabel: "Decode your aid offer",
+    followUpCtaLabel: "Track aid offers",
+    aidDecoderCtaLabel: "Decode aid offer",
     nextPlanKey: null,
     previousPlanKey: "respond-verification",
   },
@@ -395,6 +401,10 @@ export function getGuidedProgressPercent(completedPlanKeys: string[]): number {
   if (FAFSA_STEPS.length === 0) return 0;
   const completed = completedPlanKeys.filter((key) => STEP_BY_KEY.has(key)).length;
   return Math.round((completed / FAFSA_STEPS.length) * 100);
+}
+
+export function getFollowUpTrackerHref(): string {
+  return "/fafsa/follow-up";
 }
 
 export function getOfficialStudentAidUrl(step: FafsaStep): string {

@@ -37,6 +37,15 @@ import {
   summarizeAidOffer,
 } from "@/lib/dashboard-command-center";
 import { PROFILE_OPTIONAL_SAVE_NOTICE_KEY } from "@/lib/onboarding-profile";
+import { useSchoolAidTracker } from "@/hooks/useSchoolAidTracker";
+import { useAidActions } from "@/hooks/useAidActions";
+import { useAidOffers } from "@/hooks/useAidOffers";
+import { AID_ACTION_EMPTY_MESSAGE } from "@/components/aid-actions/AidActionList";
+import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
+import {
+  countUrgentFollowUpTasks,
+  getMostUrgentFollowUpAction,
+} from "@/lib/fafsa/school-aid-tracker";
 
 const primaryBtn = {
   display: "inline-flex",
@@ -80,6 +89,10 @@ export default function DashboardClient() {
     refreshRecommendations,
     generateWeeklyReport,
   } = useUserData();
+  const { statuses: schoolAidStatuses, tasks: schoolAidTasks, userId: schoolTrackerUserId, loading: schoolTrackerLoading } =
+    useSchoolAidTracker();
+  const { topAction, loading: aidActionsLoading, loadError: aidActionsLoadError } = useAidActions();
+  const { offers: aidOffers, userId: aidOffersUserId, loading: aidOffersLoading } = useAidOffers();
   const [refreshing, setRefreshing] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -276,6 +289,23 @@ export default function DashboardClient() {
   const protectionColor =
     aidProtection.score >= 80 ? "#15885A" : aidProtection.score >= 40 ? "#0B5CAD" : "#B7791F";
 
+  const trackedSchoolCount = schoolTrackerUserId ? schoolAidStatuses.length : 0;
+  const urgentFollowUpCount = schoolTrackerUserId ? countUrgentFollowUpTasks(schoolAidTasks) : 0;
+  const urgentFollowUpAction =
+    schoolTrackerUserId && schoolAidStatuses.length > 0
+      ? getMostUrgentFollowUpAction(schoolAidStatuses, schoolAidTasks)
+      : null;
+
+  const aidOfferStats = (() => {
+    if (!aidOffersUserId || aidOffers.length === 0) return null;
+    const withCalc = aidOffers.map((offer) => ({ offer, calculation: calculateAidOfferFromRecord(offer) }));
+    const lowestNet = [...withCalc].sort((a, b) => a.calculation.netCostAfterGiftAid - b.calculation.netCostAfterGiftAid)[0];
+    const highestGap = [...withCalc].sort(
+      (a, b) => b.calculation.remainingGapAfterAllAid - a.calculation.remainingGapAfterAllAid
+    )[0];
+    return { count: aidOffers.length, lowestNet, highestGap };
+  })();
+
   return (
     <AppShell>
       {profileNotice && (
@@ -310,6 +340,54 @@ export default function DashboardClient() {
         style={{
           padding: 28,
           marginBottom: 20,
+          background: "linear-gradient(135deg,#F4FBF7,#F9FAFB)",
+          border: "1px solid #D5F0E2",
+        }}
+      >
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+          Your next aid action
+        </h2>
+        {aidActionsLoadError ? (
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.65 }}>
+            {aidActionsLoadError}
+          </p>
+        ) : aidActionsLoading ? (
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 14px", lineHeight: 1.65 }}>
+            Loading your aid actions...
+          </p>
+        ) : topAction ? (
+          <>
+            <p style={{ fontSize: 17, fontWeight: 800, color: "#15212E", margin: "0 0 8px", lineHeight: 1.4 }}>
+              {topAction.title}
+            </p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+              {topAction.description}
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <Link href={topAction.href} style={primaryBtn}>
+                {topAction.ctaLabel}
+              </Link>
+              <Link href="/actions" style={secondaryBtn}>
+                View all actions
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+              {AID_ACTION_EMPTY_MESSAGE}
+            </p>
+            <Link href="/actions" style={secondaryBtn}>
+              View all actions
+            </Link>
+          </>
+        )}
+      </ProductCard>
+
+      <ProductCard
+        style={{
+          padding: 28,
+          marginBottom: 20,
           background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)",
           border: "1px solid #D7E7FB",
         }}
@@ -317,11 +395,84 @@ export default function DashboardClient() {
         <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
           Protect your aid
         </h2>
-        <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-          Your FAFSA next step is shown here.
-        </p>
-        <Link href="/fafsa" style={primaryBtn}>
-          Continue FAFSA guide
+        {schoolTrackerUserId && !schoolTrackerLoading ? (
+          <>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Schools tracked</div>
+                <div className="font-display" style={{ fontSize: 24, fontWeight: 900, color: "#15212E" }}>
+                  {trackedSchoolCount}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Urgent follow-ups</div>
+                <div className="font-display" style={{ fontSize: 24, fontWeight: 900, color: urgentFollowUpCount > 0 ? "#C04E57" : "#15212E" }}>
+                  {urgentFollowUpCount}
+                </div>
+              </div>
+            </div>
+            {urgentFollowUpAction ? (
+              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+                <span style={{ fontWeight: 700, color: "#15212E" }}>{urgentFollowUpAction.schoolName}:</span>{" "}
+                {urgentFollowUpAction.action}
+              </p>
+            ) : (
+              <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+                Track school portals, verification, and aid offers after FAFSA.
+              </p>
+            )}
+          </>
+        ) : (
+          <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+            Track school portals, verification, and aid offers after FAFSA.
+          </p>
+        )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          <Link href="/fafsa/follow-up" style={primaryBtn}>
+            Open Follow-Up Tracker
+          </Link>
+          <Link href="/fafsa" style={secondaryBtn}>
+            FAFSA guide
+          </Link>
+        </div>
+      </ProductCard>
+
+      <ProductCard style={{ padding: 28, marginBottom: 20 }}>
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+          Compare your aid offers
+        </h2>
+        {aidOffersUserId && !aidOffersLoading && aidOfferStats ? (
+          <>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Saved offers</div>
+                <div className="font-display" style={{ fontSize: 24, fontWeight: 900, color: "#15212E" }}>
+                  {aidOfferStats.count}
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 6px", lineHeight: 1.65 }}>
+              Lowest net after gift aid:{" "}
+              <span style={{ fontWeight: 700, color: "#15885A" }}>
+                {aidOfferStats.lowestNet.offer.school_name} ($
+                {aidOfferStats.lowestNet.calculation.netCostAfterGiftAid.toLocaleString()})
+              </span>
+            </p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+              Highest remaining gap:{" "}
+              <span style={{ fontWeight: 700, color: "#C04E57" }}>
+                {aidOfferStats.highestGap.offer.school_name} ($
+                {aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()})
+              </span>
+            </p>
+          </>
+        ) : (
+          <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+            Enter aid offers manually to compare gift aid, loans, and remaining cost across schools.
+          </p>
+        )}
+        <Link href="/aid-letter" style={primaryBtn}>
+          Open Aid Offer Decoder
         </Link>
       </ProductCard>
 
