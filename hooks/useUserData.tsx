@@ -13,7 +13,7 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { checkScholarshipAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
-import { formatScholarshipError } from "@/lib/scholarship-errors";
+import { formatScholarshipError, isScholarshipSchemaError } from "@/lib/scholarship-errors";
 import {
   buildScholarshipMatchActionUpdate,
   loadScholarshipMatches,
@@ -45,7 +45,7 @@ import {
   saveAidLetterLocal,
 } from "@/lib/aid-letter-local";
 import { withCanonicalProfileFields } from "@/lib/student-profile-payload";
-import { toFriendlyError } from "@/lib/friendly-errors";
+import { isRecoverableWithLocalFallback, isSchemaColumnError, toFriendlyError } from "@/lib/friendly-errors";
 import { getFafsaPlanTasks, isFafsaPlanTask, FAFSA_TASK_SOURCE } from "@/lib/fafsa-plan";
 import { isAidTaskComplete } from "@/lib/data-helpers";
 import type {
@@ -79,6 +79,18 @@ function normalizeAidTask(task: AidTask): AidTask {
 
 function normalizeAidTasks(tasks: AidTask[]) {
   return tasks.map(normalizeAidTask);
+}
+
+function shouldSurfaceLoadError(
+  error: unknown,
+  options?: { optionalFeature?: boolean; schemaWarning?: string | null }
+): boolean {
+  if (!error) return false;
+  if (options?.schemaWarning && isScholarshipSchemaError(error)) return false;
+  if (options?.optionalFeature && (isScholarshipSchemaError(error) || isSchemaColumnError(error))) {
+    return false;
+  }
+  return true;
 }
 
 function buildIntelligenceUserData(state: {
@@ -268,14 +280,25 @@ function useUserDataState() {
             profileRes.error,
             tasksRes.error,
             docsRes.error,
-            scholarshipsLoad.error,
+            shouldSurfaceLoadError(scholarshipsLoad.error, {
+              optionalFeature: true,
+              schemaWarning: scholarshipsLoad.schemaWarning,
+            })
+              ? scholarshipsLoad.error
+              : null,
             deadlinesRes.error,
-            aidLettersRes.error,
-            reportsRes.error,
-            recsRes.error,
-            userStepsRes.error,
+            shouldSurfaceLoadError(aidLettersRes.error, { optionalFeature: true }) ? aidLettersRes.error : null,
+            shouldSurfaceLoadError(reportsRes.error, { optionalFeature: true }) ? reportsRes.error : null,
+            shouldSurfaceLoadError(recsRes.error, { optionalFeature: true }) ? recsRes.error : null,
+            shouldSurfaceLoadError(userStepsRes.error, { optionalFeature: true }) ? userStepsRes.error : null,
             workflowRes.error,
-            sourcesLoad.error,
+            shouldSurfaceLoadError(sourcesLoad.error, {
+              optionalFeature: true,
+              schemaWarning: sourcesLoad.schemaWarning,
+            })
+              ? sourcesLoad.error
+              : null,
+            intakeRes.error,
           ].filter(Boolean);
 
           if (errors.length > 0) {
@@ -333,7 +356,7 @@ function useUserDataState() {
         } catch (err) {
           console.error("useUserData: loadData failed", err);
           if (!options?.silent) {
-            setLoadError(err instanceof Error ? err.message : "Could not load your data. Please refresh the page.");
+            setLoadError(toFriendlyError(err, "Could not load your data. Please refresh the page."));
           }
         } finally {
           hasLoadedOnceRef.current = true;
@@ -474,6 +497,9 @@ function useUserDataState() {
       return applyDemoFallback(new Error("No FAFSA plan tasks returned from save"), intake);
     } catch (err) {
       console.error("saveFafsaIntakeAndGeneratePlan failed:", err);
+      if (!isRecoverableWithLocalFallback(err)) {
+        throw new Error(toFriendlyError(err, "We couldn't save your FAFSA plan. Please try again."));
+      }
       const intake = formToDemoIntake(resolvedUserId, form);
       return applyDemoFallback(err, intake);
     }
@@ -487,7 +513,7 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this document. Please try again."));
     setDocuments((prev) => prev.map((d) => (d.id === docId ? (data as DocumentItem) : d)));
   };
 
@@ -499,7 +525,7 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this deadline. Please try again."));
     setDeadlines((prev) => prev.map((d) => (d.id === deadlineId ? (data as Deadline) : d)));
   };
 
@@ -515,7 +541,7 @@ function useUserDataState() {
       .single();
 
     if (error) {
-      throw new Error("We couldn't save your settings. Please try again.");
+      throw new Error(toFriendlyError(error, "We couldn't save your settings. Please try again."));
     }
     setProfile(data as StudentProfile);
     return data as StudentProfile;
@@ -659,7 +685,11 @@ function useUserDataState() {
       setAidLetters([merged]);
       return { letter: merged, savedLocally: false as const };
     } catch (err) {
-      console.error("saveAidLetter failed, using local device storage:", err);
+      console.error("saveAidLetter failed:", err);
+      if (!isRecoverableWithLocalFallback(err)) {
+        throw new Error(toFriendlyError(err, "Could not save your aid offer. Please try again."));
+      }
+      console.error("saveAidLetter using local device storage after recoverable error:", err);
       const localLetter = aidLetterFromLocalStore(user.id, {
         userId: user.id,
         aid_year: input.aid_year,

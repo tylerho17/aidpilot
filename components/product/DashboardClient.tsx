@@ -206,7 +206,6 @@ export default function DashboardClient() {
     missingDocs,
     scholarshipStats,
     protectItems,
-    fafsaNextAction,
     fafsaBlockers,
     aidProtection,
     aidOfferSummary,
@@ -277,12 +276,6 @@ export default function DashboardClient() {
   const protectionColor =
     aidProtection.score >= 80 ? "#15885A" : aidProtection.score >= 40 ? "#0B5CAD" : "#B7791F";
 
-  const nextStepHref = fafsaNextAction?.plan_key
-    ? fafsaStepHref(fafsaNextAction.plan_key)
-    : fafsaIntake
-      ? "/fafsa"
-      : "/fafsa/readiness";
-
   return (
     <AppShell>
       {profileNotice && (
@@ -322,50 +315,14 @@ export default function DashboardClient() {
         }}
       >
         <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
-          Your next FAFSA move
+          Protect your aid
         </h2>
-        {!fafsaIntake ? (
-          <>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.65 }}>
-              You have not built a FAFSA plan yet. The readiness wizard takes about 3 minutes and works even if saving to the cloud fails.
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.6 }}>
-              Why it matters: Schools use FAFSA to build your aid package — starting early gives you time to fix issues.
-            </p>
-            <Link href="/fafsa/readiness" style={primaryBtn}>
-              Start FAFSA readiness
-            </Link>
-          </>
-        ) : fafsaNextAction ? (
-          <>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#15212E", marginBottom: 8 }}>{fafsaNextAction.title}</div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#5B6573", margin: "0 0 6px", lineHeight: 1.6 }}>
-              Why it matters: {fafsaNextAction.why_it_matters ?? "This step keeps your FAFSA on track."}
-            </p>
-            {fafsaNextAction.instructions && (
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
-                {fafsaNextAction.instructions}
-              </p>
-            )}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              <Link href={nextStepHref} style={primaryBtn}>
-                Continue step
-              </Link>
-              <Link href="/fafsa" style={secondaryBtn}>
-                View full plan
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#15885A", margin: "0 0 14px", lineHeight: 1.65 }}>
-              Your FAFSA plan steps look complete. Keep checking StudentAid.gov and your school portal for updates.
-            </p>
-            <Link href="/fafsa" style={primaryBtn}>
-              Open FAFSA plan
-            </Link>
-          </>
-        )}
+        <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+          Your FAFSA next step is shown here.
+        </p>
+        <Link href="/fafsa" style={primaryBtn}>
+          Continue FAFSA guide
+        </Link>
       </ProductCard>
 
       <div

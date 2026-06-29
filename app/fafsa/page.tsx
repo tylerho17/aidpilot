@@ -1,5 +1,5 @@
-import FafsaClient from "@/components/product/FafsaClient";
+import FafsaHomeClient from "@/components/fafsa/FafsaHomeClient";
 
 export default function FafsaPage() {
-  return <FafsaClient />;
+  return <FafsaHomeClient />;
 }

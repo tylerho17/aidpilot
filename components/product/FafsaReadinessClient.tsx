@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
 import { FAFSA_DEMO_GUEST_USER_ID } from "@/lib/fafsa-demo-fallback";
+import { isRecoverableWithLocalFallback, toFriendlyError } from "@/lib/friendly-errors";
 import type { FafsaIntakeFormData } from "@/lib/types";
 
 const AID_YEARS = ["2025-26", "2026-27", "2027-28"];
@@ -116,8 +117,12 @@ export default function FafsaReadinessClient() {
         console.error("FAFSA plan generation failed after intake saved:", result.planError);
       }
     } catch (err) {
-      console.error("FAFSA readiness submit failed, applying client local fallback:", err);
-      routed = applyFafsaDemoFallback(form, userId);
+      console.error("FAFSA readiness submit failed:", err);
+      if (isRecoverableWithLocalFallback(err)) {
+        routed = applyFafsaDemoFallback(form, userId);
+      } else {
+        setError(toFriendlyError(err, "We couldn't save your FAFSA plan. Please try again."));
+      }
     }
 
     if (routed) {

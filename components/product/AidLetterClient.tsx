@@ -5,7 +5,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
 import { AidLetterLocalBanner } from "@/components/product/AidLetterLocalBanner";
-import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
+import { PageErrorBanner, PageLoading, friendlyActionError } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
 import {
   decodeAidOffer,
@@ -409,7 +409,7 @@ function AidLetterForm({
       }
     } catch (err) {
       console.error("Aid letter save failed:", err);
-      setSaveNotice("Could not sync to your account, but your numbers are still decoded below.");
+      setSaveNotice(friendlyActionError(err, "Could not save your aid offer. Please try again."));
     } finally {
       setSaving(false);
     }

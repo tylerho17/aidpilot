@@ -118,7 +118,13 @@ export async function loadScholarshipMatches(
     .order("match_percent", { ascending: false });
 
   if (base.error) {
-    return { data: [], schemaMode: "base", schemaWarning: SCHOLARSHIP_SCHEMA_BANNER_MESSAGE, error: base.error };
+    const schemaDegraded = isScholarshipSchemaError(base.error, "scholarship_matches");
+    return {
+      data: [],
+      schemaMode: "base",
+      schemaWarning: schemaDegraded ? SCHOLARSHIP_SCHEMA_BANNER_MESSAGE : null,
+      error: base.error,
+    };
   }
 
   return {
@@ -158,7 +164,13 @@ export async function loadScholarshipSources(
     .order("deadline");
 
   if (base.error) {
-    return { data: [], schemaMode: "base", schemaWarning: SCHOLARSHIP_SCHEMA_BANNER_MESSAGE, error: base.error };
+    const schemaDegraded = isScholarshipSchemaError(base.error, "scholarship_sources");
+    return {
+      data: [],
+      schemaMode: "base",
+      schemaWarning: schemaDegraded ? SCHOLARSHIP_SCHEMA_BANNER_MESSAGE : null,
+      error: base.error,
+    };
   }
 
   return {

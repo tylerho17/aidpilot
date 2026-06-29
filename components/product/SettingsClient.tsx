@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ProductCard, PageContentSkeleton } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
+import {
+  isAuthSessionError,
+  isSchemaColumnError,
+  toFriendlyError,
+} from "@/lib/friendly-errors";
 
 type ProfileSummary = {
   name: string;
@@ -242,7 +247,15 @@ function SettingsClientInner() {
         if (profileError) {
           console.error("Settings profile query failed:", profileError);
           if (!cancelled) {
-            setPageError("Some profile details could not be loaded. More settings are coming soon.");
+            if (isAuthSessionError(profileError)) {
+              router.replace("/login");
+              return;
+            }
+            if (isSchemaColumnError(profileError)) {
+              setPageError("Some profile details are not available yet. More settings are coming soon.");
+            } else {
+              setPageError(toFriendlyError(profileError, "We couldn't load your profile details. Please try again."));
+            }
           }
           return;
         }

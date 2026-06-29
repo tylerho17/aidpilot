@@ -6,30 +6,14 @@ import {
   type OnboardingProfileContext,
   STUDENT_PROFILE_OPTIONAL_SAVE_COLUMNS,
 } from "@/lib/student-profile-payload";
+import { isSchemaColumnError, toFriendlyError } from "@/lib/friendly-errors";
 
 export const PROFILE_OPTIONAL_SAVE_NOTICE_KEY = "aidpilot_profile_optional_notice";
 export const PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE =
   "We saved your required profile info. Some optional matching details can be updated later in Settings.";
 
 export function isProfileSchemaColumnError(error: unknown): boolean {
-  const message =
-    error && typeof error === "object" && "message" in error
-      ? String((error as { message?: string }).message ?? "")
-      : error instanceof Error
-        ? error.message
-        : String(error ?? "");
-
-  const code =
-    error && typeof error === "object" && "code" in error
-      ? String((error as { code?: string }).code ?? "")
-      : "";
-
-  return (
-    code === "PGRST204" ||
-    /schema cache/i.test(message) ||
-    /could not find the .* column/i.test(message) ||
-    /column .* does not exist/i.test(message)
-  );
+  return isSchemaColumnError(error);
 }
 
 async function saveOptionalProfileFieldsIndividually(
@@ -60,7 +44,7 @@ async function saveOptionalProfileFieldsIndividually(
     }
 
     console.error(`Optional onboarding profile field "${column}" failed:`, error);
-    throw new Error("We couldn't save your optional profile details. Please try again.");
+    throw new Error(toFriendlyError(error, "We couldn't save your optional profile details. Please try again."));
   }
 
   return anySkipped;
