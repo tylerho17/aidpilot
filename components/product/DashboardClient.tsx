@@ -5,15 +5,13 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { CheckSVG, PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
-import { PageErrorBanner, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
+import { PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { useUserData } from "@/hooks/useUserData";
 import { getProfileFullName, getProfileSchoolName } from "@/lib/profile-fields";
 import { getTopAttentionItems, getSeverityLabel, attentionSeverityToTone } from "@/lib/attention";
 import {
-  getCurrentFafsaStage,
   getFafsaBlockers,
-  getFafsaPlanProgress,
   getNextFafsaAction,
   getChecklistOnlyTasks,
 } from "@/lib/fafsa-plan";
@@ -30,13 +28,38 @@ import {
   formatDueDate,
   statusToTone,
   getUpcomingDeadlines,
-  getDeadlinesThisMonthCount,
   getNextDeadlineFromDeadlines,
   deadlineStatusToTone,
 } from "@/lib/data-helpers";
 import {
-  PROFILE_OPTIONAL_SAVE_NOTICE_KEY,
-} from "@/lib/onboarding-profile";
+  buildWeeklyFocus,
+  calculateAidProtectionScore,
+  summarizeAidOffer,
+} from "@/lib/dashboard-command-center";
+import { PROFILE_OPTIONAL_SAVE_NOTICE_KEY } from "@/lib/onboarding-profile";
+
+const primaryBtn = {
+  display: "inline-flex",
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#fff",
+  background: "#0B5CAD",
+  padding: "12px 22px",
+  borderRadius: 13,
+  textDecoration: "none",
+  boxShadow: "0 10px 20px rgba(11,92,173,.22)",
+} as const;
+
+const secondaryBtn = {
+  display: "inline-flex",
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#0B5CAD",
+  background: "#EAF3FF",
+  padding: "10px 16px",
+  borderRadius: 999,
+  textDecoration: "none",
+} as const;
 
 export default function DashboardClient() {
   const {
@@ -51,9 +74,9 @@ export default function DashboardClient() {
     recommendations,
     userFafsaSteps,
     workflowSteps,
-    loadError,
     fafsaIntake,
     fafsaDemoMode,
+    aidLetter,
     refreshRecommendations,
     generateWeeklyReport,
   } = useUserData();
@@ -74,7 +97,7 @@ export default function DashboardClient() {
     return <PageLoading message="Loading your aid check-in..." />;
   }
 
-  const { data: view, error: viewError } = runSafe(
+  const { data: view } = runSafe(
     "Dashboard",
     () => {
       const checklistTasks = getChecklistOnlyTasks(tasks ?? []);
@@ -96,10 +119,21 @@ export default function DashboardClient() {
         },
         5
       );
-      const fafsaPlanProgress = getFafsaPlanProgress(tasks ?? []);
-      const fafsaCurrentStage = getCurrentFafsaStage(tasks ?? []);
       const fafsaNextAction = getNextFafsaAction(tasks ?? []);
       const fafsaBlockers = getFafsaBlockers(tasks ?? []);
+      const aidProtection = calculateAidProtectionScore({
+        fafsaIntake: fafsaIntake ?? null,
+        tasks: tasks ?? [],
+        aidLetter: aidLetter ?? null,
+      });
+      const aidOfferSummary = summarizeAidOffer(aidLetter ?? null);
+      const weeklyFocus = buildWeeklyFocus({
+        fafsaIntake: fafsaIntake ?? null,
+        tasks: tasks ?? [],
+        fafsaBlockers,
+        attentionCount: attention,
+        scholarshipNewCount: scholarshipStats.newCount,
+      });
       const urgent = getUrgentTasksFromDb(checklistTasks, 3).map((t) => ({
         id: t.id,
         title: t.title,
@@ -110,7 +144,6 @@ export default function DashboardClient() {
         priority: t.priority ?? "Medium",
       }));
       const upcomingDeadlines = getUpcomingDeadlines(deadlines ?? [], 3);
-      const deadlinesThisMonth = getDeadlinesThisMonthCount(deadlines ?? []);
       const nextDeadlineLabel = getNextDeadlineFromDeadlines(deadlines ?? []);
       const topActions = getTopRecommendations(recommendations ?? [], 3);
 
@@ -124,13 +157,13 @@ export default function DashboardClient() {
         missingDocs,
         scholarshipStats,
         protectItems,
-        fafsaPlanProgress,
-        fafsaCurrentStage,
         fafsaNextAction,
         fafsaBlockers,
+        aidProtection,
+        aidOfferSummary,
+        weeklyFocus,
         urgent,
         upcomingDeadlines,
-        deadlinesThisMonth,
         nextDeadlineLabel,
         topActions,
       };
@@ -151,13 +184,13 @@ export default function DashboardClient() {
       missingDocs: 0,
       scholarshipStats: getScholarshipStatsFromDb([]),
       protectItems: [],
-      fafsaPlanProgress: 0,
-      fafsaCurrentStage: null,
       fafsaNextAction: null,
       fafsaBlockers: [],
+      aidProtection: calculateAidProtectionScore({ fafsaIntake: null, tasks: [], aidLetter: null }),
+      aidOfferSummary: null,
+      weeklyFocus: [],
       urgent: [],
       upcomingDeadlines: [],
-      deadlinesThisMonth: 0,
       nextDeadlineLabel: "No deadlines yet",
       topActions: [],
     }
@@ -173,13 +206,13 @@ export default function DashboardClient() {
     missingDocs,
     scholarshipStats,
     protectItems,
-    fafsaPlanProgress,
-    fafsaCurrentStage,
     fafsaNextAction,
     fafsaBlockers,
+    aidProtection,
+    aidOfferSummary,
+    weeklyFocus,
     urgent,
     upcomingDeadlines,
-    deadlinesThisMonth,
     nextDeadlineLabel,
     topActions,
     summary,
@@ -201,13 +234,6 @@ export default function DashboardClient() {
     : null;
 
   const toneFn = (status: string) => statusToTone(status);
-
-  const fafsaLabel =
-    profile?.fafsa_status === "Yes"
-      ? "Submitted"
-      : profile?.fafsa_status === "Not yet"
-        ? "Not started"
-        : profile?.fafsa_status ?? "Unknown";
 
   async function handleRefreshRecommendations() {
     setRefreshing(true);
@@ -248,116 +274,241 @@ export default function DashboardClient() {
         ? "coral"
         : "amber";
 
+  const protectionColor =
+    aidProtection.score >= 80 ? "#15885A" : aidProtection.score >= 40 ? "#0B5CAD" : "#B7791F";
+
+  const nextStepHref = fafsaNextAction?.plan_key
+    ? fafsaStepHref(fafsaNextAction.plan_key)
+    : fafsaIntake
+      ? "/fafsa"
+      : "/fafsa/readiness";
+
   return (
     <AppShell>
-      <PageErrorBanner message={loadError ?? viewError} />
-
       {profileNotice && (
         <ProductCard style={{ padding: 18, marginBottom: 22, background: "#EAF3FF", border: "1px solid #D7E7FB" }}>
           <p style={{ fontSize: 14, fontWeight: 500, color: "#0B5CAD", margin: 0, lineHeight: 1.6 }}>{profileNotice}</p>
         </ProductCard>
       )}
 
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 28 }}>
         <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 6px" }}>
           Good morning, {firstName}.
         </p>
-        <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 6px", color: "#15212E", lineHeight: 1.1 }}>
-          {summary.protectedMessage}
+        <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 6px", color: "#15212E", lineHeight: 1.1 }}>
+          Your aid command center
         </h1>
-        <p style={{ fontSize: 15, fontWeight: 600, color: "#0B5CAD", margin: "0 0 8px" }}>{schoolLabel}</p>
-        <p style={{ fontSize: 17, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          {attention} tasks need attention before {nextDeadlineLabel}. AidPilot is watching the rest.
+        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+          {schoolLabel} · Here is what to do next for FAFSA, blockers, and your aid offer.
         </p>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Aid Status" value={report?.aid_status ?? summary.aidStatus} color="#15885A" style={{ flex: "1 1 140px" }} />
-        <StatCard label="FAFSA Status" value={fafsaLabel} color="#0B5CAD" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Missing Documents" value={String(missingDocs)} color="#C04E57" style={{ flex: "1 1 140px" }} />
-        <StatCard label="Checklist Progress" value={`${completed} of ${totalTasks}`} color="#0B5CAD" style={{ flex: "1 1 140px" }} sub={`${progress}% complete`} />
-        <StatCard label="Next Deadline" value={nextDeadlineLabel} color="#B7791F" style={{ flex: "1 1 140px" }} sub={`${deadlinesThisMonth} this month`} />
-        <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new matches`} color="#0B5CAD" style={{ flex: "1 1 160px" }} />
-      </div>
+      {fafsaDemoMode && (
+        <div style={{ marginBottom: 20 }}>
+          <FafsaDemoBanner />
+        </div>
+      )}
 
       {actionError && (
         <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
       )}
 
-      <ProductCard style={{ padding: 26, marginBottom: 22, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
-          Your FAFSA journey
+      <ProductCard
+        style={{
+          padding: 28,
+          marginBottom: 20,
+          background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)",
+          border: "1px solid #D7E7FB",
+        }}
+      >
+        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+          Your next FAFSA move
         </h2>
-        {fafsaDemoMode && (
-          <div style={{ marginBottom: 14 }}>
-            <FafsaDemoBanner />
-          </div>
-        )}
         {!fafsaIntake ? (
           <>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
-              Let&apos;s build your FAFSA plan in 3 minutes.
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.65 }}>
+              You have not built a FAFSA plan yet. The readiness wizard takes about 3 minutes and works even if saving to the cloud fails.
             </p>
-            <Link
-              href="/fafsa/readiness"
-              style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
-            >
-              Start FAFSA Readiness Wizard
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.6 }}>
+              Why it matters: Schools use FAFSA to build your aid package — starting early gives you time to fix issues.
+            </p>
+            <Link href="/fafsa/readiness" style={primaryBtn}>
+              Start FAFSA readiness
             </Link>
+          </>
+        ) : fafsaNextAction ? (
+          <>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#15212E", marginBottom: 8 }}>{fafsaNextAction.title}</div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#5B6573", margin: "0 0 6px", lineHeight: 1.6 }}>
+              Why it matters: {fafsaNextAction.why_it_matters ?? "This step keeps your FAFSA on track."}
+            </p>
+            {fafsaNextAction.instructions && (
+              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
+                {fafsaNextAction.instructions}
+              </p>
+            )}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <Link href={nextStepHref} style={primaryBtn}>
+                Continue step
+              </Link>
+              <Link href="/fafsa" style={secondaryBtn}>
+                View full plan
+              </Link>
+            </div>
           </>
         ) : (
           <>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
-              Aid year {fafsaIntake.aid_year} · Current stage: {fafsaCurrentStage ?? "Complete"}
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#15885A", margin: "0 0 14px", lineHeight: 1.65 }}>
+              Your FAFSA plan steps look complete. Keep checking StudentAid.gov and your school portal for updates.
             </p>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#6B7280" }}>FAFSA plan progress</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: "#0B5CAD" }}>{fafsaPlanProgress}%</span>
-              </div>
-              <ProgressBar pct={fafsaPlanProgress} />
-            </div>
-            {fafsaNextAction ? (
-              <div style={{ padding: "14px 16px", borderRadius: 14, background: "#fff", border: "1px solid #EAEEF3", marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Next best action</div>
-                {fafsaNextAction.plan_key ? (
-                  <Link
-                    href={fafsaStepHref(fafsaNextAction.plan_key)}
-                    style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6, display: "inline-block", textDecoration: "none" }}
-                  >
-                    {fafsaNextAction.title} →
-                  </Link>
-                ) : (
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6 }}>{fafsaNextAction.title}</div>
-                )}
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.55 }}>
-                  {fafsaNextAction.instructions ?? fafsaNextAction.description}
-                </p>
-              </div>
-            ) : (
-              <p style={{ fontSize: 14, color: "#15885A", fontWeight: 600, margin: "0 0 14px" }}>
-                Your FAFSA plan steps are complete. Keep checking StudentAid.gov and your school portal.
-              </p>
-            )}
-            {fafsaBlockers.length > 0 && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#B7791F", marginBottom: 8 }}>Needs attention</div>
-                {fafsaBlockers.slice(0, 2).map((blocker) => (
-                  <div key={blocker.id} style={{ fontSize: 13, fontWeight: 600, color: "#6B7280", marginBottom: 4 }}>
-                    · {blocker.blocking_reason}
-                  </div>
-                ))}
-              </div>
-            )}
-            <Link
-              href="/fafsa"
-              style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
-            >
-              Continue FAFSA plan
+            <Link href="/fafsa" style={primaryBtn}>
+              Open FAFSA plan
             </Link>
           </>
         )}
       </ProductCard>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 18,
+          marginBottom: 20,
+        }}
+      >
+        <ProductCard style={{ padding: 24 }}>
+          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
+            Aid Protection Score
+          </h2>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+            <span className="font-display" style={{ fontSize: 40, fontWeight: 900, color: protectionColor }}>
+              {aidProtection.score}
+            </span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: "#9AA4B2" }}>/ {aidProtection.maxScore}</span>
+            <PillBadge tone={aidProtection.score >= 80 ? "green" : aidProtection.score >= 40 ? "blue" : "amber"}>
+              {aidProtection.label}
+            </PillBadge>
+          </div>
+          <ProgressBar pct={aidProtection.score} color={`linear-gradient(90deg,${protectionColor},#37A0E0)`} />
+          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+            {aidProtection.pillars.map((pillar) => (
+              <div key={pillar.id} style={{ fontSize: 13, fontWeight: 500, color: pillar.earned ? "#15885A" : "#6B7280", lineHeight: 1.5 }}>
+                {pillar.earned ? "✓" : "○"} {pillar.label}
+                {!pillar.earned && (
+                  <span style={{ display: "block", fontSize: 12, color: "#9AA4B2", marginTop: 2 }}>{pillar.detail}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </ProductCard>
+
+        <ProductCard style={{ padding: 24 }}>
+          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
+            Blockers
+          </h2>
+          {fafsaBlockers.length === 0 ? (
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#15885A", margin: 0, lineHeight: 1.65 }}>
+              No major blockers detected yet. Keep working through your FAFSA plan on StudentAid.gov.
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {fafsaBlockers.slice(0, 4).map((blocker) => (
+                <div key={blocker.id} style={{ padding: "12px 14px", borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#78350F", marginBottom: 4 }}>{blocker.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "#6B7280" }}>{blocker.blocking_reason}</div>
+                  {blocker.plan_key && (
+                    <Link href={fafsaStepHref(blocker.plan_key)} style={{ ...secondaryBtn, marginTop: 10, display: "inline-flex" }}>
+                      Resolve step
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </ProductCard>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 18,
+          marginBottom: 28,
+        }}
+      >
+        <ProductCard style={{ padding: 24 }}>
+          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
+            Aid offer
+          </h2>
+          {!aidOfferSummary ? (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.65 }}>
+                Decode your aid offer when you receive it. AidPilot separates free money from loans — no SSNs or tax numbers needed.
+              </p>
+              <Link href="/aid-letter" style={primaryBtn}>
+                Open aid decoder
+              </Link>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2", margin: "0 0 12px" }}>{aidOfferSummary.schoolName}</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                <div style={{ padding: 12, borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15885A" }}>Free money</div>
+                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
+                    ${aidOfferSummary.freeMoney.toLocaleString()}
+                  </div>
+                </div>
+                <div style={{ padding: 12, borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#B7791F" }}>Loans</div>
+                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
+                    ${aidOfferSummary.loans.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", margin: "0 0 16px" }}>
+                Estimated gap after aid: <span style={{ color: "#C04E57" }}>${aidOfferSummary.gap.toLocaleString()}</span>
+              </p>
+              <Link href="/aid-letter" style={secondaryBtn}>
+                Review aid offer →
+              </Link>
+            </>
+          )}
+        </ProductCard>
+
+        <ProductCard style={{ padding: 24, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
+          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
+            This week
+          </h2>
+          <ul style={{ margin: "0 0 18px", paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            {weeklyFocus.map((item) => (
+              <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "#374151", lineHeight: 1.6 }}>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <Link href="/fafsa" style={secondaryBtn}>
+              FAFSA plan
+            </Link>
+            <Link href="/aid-letter" style={secondaryBtn}>
+              Aid decoder
+            </Link>
+            <Link href="/documents" style={secondaryBtn}>
+              Documents
+            </Link>
+            <Link href="/deadlines" style={secondaryBtn}>
+              Deadlines
+            </Link>
+          </div>
+        </ProductCard>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
+        <StatCard label="Checklist" value={`${completed} of ${totalTasks}`} color="#0B5CAD" style={{ flex: "1 1 120px" }} sub={`${progress}%`} />
+        <StatCard label="Next deadline" value={nextDeadlineLabel} color="#B7791F" style={{ flex: "1 1 120px" }} />
+        <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new`} color="#0B5CAD" style={{ flex: "1 1 120px" }} />
+      </div>
 
       <ProductCard style={{ padding: 26, marginBottom: 22 }}>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>

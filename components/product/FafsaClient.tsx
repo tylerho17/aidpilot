@@ -138,20 +138,28 @@ export default function FafsaClient() {
                     style={{
                       padding: "16px 18px",
                       borderRadius: 14,
-                      border: "1px solid #EAEEF3",
+                      border: complete ? "1px solid #BBF7D0" : "1px solid #EAEEF3",
                       background: complete ? "#F5FBF7" : "#fff",
+                      transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
                       {task.plan_key ? (
                         <Link
                           href={fafsaStepHref(task.plan_key)}
-                          style={{ fontSize: 15, fontWeight: 700, color: "#15212E", textDecoration: "none", lineHeight: 1.4 }}
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: "#15212E",
+                            textDecoration: "none",
+                            lineHeight: 1.4,
+                            flex: 1,
+                          }}
                         >
-                          {task.title} →
+                          {task.title}
                         </Link>
                       ) : (
-                        <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{task.title}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", flex: 1 }}>{task.title}</div>
                       )}
                       <PillBadge tone={statusToTone(task.status)}>{task.status}</PillBadge>
                     </div>
@@ -179,9 +187,17 @@ export default function FafsaClient() {
                       {task.plan_key && (
                         <Link
                           href={fafsaStepHref(task.plan_key)}
-                          style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#fff",
+                            background: "#0B5CAD",
+                            padding: "8px 14px",
+                            borderRadius: 999,
+                            textDecoration: "none",
+                          }}
                         >
-                          Open step guide
+                          Open mission guide →
                         </Link>
                       )}
                       {task.action_url && (

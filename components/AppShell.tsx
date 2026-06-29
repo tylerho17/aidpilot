@@ -14,9 +14,11 @@ const GridSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const CheckSVG = ({ color = "currentColor" }: { color?: string }) => (
+const FafsaSVG = ({ color = "currentColor" }: { color?: string }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 11 12 14 20 6" /><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+    <rect x="9" y="3" width="6" height="4" rx="1" />
+    <path d="M9 12h6M9 16h4" />
   </svg>
 );
 
@@ -29,12 +31,6 @@ const DocSVG = ({ color = "currentColor" }: { color?: string }) => (
 const CalendarSVG = ({ color = "currentColor" }: { color?: string }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 9h18M8 3v4M16 3v4" />
-  </svg>
-);
-
-const StarSVG = ({ color = "currentColor" }: { color?: string }) => (
-  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3l2.4 5.3L20 9l-4 4 1 6-5-2.8L7 19l1-6-4-4 5.6-.7L12 3Z" />
   </svg>
 );
 
@@ -56,15 +52,37 @@ const ShieldSVG = ({ color = "currentColor" }: { color?: string }) => (
   </svg>
 );
 
-const NAV: { href: string; label: string; icon: ({ color }: { color?: string }) => ReactElement }[] = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ({ color }: { color?: string }) => ReactElement;
+  isActive?: (pathname: string) => boolean;
+};
+
+const CORE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: GridSVG },
-  { href: "/checklist", label: "Checklist", icon: CheckSVG },
+  {
+    href: "/fafsa",
+    label: "FAFSA Plan",
+    icon: FafsaSVG,
+    isActive: (pathname) => pathname === "/fafsa" || pathname.startsWith("/fafsa/"),
+  },
+  { href: "/aid-letter", label: "Aid Offer Decoder", icon: LetterSVG },
   { href: "/documents", label: "Documents", icon: DocSVG },
   { href: "/deadlines", label: "Deadlines", icon: CalendarSVG },
-  { href: "/scholarships", label: "Scholarships", icon: StarSVG },
-  { href: "/aid-letter", label: "Aid Letter", icon: LetterSVG },
   { href: "/settings", label: "Settings", icon: GearSVG },
 ];
+
+const COMING_SOON_NAV = [
+  { href: "/scholarships", label: "Scholarships" },
+  { href: "/report", label: "Reports" },
+  { href: "/schools", label: "Schools" },
+];
+
+function isNavItemActive(item: NavItem, pathname: string) {
+  if (item.isActive) return item.isActive(pathname);
+  return pathname === item.href;
+}
 
 function ProfileSkeleton() {
   return (
@@ -177,8 +195,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3, overflowY: "auto" }}>
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href;
+          {CORE_NAV.map((item) => {
+            const { href, label, icon: Icon } = item;
+            const isActive = isNavItemActive(item, pathname);
             return (
               <Link key={href} href={href} prefetch style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: isActive ? "#fff" : "transparent", color: isActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: isActive ? 700 : 600, fontSize: 14 }}>
                 <Icon color={isActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
@@ -186,11 +205,51 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,.1)" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase", letterSpacing: ".8px", margin: "0 12px 8px" }}>
+              Coming soon
+            </div>
+            {COMING_SOON_NAV.map(({ href, label }) => {
+              const isActive = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    padding: "8px 12px",
+                    borderRadius: 12,
+                    textDecoration: "none",
+                    background: isActive ? "rgba(255,255,255,.12)" : "transparent",
+                    color: "rgba(255,255,255,.55)",
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  <span>{label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.4)", textTransform: "uppercase", letterSpacing: ".4px" }}>
+                    Soon
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+
           {isScholarshipAdmin && (
-            <Link href={adminHref} prefetch style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
-              <ShieldSVG color={adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
-              Admin
-            </Link>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,.1)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase", letterSpacing: ".8px", margin: "0 12px 8px" }}>
+                Admin
+              </div>
+              <Link href={adminHref} prefetch style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, textDecoration: "none", background: adminActive ? "#fff" : "transparent", color: adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)", fontWeight: adminActive ? 700 : 600, fontSize: 14 }}>
+                <ShieldSVG color={adminActive ? "#0B5CAD" : "rgba(255,255,255,.78)"} />
+                Scholarships admin
+              </Link>
+            </div>
           )}
         </nav>
 

@@ -151,7 +151,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Gather tax and financial records",
     stage: "Get ready",
     why_it_matters:
-      "FAFSA may ask whether you or a contributor can access tax information. Having records ready prevents stopping halfway through the form.",
+      "FAFSA might pause you mid-form if nobody can answer money questions. You are not entering dollar amounts here — just checking whether you can find tax info when StudentAid.gov asks.",
     before_you_start: [
       "Know whether you or a parent filed taxes for the year FAFSA asks about.",
       "Locate where tax documents are stored (IRS account, tax preparer, filing cabinet) — you do not upload these to AidPilot.",
@@ -211,7 +211,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Start your FAFSA form",
     stage: "Fill FAFSA",
     why_it_matters:
-      "Starting early gives you time to fix mistakes, invite contributors, and meet school deadlines without panic.",
+      "Starting early beats a last-minute panic. You can save progress on StudentAid.gov and come back — AidPilot just helps you know what to do next.",
     before_you_start: [
       "Working StudentAid.gov account.",
       "Confirmed aid year.",
@@ -527,7 +527,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Enter and review your financial aid offer",
     stage: "Aid offer review",
     why_it_matters:
-      "Understanding grants vs loans vs work-study helps you avoid borrowing more than you need.",
+      "Your aid letter mixes free money and loans that look similar. Understanding the difference helps you avoid borrowing more than you need.",
     before_you_start: [
       "Official aid offer letter or portal summary from your school.",
       "Questions written down for financial aid (optional).",
@@ -581,8 +581,13 @@ const GUIDES: FafsaStepGuide[] = [
 
 const GUIDE_BY_KEY = new Map(GUIDES.map((guide) => [guide.plan_key, guide]));
 
+/** Map generated plan keys to the closest rich guide when titles differ slightly. */
+const GUIDE_ALIASES: Record<string, string> = {
+  "after_submission:save_confirmation": "after_submission:review_summary",
+};
+
 export function getFafsaStepGuide(planKey: string): FafsaStepGuide | null {
-  return GUIDE_BY_KEY.get(planKey) ?? null;
+  return GUIDE_BY_KEY.get(planKey) ?? GUIDE_BY_KEY.get(GUIDE_ALIASES[planKey] ?? "") ?? null;
 }
 
 export function listFafsaStepGuideKeys(): string[] {

@@ -60,7 +60,7 @@ async function saveOptionalProfileFieldsIndividually(
     }
 
     console.error(`Optional onboarding profile field "${column}" failed:`, error);
-    anySkipped = true;
+    throw new Error("We couldn't save your optional profile details. Please try again.");
   }
 
   return anySkipped;

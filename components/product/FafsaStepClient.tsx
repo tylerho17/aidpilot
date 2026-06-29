@@ -1,19 +1,58 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard } from "@/components/ProductUI";
 import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { PageEmptyState, PageLoading, friendlyActionError } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
-import { statusToTone } from "@/lib/data-helpers";
+import { isAidTaskComplete, statusToTone } from "@/lib/data-helpers";
 import { resolveFafsaStep } from "@/lib/fafsa-step-resolve";
-import { parseFafsaStepPlanKey } from "@/lib/fafsa-step-url";
+import { fafsaStepHref, parseFafsaStepPlanKey } from "@/lib/fafsa-step-url";
 
 const PLAN_STATUSES = ["Upcoming", "Due Soon", "Complete"] as const;
+
+const primaryBtn: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#fff",
+  background: "#0B5CAD",
+  padding: "12px 22px",
+  borderRadius: 13,
+  textDecoration: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  boxShadow: "0 10px 20px rgba(11,92,173,.22)",
+};
+
+const secondaryBtn: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#0B5CAD",
+  background: "#EAF3FF",
+  padding: "12px 22px",
+  borderRadius: 13,
+  textDecoration: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const completeBtn: CSSProperties = {
+  ...primaryBtn,
+  background: "#15885A",
+  boxShadow: "0 10px 20px rgba(21,136,90,.22)",
+};
 
 function GuideSection({
   title,
@@ -66,6 +105,7 @@ function NumberedList({ items }: { items: string[] }) {
 }
 
 export default function FafsaStepClient() {
+  const router = useRouter();
   const params = useParams();
   const rawPlanKey = typeof params.planKey === "string" ? params.planKey : "";
   const planKey = parseFafsaStepPlanKey(rawPlanKey);
@@ -73,6 +113,10 @@ export default function FafsaStepClient() {
   const { loading, authReady, tasks, fafsaDemoMode, updateTaskStatus } = useUserData();
   const [error, setError] = useState("");
   const [updating, setUpdating] = useState(false);
+
+  const step = useMemo(() => resolveFafsaStep(planKey, tasks ?? []), [planKey, tasks]);
+
+  const isComplete = step?.status ? isAidTaskComplete(step.status) : false;
 
   if (!authReady && loading) {
     return <PageLoading message="Loading FAFSA step..." />;
@@ -82,7 +126,21 @@ export default function FafsaStepClient() {
     return <PageLoading message="Loading FAFSA step..." />;
   }
 
-  const step = resolveFafsaStep(planKey, tasks ?? []);
+  async function handleMarkComplete() {
+    if (!step?.task?.id || isComplete) return;
+    setError("");
+    setUpdating(true);
+    try {
+      await updateTaskStatus(step.task.id, "Complete");
+      if (step.nextStep) {
+        router.push(fafsaStepHref(step.nextStep.planKey));
+      }
+    } catch (err) {
+      setError(friendlyActionError(err, "Could not mark this step complete. Please try again."));
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   async function handleStatusChange(status: string) {
     if (!step?.task?.id) return;
@@ -105,20 +163,7 @@ export default function FafsaStepClient() {
             title="Step guide not found"
             description="This FAFSA step does not have a guide yet. Head back to your plan and pick another step."
           />
-          <Link
-            href="/fafsa"
-            style={{
-              display: "inline-flex",
-              marginTop: 8,
-              fontSize: 15,
-              fontWeight: 700,
-              color: "#fff",
-              background: "#0B5CAD",
-              padding: "12px 22px",
-              borderRadius: 13,
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/fafsa" style={{ ...primaryBtn, marginTop: 8 }}>
             Back to FAFSA plan
           </Link>
         </ProductCard>
@@ -138,24 +183,48 @@ export default function FafsaStepClient() {
           ← Back to FAFSA plan
         </Link>
 
-        <div style={{ marginBottom: 20 }}>
-          <PillBadge tone="blue">{step.stage}</PillBadge>
+        <ProductCard
+          style={{
+            padding: 24,
+            marginBottom: 20,
+            background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)",
+            border: "1px solid #D7E7FB",
+          }}
+        >
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12, alignItems: "center" }}>
+            <PillBadge tone="blue">{step.stage}</PillBadge>
+            {step.stepNumber && step.totalSteps && (
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#6B7280" }}>
+                Mission {step.stepNumber} of {step.totalSteps}
+              </span>
+            )}
+            {step.status ? (
+              <PillBadge tone={statusToTone(step.status)}>{step.status}</PillBadge>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>Guide only — not in your plan yet</span>
+            )}
+            {step.source === "static" && step.task === null && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>General guide</span>
+            )}
+          </div>
+
           <h1
             className="font-display"
-            style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-.6px", margin: "12px 0 10px", color: "#15212E", lineHeight: 1.2 }}
+            style={{ fontSize: 30, fontWeight: 900, letterSpacing: "-.6px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.2 }}
           >
             {step.title}
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {step.status && <PillBadge tone={statusToTone(step.status)}>{step.status}</PillBadge>}
-            {step.source === "static" && (
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>General guide</span>
-            )}
-            {step.blockingReason && (
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#B7791F" }}>Blocker: {step.blockingReason}</span>
-            )}
-          </div>
-        </div>
+
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.65 }}>
+            AidPilot tracks your readiness — you complete the real FAFSA on StudentAid.gov. Never enter SSNs, passwords, or tax numbers here.
+          </p>
+
+          {step.blockingReason && !isComplete && (
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#B7791F", margin: "12px 0 0", lineHeight: 1.5 }}>
+              Blocker: {step.blockingReason}
+            </p>
+          )}
+        </ProductCard>
 
         {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{error}</p>}
 
@@ -169,7 +238,7 @@ export default function FafsaStepClient() {
           <BulletList items={step.beforeYouStart} />
         </GuideSection>
 
-        <GuideSection title="What to do (step by step)" tone="tip">
+        <GuideSection title="Exact instructions" tone="tip">
           <NumberedList items={step.instructions} />
           {step.actionUrl && (
             <p style={{ margin: "16px 0 0" }}>
@@ -199,50 +268,60 @@ export default function FafsaStepClient() {
           </p>
         </GuideSection>
 
-        {step.task?.id && (
-          <ProductCard style={{ padding: 20, marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#6B7280", marginBottom: 10 }}>Mark your progress</div>
-            <select
-              value={step.status ?? "Upcoming"}
-              disabled={updating}
-              onChange={(e) => void handleStatusChange(e.target.value)}
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                borderRadius: 12,
-                border: "1px solid #E5E7EB",
-                padding: "10px 14px",
-                fontFamily: "inherit",
-                background: "#fff",
-                width: "100%",
-                maxWidth: 280,
-              }}
-            >
-              {PLAN_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </ProductCard>
-        )}
+        <ProductCard style={{ padding: 22, marginBottom: 24 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            {step.task?.id && !isComplete && (
+              <button type="button" onClick={() => void handleMarkComplete()} disabled={updating} style={completeBtn}>
+                {updating ? "Saving..." : "Mark complete"}
+              </button>
+            )}
+            {step.task?.id && isComplete && (
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#15885A" }}>✓ You marked this step complete</span>
+            )}
+            <Link href="/fafsa" style={secondaryBtn}>
+              Back to FAFSA plan
+            </Link>
+            {step.nextStep && (
+              <Link href={fafsaStepHref(step.nextStep.planKey)} style={primaryBtn}>
+                Next step: {step.nextStep.title} →
+              </Link>
+            )}
+          </div>
 
-        <Link
-          href="/fafsa"
-          style={{
-            display: "inline-flex",
-            fontSize: 15,
-            fontWeight: 700,
-            color: "#fff",
-            background: "#0B5CAD",
-            padding: "12px 22px",
-            borderRadius: 13,
-            textDecoration: "none",
-            boxShadow: "0 10px 20px rgba(11,92,173,.22)",
-          }}
-        >
-          Back to FAFSA plan
-        </Link>
+          {step.task?.id && (
+            <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid #EAEEF3" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#6B7280", marginBottom: 10 }}>Update status manually</div>
+              <select
+                value={step.status ?? "Upcoming"}
+                disabled={updating}
+                onChange={(e) => void handleStatusChange(e.target.value)}
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 12,
+                  border: "1px solid #E5E7EB",
+                  padding: "10px 14px",
+                  fontFamily: "inherit",
+                  background: "#fff",
+                  width: "100%",
+                  maxWidth: 280,
+                }}
+              >
+                {PLAN_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {!step.task?.id && (
+            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "14px 0 0", lineHeight: 1.55 }}>
+              This guide is available even when the step is not in your saved plan. Run the FAFSA readiness wizard to add it to your checklist.
+            </p>
+          )}
+        </ProductCard>
       </div>
     </AppShell>
   );
