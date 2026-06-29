@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { ScholarshipMatchCard } from "@/components/product/ScholarshipMatchCard";
 import { ProductCard, StatCard } from "@/components/ProductUI";
+import { PageErrorBanner, PageEmptyState, PageLoading, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
 import {
   filterScholarshipMatchesByTab,
@@ -17,7 +18,7 @@ import {
 } from "@/lib/data-helpers";
 import { getApplyUrl } from "@/lib/intelligence/scholarship-report";
 import { formatScholarshipError } from "@/lib/scholarship-errors";
-import type { ScholarshipSource } from "@/lib/types";
+import type { ScholarshipMatch, ScholarshipSource } from "@/lib/types";
 
 const TABS: { id: ScholarshipMatchTab; label: string }[] = [
   { id: "new", label: "New matches" },
@@ -29,6 +30,8 @@ const TABS: { id: ScholarshipMatchTab; label: string }[] = [
 export default function ScholarshipsClient() {
   const {
     loading,
+    authReady,
+    loadError,
     scholarships,
     scholarshipSources,
     scholarshipSchemaError,
@@ -42,18 +45,29 @@ export default function ScholarshipsClient() {
   const [actionError, setActionError] = useState("");
   const [tab, setTab] = useState<ScholarshipMatchTab>("new");
 
-  if (loading) {
-    return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading your scholarships...</p>
-      </AppShell>
-    );
+  if (!authReady && loading) {
+    return <PageLoading message="Loading your scholarships..." />;
   }
 
-  const visibleScholarships = resolveScholarshipMatches(scholarships);
-  const stats = getScholarshipStatsFromDb(scholarships);
-  const featuredDb = getFeaturedScholarshipFromDb(scholarships);
-  const tabMatches = filterScholarshipMatchesByTab(visibleScholarships, tab);
+  const { data: view, error: viewError } = runSafe(
+    "Scholarships",
+    () => {
+      const visibleScholarships = resolveScholarshipMatches(scholarships ?? []);
+      const stats = getScholarshipStatsFromDb(scholarships ?? []);
+      const featuredDb = getFeaturedScholarshipFromDb(scholarships ?? []);
+      const tabMatches = filterScholarshipMatchesByTab(visibleScholarships, tab);
+      return { visibleScholarships, stats, featuredDb, tabMatches };
+    },
+    {
+      visibleScholarships: [] as ReturnType<typeof resolveScholarshipMatches>,
+      stats: getScholarshipStatsFromDb([]),
+      featuredDb: null as ScholarshipMatch | null,
+      tabMatches: [] as ReturnType<typeof filterScholarshipMatchesByTab>,
+    }
+  );
+
+  const { visibleScholarships, stats, featuredDb, tabMatches } = view;
+  const sources = scholarshipSources ?? [];
 
   async function handleGenerateMatches() {
     setGenerating(true);
@@ -62,7 +76,6 @@ export default function ScholarshipsClient() {
       await generateScholarshipMatches();
       setTab("new");
     } catch (err) {
-      console.error("Failed to generate scholarship matches:", err);
       setMatchError(formatScholarshipError(err, "Could not generate scholarship matches. Please try again."));
     } finally {
       setGenerating(false);
@@ -74,13 +87,17 @@ export default function ScholarshipsClient() {
     try {
       await action(id);
     } catch (err) {
-      console.error("Scholarship action failed:", err);
       setActionError(formatScholarshipError(err, "Could not update this scholarship."));
     }
   }
 
+  if (loading) {
+    return <PageLoading message="Loading your scholarships..." />;
+  }
+
   return (
     <AppShell>
+      <PageErrorBanner message={loadError ?? viewError} />
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0B5CAD", color: "#fff", fontSize: 12, fontWeight: 700, padding: "5px 13px", borderRadius: 999 }}>
@@ -122,31 +139,28 @@ export default function ScholarshipsClient() {
           <div>
             <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Match generator</h2>
             <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>
-              {scholarshipSources.length} active sources available.
+              {sources.length} active sources available.
             </p>
           </div>
           <button
             type="button"
             onClick={() => handleGenerateMatches()}
-            disabled={generating || scholarshipSources.length === 0}
-            style={{ fontSize: 14, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 13, cursor: generating || scholarshipSources.length === 0 ? "not-allowed" : "pointer", opacity: scholarshipSources.length === 0 ? 0.6 : 1, fontFamily: "inherit" }}
+            disabled={generating || sources.length === 0}
+            style={{ fontSize: 14, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 13, cursor: generating || sources.length === 0 ? "not-allowed" : "pointer", opacity: sources.length === 0 ? 0.6 : 1, fontFamily: "inherit" }}
           >
             {generating ? "Generating..." : "Generate matches"}
           </button>
         </div>
-        {scholarshipSources.length === 0 ? (
-          <ProductCard style={{ padding: 24 }}>
-            <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-              No scholarship sources yet. Run <code>supabase/009_phase_5_schema_parity.sql</code> and seed data, or add scholarships in{" "}
-              <Link href="/admin/scholarships" style={{ color: "#0B5CAD" }}>admin</Link>.
-            </p>
-          </ProductCard>
+        {sources.length === 0 ? (
+          <PageEmptyState
+            title="No scholarship sources yet"
+            description="Scholarship sources are not available in this environment yet. You can still use the rest of AidPilot."
+          />
         ) : visibleScholarships.length === 0 ? (
-          <ProductCard style={{ padding: 24, textAlign: "center" }}>
-            <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-              Generate matches to create your first scholarship report.
-            </p>
-          </ProductCard>
+          <PageEmptyState
+            title="No matches yet"
+            description="Generate matches to create your first scholarship report."
+          />
         ) : null}
       </section>
 
@@ -155,7 +169,7 @@ export default function ScholarshipsClient() {
           <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 16px", color: "#15212E" }}>Top match</h2>
           <ScholarshipMatchCard
             match={featuredDb}
-            applyUrl={getApplyUrl(featuredDb, scholarshipSources)}
+            applyUrl={getApplyUrl(featuredDb, sources)}
             featured
             onSave={(id) => runAction(saveScholarship, id)}
             onApply={(id) => runAction(applyScholarship, id)}
@@ -189,13 +203,14 @@ export default function ScholarshipsClient() {
         </div>
 
         {tabMatches.length === 0 ? (
-          <ProductCard style={{ padding: 24, textAlign: "center" }}>
-            <p style={{ fontSize: 15, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-              {tab === "new"
-                ? "No new matches. Generate matches or check your saved and applied tabs."
-                : `No ${tab} scholarships yet.`}
-            </p>
-          </ProductCard>
+          <PageEmptyState
+            title={tab === "new" ? "No new matches" : `No ${tab} scholarships`}
+            description={
+              tab === "new"
+                ? "Generate matches or check your saved and applied tabs."
+                : `You have not marked any scholarships as ${tab} yet.`
+            }
+          />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
             {tabMatches
@@ -204,7 +219,7 @@ export default function ScholarshipsClient() {
                 <ScholarshipMatchCard
                   key={m.id}
                   match={m}
-                  applyUrl={getApplyUrl(m, scholarshipSources)}
+                  applyUrl={getApplyUrl(m, sources)}
                   onSave={(id) => runAction(saveScholarship, id)}
                   onApply={(id) => runAction(applyScholarship, id)}
                   onIgnore={(id) => runAction(ignoreScholarship, id)}
@@ -214,11 +229,11 @@ export default function ScholarshipsClient() {
         )}
       </section>
 
-      {scholarshipSources.length > 0 && (
+      {sources.length > 0 && (
         <section style={{ marginBottom: 32 }}>
           <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Source preview</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-            {scholarshipSources.slice(0, 4).map((source) => (
+            {sources.slice(0, 4).map((source) => (
               <SourceCard key={source.id} source={source} />
             ))}
           </div>

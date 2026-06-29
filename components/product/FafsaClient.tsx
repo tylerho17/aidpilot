@@ -1,178 +1,196 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
+import { PageErrorBanner, PageEmptyState, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
-import type { FafsaWorkflowStep, UserFafsaStep } from "@/lib/types";
+import { isAidTaskComplete, statusToTone } from "@/lib/data-helpers";
+import {
+  getFafsaPlanProgress,
+  getFafsaPlanTasks,
+  groupFafsaPlanByStage,
+} from "@/lib/fafsa-plan";
 
-const STEP_STATUSES = ["not_started", "in_progress", "completed"] as const;
-
-function formatStepStatus(status: string) {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function stepStatusTone(status: string): "green" | "amber" | "coral" | "blue" | "gray" {
-  if (status === "completed") return "green";
-  if (status === "in_progress") return "amber";
-  return "gray";
-}
-
-function getMergedSteps(workflowSteps: FafsaWorkflowStep[], userSteps: UserFafsaStep[]) {
-  const byWorkflowId = new Map(userSteps.map((s) => [s.workflow_step_id, s]));
-  return workflowSteps.map((step) => ({
-    workflow: step,
-    userStep: byWorkflowId.get(step.id) ?? null,
-  }));
-}
+const PLAN_STATUSES = ["Upcoming", "Due Soon", "Complete"] as const;
 
 export default function FafsaClient() {
-  const {
-    loading,
-    workflowSteps,
-    userFafsaSteps,
-    updateFafsaStepStatus,
-    updateFafsaStepByWorkflowId,
-    ensureUserFafsaSteps,
-    loadData,
-  } = useUserData();
-  const [seeding, setSeeding] = useState(false);
-  const [stepError, setStepError] = useState("");
-  const [updatingStepId, setUpdatingStepId] = useState<string | null>(null);
+  const { loading, authReady, loadError, fafsaIntake, tasks, updateTaskStatus } = useUserData();
+  const [error, setError] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && workflowSteps.length > 0 && userFafsaSteps.length < workflowSteps.length) {
-      void ensureUserFafsaSteps();
+  if (!authReady && loading) {
+    return <PageLoading message="Loading your FAFSA plan..." />;
+  }
+
+  const { data: planView, error: planError } = runSafe(
+    "Fafsa",
+    () => ({
+      planTasks: getFafsaPlanTasks(tasks ?? []),
+      progress: getFafsaPlanProgress(tasks ?? []),
+      grouped: groupFafsaPlanByStage(tasks ?? []),
+    }),
+    { planTasks: [], progress: 0, grouped: [] }
+  );
+
+  const { planTasks, progress, grouped } = planView;
+
+  async function handleStatusChange(taskId: string, status: string) {
+    setError("");
+    setUpdatingId(taskId);
+    try {
+      await updateTaskStatus(taskId, status);
+    } catch (err) {
+      setError(friendlyActionError(err, "Could not update this step. Please try again."));
+    } finally {
+      setUpdatingId(null);
     }
-  }, [loading, workflowSteps.length, userFafsaSteps.length, ensureUserFafsaSteps]);
+  }
 
   if (loading) {
+    return <PageLoading message="Loading your FAFSA plan..." />;
+  }
+
+  if (!fafsaIntake || planTasks.length === 0) {
     return (
       <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading FAFSA workflow...</p>
+        <div style={{ marginBottom: 28 }}>
+          <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
+            FAFSA Plan
+          </h1>
+          <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+            Build a personalized FAFSA plan in about 3 minutes. AidPilot organizes your next steps but does not submit FAFSA for you.
+          </p>
+        </div>
+        <ProductCard style={{ padding: 28, textAlign: "center" }}>
+          <PageEmptyState
+            title="Let's build your FAFSA plan"
+            description="Answer a few readiness questions and AidPilot will create a step-by-step plan with stages, blockers, and next actions."
+          />
+          <Link
+            href="/fafsa/readiness"
+            style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
+          >
+            Start FAFSA Readiness Wizard
+          </Link>
+        </ProductCard>
       </AppShell>
     );
   }
 
-  const merged = getMergedSteps(workflowSteps, userFafsaSteps);
-  const completed = merged.filter((m) => (m.userStep?.status ?? "not_started") === "completed").length;
-  const progress = merged.length ? Math.round((completed / merged.length) * 100) : 0;
-
-  async function handleCheckAgain() {
-    setSeeding(true);
-    setStepError("");
-    try {
-      await loadData();
-      await ensureUserFafsaSteps();
-    } catch (err) {
-      console.error("Failed to refresh FAFSA workflow:", err);
-      setStepError("Could not refresh FAFSA steps. Please try again.");
-    } finally {
-      setSeeding(false);
-    }
-  }
-
-  async function handleStatusChange(workflowStepId: string, userStepId: string | null, status: string) {
-    setStepError("");
-    setUpdatingStepId(workflowStepId);
-    try {
-      if (userStepId) {
-        await updateFafsaStepStatus(userStepId, status);
-      } else {
-        await updateFafsaStepByWorkflowId(workflowStepId, status);
-      }
-    } catch (err) {
-      console.error("Failed to update FAFSA step:", err);
-      setStepError(err instanceof Error ? err.message : "Could not update step status. Please try again.");
-    } finally {
-      setUpdatingStepId(null);
-    }
-  }
-
   return (
     <AppShell>
+      <PageErrorBanner message={loadError ?? planError} />
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
-          FAFSA Workflow
+          Your FAFSA plan
         </h1>
         <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Track your FAFSA progress step by step. AidPilot organizes your process but does not submit FAFSA for you.
+          Aid year {fafsaIntake.aid_year} · {fafsaIntake.student_situation}. Complete each step on StudentAid.gov — AidPilot tracks progress only.
         </p>
       </div>
 
       <ProductCard style={{ padding: 22, marginBottom: 22, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
         <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-          AidPilot helps you organize your FAFSA process, but FAFSA must be completed through official StudentAid.gov channels.
+          FAFSA must be completed through official StudentAid.gov channels. AidPilot does not collect SSNs, passwords, or tax return numbers.
         </p>
       </ProductCard>
 
-      {stepError && (
-        <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{stepError}</p>
-      )}
+      {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{error}</p>}
 
       <ProductCard style={{ padding: 24, marginBottom: 22 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <span className="font-display" style={{ fontSize: 18, fontWeight: 800, color: "#15212E" }}>Workflow progress</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 12 }}>
+          <span className="font-display" style={{ fontSize: 18, fontWeight: 800, color: "#15212E" }}>Plan progress</span>
           <span style={{ fontSize: 15, fontWeight: 800, color: "#0B5CAD" }}>{progress}%</span>
         </div>
         <ProgressBar pct={progress} color="linear-gradient(90deg,#0B5CAD,#37A0E0)" />
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#6B7280", margin: "12px 0 0" }}>
-          {completed} of {merged.length || 12} steps completed
-        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+          <Link href="/fafsa/readiness" style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "8px 14px", borderRadius: 999, textDecoration: "none" }}>
+            Update readiness answers
+          </Link>
+        </div>
       </ProductCard>
 
-      {workflowSteps.length === 0 ? (
-        <ProductCard style={{ padding: 28, textAlign: "center" }}>
-          <p style={{ fontSize: 15, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.6 }}>
-            FAFSA workflow steps are not seeded yet. Run supabase/005_seed_global_intelligence_data.sql.
-          </p>
-          <button type="button" onClick={() => handleCheckAgain()} disabled={seeding} style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 13, cursor: seeding ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {seeding ? "Checking..." : "Check again"}
-          </button>
-        </ProductCard>
-      ) : (
-        <ProductCard style={{ padding: 26 }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 16px", color: "#15212E" }}>Your FAFSA steps</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {merged.map(({ workflow, userStep }) => {
-              const status = userStep?.status ?? "not_started";
-              return (
-                <div key={workflow.id} style={{ padding: "14px 16px", borderRadius: 14, border: "1px solid #EAEEF3", background: status === "completed" ? "#F5FBF7" : "#fff" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Step {workflow.step_order}</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{workflow.title}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {grouped.length === 0 ? (
+          <PageEmptyState
+            title="No FAFSA plan steps yet"
+            description="Complete the FAFSA Readiness Wizard to generate your personalized plan."
+          />
+        ) : (
+        grouped.map(({ stage, tasks: stageTasks }) => (
+          <ProductCard key={stage} style={{ padding: 26 }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 16px", color: "#15212E" }}>
+              {stage}
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {stageTasks.map((task) => {
+                const complete = isAidTaskComplete(task.status);
+                return (
+                  <div
+                    key={task.id}
+                    style={{
+                      padding: "16px 18px",
+                      borderRadius: 14,
+                      border: "1px solid #EAEEF3",
+                      background: complete ? "#F5FBF7" : "#fff",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{task.title}</div>
+                      <PillBadge tone={statusToTone(task.status)}>{task.status}</PillBadge>
                     </div>
-                    <PillBadge tone={stepStatusTone(status)}>{formatStepStatus(status)}</PillBadge>
-                  </div>
-                  {workflow.description && (
-                    <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 10px", lineHeight: 1.55 }}>{workflow.description}</p>
-                  )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    {workflow.category && <span style={{ fontSize: 11, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "4px 10px", borderRadius: 999 }}>{workflow.category}</span>}
-                    {workflow.source_url && (
-                      <a href={workflow.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "#0B5CAD" }}>
-                        Official resource
-                      </a>
+                    {task.why_it_matters && (
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#5B6573", margin: "0 0 6px", lineHeight: 1.55 }}>
+                        Why it matters: {task.why_it_matters}
+                      </p>
                     )}
-                    <select
-                      value={status}
-                      disabled={updatingStepId === workflow.id}
-                      onChange={(e) => handleStatusChange(workflow.id, userStep?.id ?? null, e.target.value)}
-                      style={{ fontSize: 12, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 10px", fontFamily: "inherit", background: "#fff", marginLeft: "auto" }}
-                    >
-                      {STEP_STATUSES.map((s) => (
-                        <option key={s} value={s}>{formatStepStatus(s)}</option>
-                      ))}
-                    </select>
+                    {task.instructions && (
+                      <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 6px", lineHeight: 1.55 }}>
+                        Next step: {task.instructions}
+                      </p>
+                    )}
+                    {task.required_info && (
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2", margin: "0 0 8px", lineHeight: 1.5 }}>
+                        You need: {task.required_info}
+                      </p>
+                    )}
+                    {task.blocking_reason && !complete && (
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#B7791F", margin: "0 0 8px" }}>
+                        Blocker: {task.blocking_reason}
+                      </p>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+                      {task.action_url && (
+                        <a
+                          href={task.action_url}
+                          target={task.action_url.startsWith("http") ? "_blank" : undefined}
+                          rel={task.action_url.startsWith("http") ? "noopener noreferrer" : undefined}
+                          style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}
+                        >
+                          Open resource →
+                        </a>
+                      )}
+                      <select
+                        value={task.status}
+                        disabled={updatingId === task.id}
+                        onChange={(e) => void handleStatusChange(task.id, e.target.value)}
+                        style={{ fontSize: 12, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "6px 10px", fontFamily: "inherit", background: "#fff", marginLeft: "auto" }}
+                      >
+                        {PLAN_STATUSES.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </ProductCard>
-      )}
+                );
+              })}
+            </div>
+          </ProductCard>
+        ))
+        )}
+      </div>
 
       <p style={{ marginTop: 28, fontSize: 12, color: "#9AA4B2", lineHeight: 1.6 }}>
         AidPilot is an educational and organizational tool, not official financial aid advice.{" "}

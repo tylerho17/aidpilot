@@ -1,3 +1,5 @@
+import { toFriendlyError } from "@/lib/friendly-errors";
+
 export const SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE =
   "AidPilot's scholarship schema is out of date in this environment. Ask an admin to run the latest scholarship migration and reload the database schema.";
 
@@ -24,7 +26,5 @@ export function isScholarshipSchemaError(error: unknown): boolean {
 
 export function formatScholarshipError(error: unknown, fallback = "Could not complete scholarship action."): string {
   if (isScholarshipSchemaError(error)) return SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE;
-  if (error instanceof Error && error.message) return error.message;
-  const text = errorText(error);
-  return text || fallback;
+  return toFriendlyError(error, fallback);
 }

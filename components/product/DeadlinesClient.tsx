@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { PillBadge, ProductCard, StatCard, PageContentSkeleton } from "@/components/ProductUI";
+import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import { PageErrorBanner, PageEmptyState, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
 import { getChecklistAttentionTasks } from "@/lib/attention";
 import {
@@ -109,30 +110,47 @@ function ChecklistAttentionCard({ item }: { item: AidTask }) {
 
 
 export default function DeadlinesClient() {
-  const { loading, deadlines, tasks, updateDeadlineStatus } = useUserData();
+  const { loading, authReady, loadError, deadlines, tasks, updateDeadlineStatus } = useUserData();
   const [error, setError] = useState("");
 
-  const sorted = sortDeadlinesByDate(deadlines);
-  const active = sorted.filter((d) => !isDeadlineCompleted(d.status));
-  const completed = sorted.filter((d) => isDeadlineCompleted(d.status));
-  const dueSoon = active.filter((d) => {
-    const status = normalizeDeadlineStatus(d.status);
-    return status === "due soon" || status === "needs attention";
-  });
-  const checklistAttention = getChecklistAttentionTasks(tasks);
+  if (!authReady && loading) {
+    return <PageLoading message="Loading deadlines..." />;
+  }
+
+  const { data: view, error: viewError } = runSafe(
+    "Deadlines",
+    () => {
+      const sorted = sortDeadlinesByDate(deadlines ?? []);
+      const active = sorted.filter((d) => !isDeadlineCompleted(d.status));
+      const completed = sorted.filter((d) => isDeadlineCompleted(d.status));
+      const dueSoon = active.filter((d) => {
+        const status = normalizeDeadlineStatus(d.status);
+        return status === "due soon" || status === "needs attention";
+      });
+      const checklistAttention = getChecklistAttentionTasks(tasks ?? []);
+      return { sorted, active, completed, dueSoon, checklistAttention };
+    },
+    { sorted: [], active: [], completed: [], dueSoon: [], checklistAttention: [] }
+  );
+
+  const { sorted, active, completed, dueSoon, checklistAttention } = view;
 
   async function handleStatusChange(id: string, status: string) {
     setError("");
     try {
       await updateDeadlineStatus(id, status);
     } catch (err) {
-      console.error("Failed to update deadline:", err);
-      setError(err instanceof Error ? err.message : "Could not update deadline.");
+      setError(friendlyActionError(err, "Could not update deadline."));
     }
+  }
+
+  if (loading) {
+    return <PageLoading message="Loading deadlines..." />;
   }
 
   return (
     <AppShell>
+      <PageErrorBanner message={loadError ?? viewError} />
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
           Deadlines
@@ -142,66 +160,62 @@ export default function DeadlinesClient() {
         </p>
       </div>
 
-      {loading ? (
-        <PageContentSkeleton message="Loading deadlines..." />
-      ) : (
-        <>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
-            <StatCard label="Aid deadlines" value={String(sorted.length)} color="#0B5CAD" style={{ flex: "1 1 120px" }} />
-            <StatCard label="Due soon" value={String(dueSoon.length)} color="#B7791F" style={{ flex: "1 1 120px" }} />
-            <StatCard label="Checklist attention" value={String(checklistAttention.length)} color="#C04E57" style={{ flex: "1 1 120px" }} />
-            <StatCard label="Completed" value={String(completed.length)} color="#15885A" style={{ flex: "1 1 120px" }} />
-          </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
+        <StatCard label="Aid deadlines" value={String(sorted.length)} color="#0B5CAD" style={{ flex: "1 1 120px" }} />
+        <StatCard label="Due soon" value={String(dueSoon.length)} color="#B7791F" style={{ flex: "1 1 120px" }} />
+        <StatCard label="Checklist attention" value={String(checklistAttention.length)} color="#C04E57" style={{ flex: "1 1 120px" }} />
+        <StatCard label="Completed" value={String(completed.length)} color="#15885A" style={{ flex: "1 1 120px" }} />
+      </div>
 
-          {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{error}</p>}
+      {error && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{error}</p>}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-            <ProductCard style={{ padding: 24 }}>
-              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Aid deadlines</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {active.length === 0 ? (
-                  <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-                    No active aid deadlines yet. Verify official dates with your school and scholarship providers.
-                  </p>
-                ) : (
-                  active.map((item) => (
-                    <DeadlineCard key={item.id} item={item} onStatusChange={(status) => handleStatusChange(item.id, status)} />
-                  ))
-                )}
-              </div>
-            </ProductCard>
-
-            <ProductCard style={{ padding: 24 }}>
-              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
-                Checklist items needing attention
-              </h2>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
-                Checklist items appear here when they are due soon, missing, upcoming, or need review.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {checklistAttention.length === 0 ? (
-                  <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-                    No checklist items need attention right now. Mark tasks as Due Soon, Missing, Needs Review, or Upcoming on your checklist to see them here.
-                  </p>
-                ) : (
-                  checklistAttention.map((item) => <ChecklistAttentionCard key={item.id} item={item} />)
-                )}
-              </div>
-            </ProductCard>
-
-            {completed.length > 0 && (
-              <ProductCard style={{ padding: 24 }}>
-                <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Completed aid deadlines</h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {completed.map((item) => (
-                    <DeadlineCard key={item.id} item={item} onStatusChange={(status) => handleStatusChange(item.id, status)} />
-                  ))}
-                </div>
-              </ProductCard>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        <ProductCard style={{ padding: 24 }}>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Aid deadlines</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {active.length === 0 ? (
+              <PageEmptyState
+                title="No active aid deadlines"
+                description="Verify official dates with your school and scholarship providers, then add deadlines here."
+              />
+            ) : (
+              active.map((item) => (
+                <DeadlineCard key={item.id} item={item} onStatusChange={(status) => handleStatusChange(item.id, status)} />
+              ))
             )}
           </div>
-        </>
-      )}
+        </ProductCard>
+
+        <ProductCard style={{ padding: 24 }}>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
+            Checklist items needing attention
+          </h2>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
+            Checklist items appear here when they are due soon, missing, upcoming, or need review.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {checklistAttention.length === 0 ? (
+              <PageEmptyState
+                title="Nothing needs attention"
+                description="Mark tasks as Due Soon, Missing, Needs Review, or Upcoming on your checklist to see them here."
+              />
+            ) : (
+              checklistAttention.map((item) => <ChecklistAttentionCard key={item.id} item={item} />)
+            )}
+          </div>
+        </ProductCard>
+
+        {completed.length > 0 && (
+          <ProductCard style={{ padding: 24 }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Completed aid deadlines</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {completed.map((item) => (
+                <DeadlineCard key={item.id} item={item} onStatusChange={(status) => handleStatusChange(item.id, status)} />
+              ))}
+            </div>
+          </ProductCard>
+        )}
+      </div>
     </AppShell>
   );
 }

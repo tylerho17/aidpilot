@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import { PageErrorBanner, PageEmptyState, PageLoading, friendlyActionError } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
 import {
   documentStatusToTone,
@@ -44,21 +45,23 @@ function DocRow({
 }
 
 export default function DocumentsClient() {
-  const { loading, documents, updateDocumentStatus } = useUserData();
+  const { loading, authReady, loadError, documents, updateDocumentStatus } = useUserData();
   const [error, setError] = useState("");
 
-  if (loading) {
-    return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading documents...</p>
-      </AppShell>
-    );
+  if (!authReady && loading) {
+    return <PageLoading message="Loading documents..." />;
   }
 
-  const missing = getMissingDocumentCountFromDocs(documents);
+  if (loading) {
+    return <PageLoading message="Loading documents..." />;
+  }
+
+  const safeDocuments = documents ?? [];
+  const missing = getMissingDocumentCountFromDocs(safeDocuments);
 
   return (
     <AppShell>
+      <PageErrorBanner message={loadError} />
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
           Documents
@@ -77,13 +80,14 @@ export default function DocumentsClient() {
       <ProductCard style={{ padding: 26, marginBottom: 22 }}>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Document tracker</h2>
         <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.5 }}>Status only. No file uploads in AidPilot.</p>
-        {documents.length === 0 ? (
-          <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-            No documents tracked yet. Your school may request verification documents — add them here when you are ready.
-          </p>
+        {safeDocuments.length === 0 ? (
+          <PageEmptyState
+            title="No documents tracked yet"
+            description="Your school may request verification documents — add them here when you are ready. AidPilot tracks status only."
+          />
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {documents.map((doc: DocumentItem) => (
+          {safeDocuments.map((doc: DocumentItem) => (
             <DocRow
               key={doc.id}
               name={doc.title}
@@ -98,8 +102,7 @@ export default function DocumentsClient() {
                     try {
                       await updateDocumentStatus(doc.id, e.target.value);
                     } catch (err) {
-                      console.error("Failed to update document:", err);
-                      setError(err instanceof Error ? err.message : "Could not update document status.");
+                      setError(friendlyActionError(err, "Could not update document status."));
                     }
                   }}
                   style={{ fontSize: 12, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 10px", fontFamily: "inherit", background: "#fff" }}

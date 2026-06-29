@@ -6,7 +6,9 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { PillBadge, ProductCard, ProgressBar, StatCard } from "@/components/ProductUI";
+import { PageErrorBanner, PageEmptyState, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
+import { getChecklistOnlyTasks } from "@/lib/fafsa-plan";
 import {
   AID_TASK_STATUSES,
   DOCUMENT_STATUSES,
@@ -41,26 +43,46 @@ function sortDbTasks(tasks: AidTask[]) {
 }
 
 export default function ChecklistClient() {
-  const { loading, tasks, documents, updateTaskStatus, updateDocumentStatus } = useUserData();
+  const { loading, authReady, loadError, tasks, documents, updateTaskStatus, updateDocumentStatus } = useUserData();
   const [error, setError] = useState("");
 
-  if (loading) {
-    return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading your checklist...</p>
-      </AppShell>
-    );
+  if (!authReady && loading) {
+    return <PageLoading message="Loading your checklist..." />;
   }
 
-  const progress = getChecklistProgressFromTasks(tasks);
-  const attention = getAttentionCountFromTasks(tasks);
-  const missingDocs = getMissingDocumentCountFromDocs(documents);
-  const nextDeadline = getNextDeadlineFromTasks(tasks);
-  const sortedDb = sortDbTasks(tasks);
-  const categories = [...new Set(tasks.map((t) => t.category).filter(Boolean))] as string[];
+  const { data: view, error: viewError } = runSafe(
+    "Checklist",
+    () => {
+      const checklistTasks = getChecklistOnlyTasks(tasks ?? []);
+      const progress = getChecklistProgressFromTasks(checklistTasks);
+      const attention = getAttentionCountFromTasks(checklistTasks);
+      const missingDocs = getMissingDocumentCountFromDocs(documents ?? []);
+      const nextDeadline = getNextDeadlineFromTasks(checklistTasks);
+      const sortedDb = sortDbTasks(checklistTasks);
+      const categories = [...new Set(checklistTasks.map((t) => t.category).filter(Boolean))] as string[];
+      return { checklistTasks, progress, attention, missingDocs, nextDeadline, sortedDb, categories };
+    },
+    {
+      checklistTasks: [],
+      progress: 0,
+      attention: 0,
+      missingDocs: 0,
+      nextDeadline: "No deadlines yet",
+      sortedDb: [],
+      categories: [],
+    }
+  );
+
+  const { checklistTasks, progress, attention, missingDocs, nextDeadline, sortedDb, categories } = view;
+  const safeDocuments = documents ?? [];
+
+  if (loading) {
+    return <PageLoading message="Loading your checklist..." />;
+  }
 
   return (
     <AppShell>
+      <PageErrorBanner message={loadError ?? viewError} />
       <div style={{ marginBottom: 32 }}>
         <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.1 }}>
           Aid Checklist
@@ -90,7 +112,7 @@ export default function ChecklistClient() {
       {categories.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {categories.map((cat) => {
-            const catTasks = tasks.filter((t) => t.category === cat);
+            const catTasks = checklistTasks.filter((t) => t.category === cat);
             const done = catTasks.filter((t) => isAidTaskComplete(t.status)).length;
             return (
               <span key={cat} style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "6px 12px", borderRadius: 999 }}>
@@ -106,7 +128,10 @@ export default function ChecklistClient() {
           <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>All checklist tasks</h2>
           <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.5 }}>You can change this later.</p>
           {sortedDb.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No tasks yet. Tasks appear as your aid plan is set up.</p>
+            <PageEmptyState
+              title="No checklist tasks yet"
+              description="Tasks appear as your aid plan is set up. You can also add tasks from your dashboard."
+            />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {sortedDb.map((item) => (
@@ -129,7 +154,7 @@ export default function ChecklistClient() {
                           try {
                             await updateTaskStatus(item.id, e.target.value);
                           } catch (err) {
-                            setError(err instanceof Error ? err.message : "Could not update task.");
+                            setError(friendlyActionError(err, "Could not update task."));
                           }
                         }}
                         style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}
@@ -153,10 +178,10 @@ export default function ChecklistClient() {
               Status only — no file uploads yet. Document upload is coming later.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {documents.length === 0 ? (
-                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No documents tracked yet.</p>
+              {safeDocuments.length === 0 ? (
+                <PageEmptyState title="No documents tracked yet" description="Track document status here when your school requests materials." />
               ) : (
-                documents.map((doc: DocumentItem) => (
+                safeDocuments.map((doc: DocumentItem) => (
                   <DocRow
                     key={doc.id}
                     name={doc.title}
@@ -171,7 +196,7 @@ export default function ChecklistClient() {
                           try {
                             await updateDocumentStatus(doc.id, e.target.value);
                           } catch (err) {
-                            setError(err instanceof Error ? err.message : "Could not update document.");
+                            setError(friendlyActionError(err, "Could not update document."));
                           }
                         }}
                         style={{ fontSize: 11, fontWeight: 600, borderRadius: 999, border: "1px solid #E5E7EB", padding: "5px 9px", fontFamily: "inherit", background: "#fff" }}

@@ -4,9 +4,18 @@ import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { CheckSVG, PillBadge, ProductCard, StatCard, PageContentSkeleton } from "@/components/ProductUI";
+import { CheckSVG, PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
+import { PageErrorBanner, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
+import { getProfileFullName, getProfileSchoolName } from "@/lib/profile-fields";
 import { getTopAttentionItems, getSeverityLabel, attentionSeverityToTone } from "@/lib/attention";
+import {
+  getCurrentFafsaStage,
+  getFafsaBlockers,
+  getFafsaPlanProgress,
+  getNextFafsaAction,
+  getChecklistOnlyTasks,
+} from "@/lib/fafsa-plan";
 import { getTopRecommendations } from "@/lib/intelligence/recommendations";
 import {
   getDashboardSummary,
@@ -23,10 +32,14 @@ import {
   getNextDeadlineFromDeadlines,
   deadlineStatusToTone,
 } from "@/lib/data-helpers";
+import {
+  PROFILE_OPTIONAL_SAVE_NOTICE_KEY,
+} from "@/lib/onboarding-profile";
 
 export default function DashboardClient() {
   const {
     loading,
+    authReady,
     profile,
     tasks,
     documents,
@@ -37,48 +50,141 @@ export default function DashboardClient() {
     userFafsaSteps,
     workflowSteps,
     loadError,
+    fafsaIntake,
     refreshRecommendations,
     generateWeeklyReport,
   } = useUserData();
   const [refreshing, setRefreshing] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [profileNotice] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const notice = sessionStorage.getItem(PROFILE_OPTIONAL_SAVE_NOTICE_KEY);
+    if (notice) {
+      sessionStorage.removeItem(PROFILE_OPTIONAL_SAVE_NOTICE_KEY);
+      return notice;
+    }
+    return "";
+  });
 
-  const firstName = profile?.first_name ?? "there";
-  const schoolLabel = profile?.school ?? "Your school";
-  const summary = getDashboardSummary(profile, tasks, deadlines, weeklyReport);
-  const attention = getAttentionCountFromTasks(tasks);
-  const progress = getChecklistProgressFromTasks(tasks);
-  const completed = getCompletedTaskCount(tasks);
-  const totalTasks = tasks.length;
-  const missingDocs = getMissingDocumentCountFromDocs(documents);
-  const scholarshipStats = getScholarshipStatsFromDb(scholarships);
-  const protectItems = getTopAttentionItems(
-    { tasks, documents, deadlines, userFafsaSteps, workflowSteps, scholarships },
-    5
-  );
-
-  if (loading) {
-    return (
-      <AppShell>
-        <PageContentSkeleton message="Loading your aid check-in..." />
-      </AppShell>
-    );
+  if (!authReady && loading) {
+    return <PageLoading message="Loading your aid check-in..." />;
   }
 
-  const urgent = getUrgentTasksFromDb(tasks, 3).map((t) => ({
-    id: t.id,
-    title: t.title,
-    description: t.description ?? "",
-    status: t.status,
-    dueDate: formatDueDate(t.due_date, t.status),
-    category: t.category ?? "",
-    priority: t.priority ?? "Medium",
-  }));
+  const { data: view, error: viewError } = runSafe(
+    "Dashboard",
+    () => {
+      const checklistTasks = getChecklistOnlyTasks(tasks ?? []);
+      const summary = getDashboardSummary(profile, checklistTasks, deadlines ?? [], weeklyReport);
+      const attention = getAttentionCountFromTasks(checklistTasks);
+      const progress = getChecklistProgressFromTasks(checklistTasks);
+      const completed = getCompletedTaskCount(checklistTasks);
+      const totalTasks = checklistTasks.length;
+      const missingDocs = getMissingDocumentCountFromDocs(documents ?? []);
+      const scholarshipStats = getScholarshipStatsFromDb(scholarships ?? []);
+      const protectItems = getTopAttentionItems(
+        {
+          tasks: checklistTasks,
+          documents: documents ?? [],
+          deadlines: deadlines ?? [],
+          userFafsaSteps: userFafsaSteps ?? [],
+          workflowSteps: workflowSteps ?? [],
+          scholarships: scholarships ?? [],
+        },
+        5
+      );
+      const fafsaPlanProgress = getFafsaPlanProgress(tasks ?? []);
+      const fafsaCurrentStage = getCurrentFafsaStage(tasks ?? []);
+      const fafsaNextAction = getNextFafsaAction(tasks ?? []);
+      const fafsaBlockers = getFafsaBlockers(tasks ?? []);
+      const urgent = getUrgentTasksFromDb(checklistTasks, 3).map((t) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description ?? "",
+        status: t.status,
+        dueDate: formatDueDate(t.due_date, t.status),
+        category: t.category ?? "",
+        priority: t.priority ?? "Medium",
+      }));
+      const upcomingDeadlines = getUpcomingDeadlines(deadlines ?? [], 3);
+      const deadlinesThisMonth = getDeadlinesThisMonthCount(deadlines ?? []);
+      const nextDeadlineLabel = getNextDeadlineFromDeadlines(deadlines ?? []);
+      const topActions = getTopRecommendations(recommendations ?? [], 3);
 
-  const upcomingDeadlines = getUpcomingDeadlines(deadlines, 3);
-  const deadlinesThisMonth = getDeadlinesThisMonthCount(deadlines);
-  const nextDeadlineLabel = getNextDeadlineFromDeadlines(deadlines);
+      return {
+        checklistTasks,
+        summary,
+        attention,
+        progress,
+        completed,
+        totalTasks,
+        missingDocs,
+        scholarshipStats,
+        protectItems,
+        fafsaPlanProgress,
+        fafsaCurrentStage,
+        fafsaNextAction,
+        fafsaBlockers,
+        urgent,
+        upcomingDeadlines,
+        deadlinesThisMonth,
+        nextDeadlineLabel,
+        topActions,
+      };
+    },
+    {
+      checklistTasks: [],
+      summary: {
+        aidStatus: "Needs attention",
+        aidAtRisk: "$2,400",
+        nextDeadline: "No deadlines yet",
+        weeklyCheckIn: "Getting started",
+        protectedMessage: "Your aid needs a little attention this week.",
+      },
+      attention: 0,
+      progress: 0,
+      completed: 0,
+      totalTasks: 0,
+      missingDocs: 0,
+      scholarshipStats: getScholarshipStatsFromDb([]),
+      protectItems: [],
+      fafsaPlanProgress: 0,
+      fafsaCurrentStage: null,
+      fafsaNextAction: null,
+      fafsaBlockers: [],
+      urgent: [],
+      upcomingDeadlines: [],
+      deadlinesThisMonth: 0,
+      nextDeadlineLabel: "No deadlines yet",
+      topActions: [],
+    }
+  );
+
+  const firstName = getProfileFullName(profile) || "there";
+  const schoolLabel = getProfileSchoolName(profile) || "Your school";
+  const {
+    attention,
+    progress,
+    completed,
+    totalTasks,
+    missingDocs,
+    scholarshipStats,
+    protectItems,
+    fafsaPlanProgress,
+    fafsaCurrentStage,
+    fafsaNextAction,
+    fafsaBlockers,
+    urgent,
+    upcomingDeadlines,
+    deadlinesThisMonth,
+    nextDeadlineLabel,
+    topActions,
+    summary,
+  } = view;
+
+  if (loading) {
+    return <PageLoading message="Loading your aid check-in..." />;
+  }
 
   const report = weeklyReport
     ? {
@@ -92,8 +198,6 @@ export default function DashboardClient() {
     : null;
 
   const toneFn = (status: string) => statusToTone(status);
-
-  const topActions = getTopRecommendations(recommendations, 3);
 
   const fafsaLabel =
     profile?.fafsa_status === "Yes"
@@ -109,7 +213,7 @@ export default function DashboardClient() {
       await refreshRecommendations();
     } catch (err) {
       console.error("Failed to refresh recommendations:", err);
-      setActionError(err instanceof Error ? err.message : "Could not refresh recommendations. Please try again.");
+      setActionError(friendlyActionError(err, "Could not refresh recommendations. Please try again."));
     } finally {
       setRefreshing(false);
     }
@@ -122,7 +226,7 @@ export default function DashboardClient() {
       await generateWeeklyReport();
     } catch (err) {
       console.error("Failed to generate weekly report:", err);
-      setActionError(err instanceof Error ? err.message : "Could not generate your weekly report. Please try again.");
+      setActionError(friendlyActionError(err, "Could not generate your weekly report. Please try again."));
     } finally {
       setGeneratingReport(false);
     }
@@ -143,9 +247,11 @@ export default function DashboardClient() {
 
   return (
     <AppShell>
-      {loadError && (
-        <ProductCard style={{ padding: 18, marginBottom: 22, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>{loadError}</p>
+      <PageErrorBanner message={loadError ?? viewError} />
+
+      {profileNotice && (
+        <ProductCard style={{ padding: 18, marginBottom: 22, background: "#EAF3FF", border: "1px solid #D7E7FB" }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#0B5CAD", margin: 0, lineHeight: 1.6 }}>{profileNotice}</p>
         </ProductCard>
       )}
 
@@ -174,6 +280,67 @@ export default function DashboardClient() {
       {actionError && (
         <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
       )}
+
+      <ProductCard style={{ padding: 26, marginBottom: 22, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
+          Your FAFSA journey
+        </h2>
+        {!fafsaIntake ? (
+          <>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
+              Let&apos;s build your FAFSA plan in 3 minutes.
+            </p>
+            <Link
+              href="/fafsa/readiness"
+              style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
+            >
+              Start FAFSA Readiness Wizard
+            </Link>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
+              Aid year {fafsaIntake.aid_year} · Current stage: {fafsaCurrentStage ?? "Complete"}
+            </p>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#6B7280" }}>FAFSA plan progress</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: "#0B5CAD" }}>{fafsaPlanProgress}%</span>
+              </div>
+              <ProgressBar pct={fafsaPlanProgress} />
+            </div>
+            {fafsaNextAction ? (
+              <div style={{ padding: "14px 16px", borderRadius: 14, background: "#fff", border: "1px solid #EAEEF3", marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Next best action</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6 }}>{fafsaNextAction.title}</div>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.55 }}>
+                  {fafsaNextAction.instructions ?? fafsaNextAction.description}
+                </p>
+              </div>
+            ) : (
+              <p style={{ fontSize: 14, color: "#15885A", fontWeight: 600, margin: "0 0 14px" }}>
+                Your FAFSA plan steps are complete. Keep checking StudentAid.gov and your school portal.
+              </p>
+            )}
+            {fafsaBlockers.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#B7791F", marginBottom: 8 }}>Needs attention</div>
+                {fafsaBlockers.slice(0, 2).map((blocker) => (
+                  <div key={blocker.id} style={{ fontSize: 13, fontWeight: 600, color: "#6B7280", marginBottom: 4 }}>
+                    · {blocker.blocking_reason}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link
+              href="/fafsa"
+              style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}
+            >
+              Continue FAFSA plan
+            </Link>
+          </>
+        )}
+      </ProductCard>
 
       <ProductCard style={{ padding: 26, marginBottom: 22 }}>
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>

@@ -42,6 +42,13 @@ Run migrations in the Supabase SQL Editor **in this order** on a fresh project:
 | 9 | `supabase/009_phase_5_schema_parity.sql` | Scholarship column parity, indexes, feedback safety net, admin RPC, schema reload |
 | 10 | `supabase/010_status_normalization.sql` | Canonical task, deadline, and document status constraints |
 | 11 | `supabase/011_profile_enrichment.sql` | Scholarship profile fields on student_profiles |
+| 12 | `supabase/012_fafsa_intake.sql` | FAFSA intake responses and plan task metadata on aid_tasks |
+| 13 | `supabase/013_student_profile_parity.sql` | Optional profile/scholarship columns on student_profiles + schema reload |
+| 14 | `supabase/014_profile_column_names.sql` | Rename legacy first_gen/pell_eligible columns to canonical names + schema reload |
+| 15 | `supabase/015_onboarding_profile_columns.sql` | One-shot parity for deployed DBs: all onboarding/matching columns + legacy renames |
+| 16 | `supabase/016_student_profile_canonical.sql` | **Canonical profile columns** (full_name, school_name, education_level, etc.) + full backfill |
+
+**Deployed production fix:** Run `016_student_profile_canonical.sql` in the Supabase SQL Editor (idempotent, safe to rerun).
 
 After running 007 and 009, grant scholarship admin access by adding your email to the database allowlist:
 

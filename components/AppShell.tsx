@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactElement, ReactNode } from "react";
 import { PlaneSVG } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
+import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
 import { getInitials } from "@/lib/data-helpers";
 
 const GridSVG = ({ color = "currentColor" }: { color?: string }) => (
@@ -94,12 +95,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const isSignedIn = Boolean(user);
   const showProfileSkeleton = !authReady;
-  const displayName = profile?.first_name?.trim() || (user?.email ? user.email.split("@")[0] : "Student");
-  const displayEmail = user?.email?.trim() || profile?.email?.trim() || "";
-  const displaySchool =
-    [profile?.year, profile?.school].filter(Boolean).join(" · ") || null;
-  const displayTag = profile?.student_type?.trim() || "";
-  const initials = getInitials(profile?.first_name?.trim() || user?.email?.split("@")[0]);
+
+  let displayName = "Student";
+  let displayEmail = "";
+  let displaySchool: string | null = null;
+  let displayTag = "";
+  let initials = "AP";
+
+  try {
+    displayName = getProfileFullName(profile) || (user?.email ? user.email.split("@")[0] : "Student");
+    displayEmail = user?.email?.trim() || profile?.email?.trim() || "";
+    displaySchool =
+      [getProfileEducationLevel(profile), getProfileSchoolName(profile)].filter(Boolean).join(" · ") || null;
+    displayTag = profile?.student_type?.trim() || "";
+    initials = getInitials(getProfileFullName(profile) || user?.email?.split("@")[0]);
+  } catch (error) {
+    console.error("AppShell identity render failed:", error);
+    displayName = user?.email?.split("@")[0] || "Student";
+    displayEmail = user?.email?.trim() || "";
+    initials = getInitials(displayName);
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-hanken), system-ui, sans-serif", background: "#F4F8FE" }}>

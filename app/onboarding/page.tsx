@@ -12,6 +12,12 @@ import {
   parseScholarshipPreferences,
 } from "@/lib/scholarship-preferences";
 import { joinCommaSeparated, parseCommaSeparated } from "@/lib/data-helpers";
+import {
+  PROFILE_OPTIONAL_SAVE_NOTICE_KEY,
+  PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE,
+  saveOnboardingProfile,
+} from "@/lib/onboarding-profile";
+import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
 import type { OnboardingFormData, School } from "@/lib/types";
 
 const PROFILE_ESSAY_OPTIONS = [
@@ -63,9 +69,9 @@ export default function OnboardingPage() {
     school_id: null,
     majors: [],
     interests: [],
-    first_gen: false,
+    first_generation: false,
     transfer_student: false,
-    pell_eligible: false,
+    pell_grant_eligible: false,
     cal_grant_eligible: false,
     gpa: "",
     profile_essay_preference: "any",
@@ -107,10 +113,10 @@ export default function OnboardingPage() {
         const prefs = parseScholarshipPreferences(profile.scholarship_preferences);
         setForm((prev) => ({
           ...prev,
-          first_name: profile.first_name ?? prev.first_name,
+          first_name: getProfileFullName(profile) || prev.first_name,
           email: profile.email ?? prev.email,
-          school: profile.school ?? prev.school,
-          year: profile.year ?? prev.year,
+          school: getProfileSchoolName(profile) || prev.school,
+          year: getProfileEducationLevel(profile) ?? prev.year,
           state: profile.state ?? prev.state,
           student_type: profile.student_type ?? prev.student_type,
           fafsa_status: profile.fafsa_status ?? prev.fafsa_status,
@@ -123,9 +129,9 @@ export default function OnboardingPage() {
           school_id: profile.school_id ?? prev.school_id,
           majors: profile.majors ?? prev.majors,
           interests: profile.interests ?? prev.interests,
-          first_gen: profile.first_gen ?? prev.first_gen,
+          first_generation: profile.first_generation ?? prev.first_generation,
           transfer_student: profile.transfer_student ?? prev.transfer_student,
-          pell_eligible: profile.pell_eligible ?? prev.pell_eligible,
+          pell_grant_eligible: profile.pell_grant_eligible ?? prev.pell_grant_eligible,
           cal_grant_eligible: profile.cal_grant_eligible ?? prev.cal_grant_eligible,
           gpa: profile.gpa != null ? String(profile.gpa) : prev.gpa,
           profile_essay_preference: profile.essay_preference ?? prev.profile_essay_preference,
@@ -183,15 +189,13 @@ export default function OnboardingPage() {
     let redirected = false;
 
     try {
-      console.log("Starting onboarding submit");
-
       const {
         data: { user },
         error: authError,
       } = await supabase.auth.getUser();
 
       if (authError) {
-        throw new Error(authError?.message ?? JSON.stringify(authError));
+        throw new Error("We couldn't verify your account. Please log in again.");
       }
 
       if (!user) {
@@ -200,50 +204,17 @@ export default function OnboardingPage() {
         return;
       }
 
-      console.log("User loaded:", user.id);
-      console.log("Saving profile");
-
-      const scholarshipPreferences = {
-        interested_categories: form.interested_categories,
-        essay_preference: form.essay_preference,
-        effort_preference: form.effort_preference,
-        state_preference: form.state,
-        major_interests: form.major_interests.trim(),
-      };
-
       const matchedSchool = schools.find((s) => s.name === resolvedSchool);
-
-      const { error: profileError } = await supabase.from("student_profiles").upsert({
-        id: user.id,
-        first_name: form.first_name,
-        email: form.email,
-        school: resolvedSchool,
-        school_id: matchedSchool?.id ?? form.school_id,
-        year: form.year,
-        state: form.state,
-        student_type: form.student_type,
-        fafsa_status: form.fafsa_status,
-        aid_types: form.aid_types,
-        main_goals: form.main_goals,
-        majors: form.majors.length ? form.majors : parseCommaSeparated(form.major_interests),
-        interests: form.interests,
-        first_gen: form.first_gen,
-        transfer_student: form.transfer_student,
-        pell_eligible: form.pell_eligible,
-        cal_grant_eligible: form.cal_grant_eligible,
-        gpa: form.gpa.trim() ? Number(form.gpa) : null,
-        essay_preference: form.profile_essay_preference,
-        scholarship_preferences: scholarshipPreferences,
-        is_onboarded: true,
-        updated_at: new Date().toISOString(),
+      const { optionalFieldsSkipped } = await saveOnboardingProfile(supabase, {
+        userId: user.id,
+        form,
+        resolvedSchool,
+        matchedSchool,
       });
 
-      if (profileError) {
-        throw new Error(profileError?.message ?? JSON.stringify(profileError));
+      if (optionalFieldsSkipped) {
+        sessionStorage.setItem(PROFILE_OPTIONAL_SAVE_NOTICE_KEY, PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE);
       }
-
-      console.log("Profile saved");
-      console.log("Redirecting to dashboard");
 
       redirected = true;
       router.replace("/dashboard");
@@ -464,7 +435,7 @@ export default function OnboardingPage() {
                 </select>
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.first_gen} onChange={(e) => setForm({ ...form, first_gen: e.target.checked })} />
+                <input type="checkbox" checked={form.first_generation} onChange={(e) => setForm({ ...form, first_generation: e.target.checked })} />
                 First-generation college student
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
@@ -472,7 +443,7 @@ export default function OnboardingPage() {
                 Transfer student
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.pell_eligible} onChange={(e) => setForm({ ...form, pell_eligible: e.target.checked })} />
+                <input type="checkbox" checked={form.pell_grant_eligible} onChange={(e) => setForm({ ...form, pell_grant_eligible: e.target.checked })} />
                 Pell Grant eligible
               </label>
               <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>

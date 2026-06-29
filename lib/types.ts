@@ -2,13 +2,18 @@ import type { ScholarshipPreferences } from "@/lib/scholarship-preferences";
 
 export type StudentProfile = {
   id: string;
+  user_id: string | null;
   created_at: string;
   updated_at: string | null;
   first_name: string | null;
+  full_name: string | null;
   email: string | null;
   school: string | null;
+  school_name: string | null;
   school_id: string | null;
   year: string | null;
+  education_level: string | null;
+  graduation_year: number | null;
   state: string | null;
   student_type: string | null;
   fafsa_status: string | null;
@@ -16,9 +21,9 @@ export type StudentProfile = {
   main_goals: string[] | null;
   majors: string[] | null;
   interests: string[] | null;
-  first_gen: boolean | null;
+  first_generation: boolean | null;
   transfer_student: boolean | null;
-  pell_eligible: boolean | null;
+  pell_grant_eligible: boolean | null;
   cal_grant_eligible: boolean | null;
   gpa: number | null;
   essay_preference: string | null;
@@ -64,6 +69,74 @@ export type AidTask = {
   due_date: string | null;
   category: string | null;
   priority: string | null;
+  task_source?: string | null;
+  stage?: string | null;
+  step_order?: number | null;
+  why_it_matters?: string | null;
+  instructions?: string | null;
+  required_info?: string | null;
+  blocking_reason?: string | null;
+  action_url?: string | null;
+  plan_key?: string | null;
+};
+
+export const FAFSA_STAGES = [
+  "Get ready",
+  "Fill FAFSA",
+  "Contributor completion",
+  "After submission",
+  "Documents and verification",
+  "Aid offer review",
+] as const;
+
+export type FafsaStage = (typeof FAFSA_STAGES)[number];
+
+export type FafsaIntakeResponse = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  user_id: string;
+  aid_year: string;
+  student_situation: string;
+  state: string;
+  schools: string;
+  fafsa_progress: string;
+  has_studentaid_account: string;
+  needs_parent_info: string;
+  parent_has_account: string | null;
+  has_tax_info_access: string;
+  received_aid_offer: string;
+  verification_requested: string;
+  plan_generated_at: string | null;
+};
+
+export type FafsaIntakeFormData = {
+  aid_year: string;
+  student_situation: string;
+  state: string;
+  schools: string;
+  fafsa_progress: string;
+  has_studentaid_account: string;
+  needs_parent_info: string;
+  parent_has_account: string;
+  has_tax_info_access: string;
+  received_aid_offer: string;
+  verification_requested: string;
+};
+
+export type FafsaPlanTaskInput = {
+  plan_key: string;
+  title: string;
+  stage: FafsaStage;
+  step_order: number;
+  status: string;
+  priority: string;
+  why_it_matters: string;
+  instructions: string;
+  required_info: string;
+  blocking_reason: string | null;
+  action_url: string | null;
+  description?: string | null;
 };
 
 export type DocumentItem = {
@@ -242,9 +315,9 @@ export type OnboardingFormData = {
   major_interests: string;
   majors: string[];
   interests: string[];
-  first_gen: boolean;
+  first_generation: boolean;
   transfer_student: boolean;
-  pell_eligible: boolean;
+  pell_grant_eligible: boolean;
   cal_grant_eligible: boolean;
   gpa: string;
   profile_essay_preference: string;

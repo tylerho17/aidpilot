@@ -1,5 +1,5 @@
--- AidPilot P1: enrich student_profiles for scholarship matching
--- Safe to rerun. Run after schools table exists.
+-- AidPilot: student_profiles column parity for onboarding + optional matching fields
+-- Safe to rerun. Run if 011 was not applied or PostgREST schema cache is stale.
 
 alter table public.student_profiles add column if not exists school_id uuid references public.schools (id) on delete set null;
 alter table public.student_profiles add column if not exists majors text[] default '{}'::text[];
@@ -19,9 +19,9 @@ update public.student_profiles set scholarship_preferences = '{}'::jsonb where s
 
 create index if not exists student_profiles_school_id_idx on public.student_profiles (school_id);
 
-comment on column public.student_profiles.majors is 'Student majors used for scholarship matching';
-comment on column public.student_profiles.interests is 'Academic and extracurricular interests for scholarship matching';
-comment on column public.student_profiles.essay_preference is 'any, prefer_no_essay, or okay_with_essay';
+comment on column public.student_profiles.first_generation is 'First-generation college student (scholarship matching)';
+comment on column public.student_profiles.pell_grant_eligible is 'Pell Grant eligibility flag (scholarship matching)';
+comment on column public.student_profiles.cal_grant_eligible is 'Cal Grant eligibility flag (California students)';
 comment on column public.student_profiles.scholarship_preferences is 'JSON preferences from onboarding/settings for scholarship matching';
 
 notify pgrst, 'reload schema';

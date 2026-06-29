@@ -22,6 +22,11 @@ import { upsertAidRecommendationsForUser } from "@/lib/intelligence/recommendati
 import { generateScholarshipMatchesForUser } from "@/lib/intelligence/scholarship-matching";
 import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
 import { saveWeeklyReportForUser } from "@/lib/intelligence/weekly-report";
+import { saveFafsaIntakeAndPlan as persistFafsaIntakeAndPlan } from "@/lib/fafsa-plan-persist";
+import { withCanonicalProfileFields } from "@/lib/student-profile-payload";
+import { toFriendlyError } from "@/lib/friendly-errors";
+import { getFafsaPlanTasks, isFafsaPlanTask, FAFSA_TASK_SOURCE } from "@/lib/fafsa-plan";
+import { isAidTaskComplete } from "@/lib/data-helpers";
 import type {
   AidLetter,
   AidRecommendation,
@@ -29,6 +34,8 @@ import type {
   Deadline,
   DocumentItem,
   FafsaWorkflowStep,
+  FafsaIntakeFormData,
+  FafsaIntakeResponse,
   IntelligenceUserData,
   ScholarshipMatch,
   ScholarshipSource,
@@ -72,6 +79,7 @@ function useUserDataState() {
   const [userFafsaSteps, setUserFafsaSteps] = useState<UserFafsaStep[]>([]);
   const [workflowSteps, setWorkflowSteps] = useState<FafsaWorkflowStep[]>([]);
   const [scholarshipSources, setScholarshipSources] = useState<ScholarshipSource[]>([]);
+  const [fafsaIntake, setFafsaIntake] = useState<FafsaIntakeResponse | null>(null);
   const [isScholarshipAdmin, setIsScholarshipAdmin] = useState(false);
   const [scholarshipSchemaError, setScholarshipSchemaError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -156,6 +164,7 @@ function useUserDataState() {
             setUserFafsaSteps([]);
             setWorkflowSteps([]);
             setScholarshipSources([]);
+            setFafsaIntake(null);
             setIsScholarshipAdmin(false);
             adminCacheRef.current = null;
             setAuthReady(true);
@@ -187,6 +196,7 @@ function useUserDataState() {
             userStepsRes,
             workflowRes,
             sourcesRes,
+            intakeRes,
           ] = await Promise.all([
             adminPromise,
             supabase.from("student_profiles").select("*").eq("id", resolvedUser.id).maybeSingle(),
@@ -204,6 +214,7 @@ function useUserDataState() {
             supabase.from("user_fafsa_steps").select("*").eq("user_id", resolvedUser.id).order("created_at"),
             supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
             supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
+            supabase.from("fafsa_intake_responses").select("*").eq("user_id", resolvedUser.id).maybeSingle(),
           ]);
 
           setIsScholarshipAdmin(adminFlag);
@@ -220,6 +231,7 @@ function useUserDataState() {
             userStepsRes.error,
             workflowRes.error,
             sourcesRes.error,
+            intakeRes.error,
           ].filter(Boolean);
 
           if (errors.length > 0) {
@@ -242,6 +254,7 @@ function useUserDataState() {
           setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
           setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
           setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
+          setFafsaIntake(intakeRes.error ? null : ((intakeRes.data as FafsaIntakeResponse | null) ?? null));
 
           const workflowCount = (workflowRes.data ?? []).length;
           const userStepCount = (userStepsRes.data ?? []).length;
@@ -307,8 +320,43 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? (data as AidTask) : t)));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
+
+    let nextTasks = tasks.map((t) => (t.id === taskId ? (data as AidTask) : t));
+
+    if (isFafsaPlanTask(data as AidTask) && isAidTaskComplete(status)) {
+      const planTasks = getFafsaPlanTasks(nextTasks);
+      const nextOpen = planTasks.find((t) => t.id !== taskId && !isAidTaskComplete(t.status));
+      if (nextOpen && nextOpen.status !== "Due Soon") {
+        const { data: promoted, error: promoteError } = await supabase
+          .from("aid_tasks")
+          .update({ status: "Due Soon", updated_at: new Date().toISOString() })
+          .eq("id", nextOpen.id)
+          .select()
+          .single();
+        if (!promoteError && promoted) {
+          nextTasks = nextTasks.map((t) => (t.id === nextOpen.id ? (promoted as AidTask) : t));
+        }
+      }
+    }
+
+    setTasks(nextTasks);
+  };
+
+  const saveFafsaIntakeAndGeneratePlan = async (form: FafsaIntakeFormData) => {
+    if (!user) throw new Error("Not logged in");
+    try {
+      const { intake, planTasks } = await persistFafsaIntakeAndPlan(supabase, user.id, form);
+      setFafsaIntake(intake);
+      setTasks((prev) => {
+        const withoutPlan = prev.filter((t) => t.task_source !== FAFSA_TASK_SOURCE);
+        return [...withoutPlan, ...planTasks];
+      });
+      return { intake, planTasks };
+    } catch (err) {
+      console.error("saveFafsaIntakeAndGeneratePlan failed:", err);
+      throw new Error(toFriendlyError(err, "Could not save your FAFSA readiness plan."));
+    }
   };
 
   const updateDocumentStatus = async (docId: string, status: string) => {
@@ -319,7 +367,7 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
     setDocuments((prev) => prev.map((d) => (d.id === docId ? (data as DocumentItem) : d)));
   };
 
@@ -331,21 +379,24 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
     setDeadlines((prev) => prev.map((d) => (d.id === deadlineId ? (data as Deadline) : d)));
   };
 
   const updateProfile = async (updates: Partial<StudentProfile>) => {
     if (!user) throw new Error("Not logged in");
 
+    const safeUpdates = withCanonicalProfileFields({ ...updates, id: user.id });
     const { data, error } = await supabase
       .from("student_profiles")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
       .eq("id", user.id)
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) {
+      throw new Error("We couldn't save your settings. Please try again.");
+    }
     setProfile(data as StudentProfile);
     return data as StudentProfile;
   };
@@ -373,7 +424,7 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
     setUserFafsaSteps((prev) => prev.map((s) => (s.id === stepId ? (data as UserFafsaStep) : s)));
   };
 
@@ -399,7 +450,7 @@ function useUserDataState() {
       .select()
       .single();
 
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
     setUserFafsaSteps((prev) => {
       const without = prev.filter((s) => s.workflow_step_id !== workflowStepId);
       return [...without, data as UserFafsaStep];
@@ -434,13 +485,13 @@ function useUserDataState() {
         .eq("id", existing.id)
         .select()
         .single();
-      if (error) throw new Error(error?.message ?? JSON.stringify(error));
+      if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
       setAidLetters([data as AidLetter, ...aidLetters.filter((l) => l.id !== existing.id)]);
       return data as AidLetter;
     }
 
     const { data, error } = await supabase.from("aid_letters").insert(payload).select().single();
-    if (error) throw new Error(error?.message ?? JSON.stringify(error));
+    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
     setAidLetters([data as AidLetter, ...aidLetters]);
     return data as AidLetter;
   };
@@ -582,12 +633,14 @@ function useUserDataState() {
     userFafsaSteps,
     workflowSteps,
     scholarshipSources,
+    fafsaIntake,
     isScholarshipAdmin,
     scholarshipSchemaError,
     loadError,
     loadData,
     getIntelligenceUserData,
     updateTaskStatus,
+    saveFafsaIntakeAndGeneratePlan,
     updateDocumentStatus,
     updateDeadlineStatus,
     updateFafsaStepStatus,

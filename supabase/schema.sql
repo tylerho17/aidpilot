@@ -1,3 +1,4 @@
+create extension if not exists "pgcrypto";
 -- AidPilot v0.2 database schema
 --
 -- HOW TO RUN THIS FILE:

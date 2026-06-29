@@ -1,4 +1,5 @@
 import type { ScholarshipMatch, ScholarshipSource, StudentProfile } from "@/lib/types";
+import { getProfileEducationLevel } from "@/lib/profile-fields";
 
 export type ScholarshipMatchResult = {
   source: ScholarshipSource;
@@ -110,7 +111,7 @@ export function scoreScholarshipSource(
   const rationale: string[] = [];
 
   const state = (profile.state ?? "").toUpperCase();
-  const yearLevel = mapYearToEducationLevel(profile.year);
+  const yearLevel = mapYearToEducationLevel(getProfileEducationLevel(profile));
   const studentType = profile.student_type ?? "";
   const goals = profile.main_goals ?? [];
   const goalText = goals.join(" ").toLowerCase();
@@ -132,7 +133,8 @@ export function scoreScholarshipSource(
       source.education_levels.includes(yearLevel) || source.education_levels.includes("all");
     if (educationMatches) {
       score += 15;
-      rationale.push(profile.year ? `Matches your education level (${profile.year})` : "Matches your education level");
+      const educationLabel = getProfileEducationLevel(profile);
+      rationale.push(educationLabel ? `Matches your education level (${educationLabel})` : "Matches your education level");
     }
   }
 
@@ -168,7 +170,7 @@ export function scoreScholarshipSource(
     rationale.push("Matches your stated interests");
   }
 
-  if (profile.first_gen && tagPool.some((tag) => /first.?gen/i.test(tag))) {
+  if (profile.first_generation && tagPool.some((tag) => /first.?gen/i.test(tag))) {
     score += 8;
     rationale.push("May fit first-generation students");
   }
@@ -178,7 +180,7 @@ export function scoreScholarshipSource(
     rationale.push("May fit transfer students");
   }
 
-  if (profile.pell_eligible && source.need_based) {
+  if (profile.pell_grant_eligible && source.need_based) {
     score += 6;
     rationale.push("May fit Pell-eligible students");
   }

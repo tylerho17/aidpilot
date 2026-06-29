@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import { PageErrorBanner, PageLoading, friendlyActionError } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
+import { getProfileSchoolName } from "@/lib/profile-fields";
 import type { AidLetter, StudentProfile } from "@/lib/types";
 
 function getSuggestedNextStep({
@@ -52,15 +54,28 @@ function formatFafsaInput(value: number) {
 }
 
 function buildFormFromData(aidLetter: AidLetter | null, profile: StudentProfile | null) {
-  return {
-    school_name: aidLetter?.school_name ?? profile?.school ?? "",
-    aid_year: aidLetter?.aid_year ?? "2026-2027",
-    cost_of_attendance: formatFafsaInput(aidLetter?.cost_of_attendance ?? 0),
-    grants_amount: formatFafsaInput(aidLetter?.grants_amount ?? 0),
-    scholarships_amount: formatFafsaInput(aidLetter?.scholarships_amount ?? 0),
-    loans_amount: formatFafsaInput(aidLetter?.loans_amount ?? 0),
-    work_study_amount: formatFafsaInput(aidLetter?.work_study_amount ?? 0),
-  };
+  try {
+    return {
+      school_name: aidLetter?.school_name ?? getProfileSchoolName(profile),
+      aid_year: aidLetter?.aid_year ?? "2026-2027",
+      cost_of_attendance: formatFafsaInput(aidLetter?.cost_of_attendance ?? 0),
+      grants_amount: formatFafsaInput(aidLetter?.grants_amount ?? 0),
+      scholarships_amount: formatFafsaInput(aidLetter?.scholarships_amount ?? 0),
+      loans_amount: formatFafsaInput(aidLetter?.loans_amount ?? 0),
+      work_study_amount: formatFafsaInput(aidLetter?.work_study_amount ?? 0),
+    };
+  } catch (error) {
+    console.error("AidLetter: could not build form", error);
+    return {
+      school_name: "",
+      aid_year: "2026-2027",
+      cost_of_attendance: "",
+      grants_amount: "",
+      scholarships_amount: "",
+      loans_amount: "",
+      work_study_amount: "",
+    };
+  }
 }
 
 function AidLetterSummary({
@@ -213,8 +228,7 @@ function AidLetterForm({
         estimated_net_cost: estimatedGap,
       });
     } catch (err) {
-      console.error("Failed to save aid letter:", err);
-      setError(err instanceof Error ? err.message : "Could not save your aid letter. Please try again.");
+      setError(friendlyActionError(err, "Could not save your aid letter. Please try again."));
     } finally {
       setSaving(false);
     }
@@ -268,7 +282,7 @@ function AidLetterForm({
 
       {coa > 0 && (
         <AidLetterSummary
-          schoolName={form.school_name || profile?.school || "Your school"}
+          schoolName={form.school_name || getProfileSchoolName(profile) || "Your school"}
           aidYear={form.aid_year}
           status={aidLetter?.status ?? "entered"}
           coa={coa}
@@ -287,18 +301,19 @@ function AidLetterForm({
 }
 
 export default function AidLetterClient() {
-  const { loading, aidLetter, profile, saveAidLetter } = useUserData();
+  const { loading, authReady, loadError, aidLetter, profile, saveAidLetter } = useUserData();
+
+  if (!authReady && loading) {
+    return <PageLoading message="Loading aid letter..." />;
+  }
 
   if (loading) {
-    return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading aid letter...</p>
-      </AppShell>
-    );
+    return <PageLoading message="Loading aid letter..." />;
   }
 
   return (
     <AppShell>
+      <PageErrorBanner message={loadError} />
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
           Aid Letter
