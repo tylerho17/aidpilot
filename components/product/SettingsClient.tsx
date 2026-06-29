@@ -26,6 +26,9 @@ type SettingsProfileRow = {
   state?: string | null;
 };
 
+const SETTINGS_PROFILE_SELECT =
+  "first_name, full_name, email, school, school_name, year, education_level, state" as const;
+
 function defaultSummary(email = ""): ProfileSummary {
   return {
     name: email ? email.split("@")[0] : "Student",
@@ -232,7 +235,7 @@ function SettingsClientInner() {
 
         const { data: profile, error: profileError } = await supabase
           .from("student_profiles")
-          .select("first_name, email, school, year, state")
+          .select(SETTINGS_PROFILE_SELECT)
           .eq("id", user.id)
           .maybeSingle();
 
