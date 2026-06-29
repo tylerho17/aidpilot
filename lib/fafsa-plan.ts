@@ -55,7 +55,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     description: `Aid year: ${year}`,
   });
 
-  if (isNo(intake.has_studentaid_account) || isNotSure(intake.has_studentaid_account)) {
+  if (isNo(intake.has_student_aid_account) || isNotSure(intake.has_student_aid_account)) {
     addTask(tasks, {
       plan_key: "get_ready:create_studentaid_account",
       title: "Create your StudentAid.gov account",
@@ -81,7 +81,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     action_url: STUDENTAID_URL,
   });
 
-  if (isNo(intake.has_tax_info_access) || isNotSure(intake.has_tax_info_access)) {
+  if (isNo(intake.has_tax_info) || isNotSure(intake.has_tax_info)) {
     addTask(tasks, {
       plan_key: "get_ready:gather_financial_access",
       title: "Confirm access to tax and financial information",
@@ -135,8 +135,8 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     });
   }
 
-  if (isYes(intake.needs_parent_info) || isNotSure(intake.needs_parent_info)) {
-    const parentAccount = intake.parent_has_account ?? "not_sure";
+  if (isYes(intake.contributor_required) || isNotSure(intake.contributor_required)) {
+    const parentAccount = intake.parent_has_student_aid_account ?? "not_sure";
     if (isNo(parentAccount) || isNotSure(parentAccount)) {
       addTask(tasks, {
         plan_key: "contributor:parent_create_account",
@@ -208,7 +208,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     });
   }
 
-  if (isYes(intake.verification_requested)) {
+  if (isYes(intake.has_verification_request)) {
     addTask(tasks, {
       plan_key: "verification:complete_documents",
       title: "Complete school verification requests",
@@ -220,7 +220,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
       blocking_reason: "Verification documents requested",
       action_url: null,
     });
-  } else if (isNotSure(intake.verification_requested)) {
+  } else if (isNotSure(intake.has_verification_request)) {
     addTask(tasks, {
       plan_key: "verification:check_portal",
       title: "Check whether your school requested verification",
@@ -234,7 +234,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     });
   }
 
-  if (isNo(intake.received_aid_offer) || isNotSure(intake.received_aid_offer)) {
+  if (isNo(intake.has_aid_offer) || isNotSure(intake.has_aid_offer)) {
     addTask(tasks, {
       plan_key: "aid_offer:watch_for_offer",
       title: "Watch for your financial aid offer",
@@ -248,7 +248,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     });
   }
 
-  if (isYes(intake.received_aid_offer)) {
+  if (isYes(intake.has_aid_offer)) {
     addTask(tasks, {
       plan_key: "aid_offer:review_offer",
       title: "Review your financial aid offer",

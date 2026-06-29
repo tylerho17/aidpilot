@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
 import { PageErrorBanner, PageEmptyState, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
+import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { useUserData } from "@/hooks/useUserData";
 import { isAidTaskComplete, statusToTone } from "@/lib/data-helpers";
 import {
@@ -12,11 +13,13 @@ import {
   getFafsaPlanTasks,
   groupFafsaPlanByStage,
 } from "@/lib/fafsa-plan";
+import { fafsaStepHref } from "@/lib/fafsa-step-url";
+import { normalizeRequiredInfo } from "@/lib/required-info";
 
 const PLAN_STATUSES = ["Upcoming", "Due Soon", "Complete"] as const;
 
 export default function FafsaClient() {
-  const { loading, authReady, loadError, fafsaIntake, tasks, updateTaskStatus } = useUserData();
+  const { loading, authReady, loadError, fafsaIntake, fafsaDemoMode, tasks, updateTaskStatus } = useUserData();
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -82,6 +85,7 @@ export default function FafsaClient() {
   return (
     <AppShell>
       <PageErrorBanner message={loadError ?? planError} />
+      {fafsaDemoMode && <FafsaDemoBanner />}
       <div style={{ marginBottom: 28 }}>
         <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
           Your FAFSA plan
@@ -127,6 +131,7 @@ export default function FafsaClient() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {stageTasks.map((task) => {
                 const complete = isAidTaskComplete(task.status);
+                const requiredInfo = normalizeRequiredInfo(task.required_info);
                 return (
                   <div
                     key={task.id}
@@ -138,7 +143,16 @@ export default function FafsaClient() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{task.title}</div>
+                      {task.plan_key ? (
+                        <Link
+                          href={fafsaStepHref(task.plan_key)}
+                          style={{ fontSize: 15, fontWeight: 700, color: "#15212E", textDecoration: "none", lineHeight: 1.4 }}
+                        >
+                          {task.title} →
+                        </Link>
+                      ) : (
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{task.title}</div>
+                      )}
                       <PillBadge tone={statusToTone(task.status)}>{task.status}</PillBadge>
                     </div>
                     {task.why_it_matters && (
@@ -151,9 +165,9 @@ export default function FafsaClient() {
                         Next step: {task.instructions}
                       </p>
                     )}
-                    {task.required_info && (
+                    {requiredInfo && (
                       <p style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2", margin: "0 0 8px", lineHeight: 1.5 }}>
-                        You need: {task.required_info}
+                        You need: {requiredInfo}
                       </p>
                     )}
                     {task.blocking_reason && !complete && (
@@ -162,6 +176,14 @@ export default function FafsaClient() {
                       </p>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+                      {task.plan_key && (
+                        <Link
+                          href={fafsaStepHref(task.plan_key)}
+                          style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}
+                        >
+                          Open step guide
+                        </Link>
+                      )}
                       {task.action_url && (
                         <a
                           href={task.action_url}

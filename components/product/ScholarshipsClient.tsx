@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { ScholarshipMatchCard } from "@/components/product/ScholarshipMatchCard";
-import { ProductCard, StatCard } from "@/components/ProductUI";
+import { StatCard } from "@/components/ProductUI";
 import { PageErrorBanner, PageEmptyState, PageLoading, runSafe } from "@/components/product/PageSafety";
 import { useUserData } from "@/hooks/useUserData";
 import {
@@ -17,7 +17,8 @@ import {
   type ScholarshipMatchTab,
 } from "@/lib/data-helpers";
 import { getApplyUrl } from "@/lib/intelligence/scholarship-report";
-import { formatScholarshipError } from "@/lib/scholarship-errors";
+import { ScholarshipSchemaBanner } from "@/components/product/ScholarshipSchemaBanner";
+import { formatScholarshipError, isScholarshipSchemaError } from "@/lib/scholarship-errors";
 import type { ScholarshipMatch, ScholarshipSource } from "@/lib/types";
 
 const TABS: { id: ScholarshipMatchTab; label: string }[] = [
@@ -76,7 +77,9 @@ export default function ScholarshipsClient() {
       await generateScholarshipMatches();
       setTab("new");
     } catch (err) {
-      setMatchError(formatScholarshipError(err, "Could not generate scholarship matches. Please try again."));
+      if (!isScholarshipSchemaError(err)) {
+        setMatchError(formatScholarshipError(err, "Could not generate scholarship matches. Please try again."));
+      }
     } finally {
       setGenerating(false);
     }
@@ -87,7 +90,9 @@ export default function ScholarshipsClient() {
     try {
       await action(id);
     } catch (err) {
-      setActionError(formatScholarshipError(err, "Could not update this scholarship."));
+      if (!isScholarshipSchemaError(err)) {
+        setActionError(formatScholarshipError(err, "Could not update this scholarship."));
+      }
     }
   }
 
@@ -125,11 +130,7 @@ export default function ScholarshipsClient() {
         <StatCard label="Deadlines this month" value={String(stats.deadlinesThisMonth)} color="#B7791F" style={{ flex: "1 1 140px" }} />
       </div>
 
-      {scholarshipSchemaError && (
-        <ProductCard style={{ padding: 20, marginBottom: 20, background: "#FFF5F5", border: "1px solid #FECACA" }}>
-          <p style={{ fontSize: 14, color: "#991B1B", margin: 0, lineHeight: 1.6 }}>{scholarshipSchemaError}</p>
-        </ProductCard>
-      )}
+      {scholarshipSchemaError ? <ScholarshipSchemaBanner /> : null}
 
       {matchError && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{matchError}</p>}
       {actionError && <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16 }}>{actionError}</p>}

@@ -13,7 +13,8 @@ import {
   getApplyUrl,
   selectWeeklyScholarshipMatches,
 } from "@/lib/intelligence/scholarship-report";
-import { formatScholarshipError } from "@/lib/scholarship-errors";
+import { ScholarshipSchemaBanner } from "@/components/product/ScholarshipSchemaBanner";
+import { formatScholarshipError, isScholarshipSchemaError } from "@/lib/scholarship-errors";
 
 export default function ScholarshipReportClient() {
   const {
@@ -51,7 +52,9 @@ export default function ScholarshipReportClient() {
       await generateScholarshipMatches();
     } catch (err) {
       console.error("Failed to generate scholarship matches:", err);
-      setMatchError(formatScholarshipError(err, "Could not generate scholarship matches."));
+      if (!isScholarshipSchemaError(err)) {
+        setMatchError(formatScholarshipError(err, "Could not generate scholarship matches."));
+      }
     } finally {
       setGenerating(false);
     }
@@ -62,7 +65,9 @@ export default function ScholarshipReportClient() {
     try {
       await action(id);
     } catch (err) {
-      setActionError(formatScholarshipError(err, "Could not update scholarship."));
+      if (!isScholarshipSchemaError(err)) {
+        setActionError(formatScholarshipError(err, "Could not update scholarship."));
+      }
     }
   }
 
@@ -114,11 +119,7 @@ export default function ScholarshipReportClient() {
         </ProductCard>
       )}
 
-      {scholarshipSchemaError && (
-        <ProductCard style={{ padding: 20, marginBottom: 20, background: "#FFF5F5", border: "1px solid #FECACA" }}>
-          <p style={{ fontSize: 14, color: "#991B1B", margin: 0, lineHeight: 1.6 }}>{scholarshipSchemaError}</p>
-        </ProductCard>
-      )}
+      {scholarshipSchemaError ? <ScholarshipSchemaBanner /> : null}
 
       {matchError && <p style={{ color: "#C04E57", marginBottom: 16 }}>{matchError}</p>}
       {actionError && <p style={{ color: "#C04E57", marginBottom: 16 }}>{actionError}</p>}

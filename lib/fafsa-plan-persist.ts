@@ -1,7 +1,76 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateFafsaPlan, FAFSA_TASK_SOURCE } from "@/lib/fafsa-plan";
+import {
+  buildIntakeDbPayload,
+  isRequiredInfoTypeMismatch,
+  isSchoolsTypeMismatch,
+  logFafsaSupabaseError,
+  parseIntakeRow,
+  supabaseErrorMessage,
+  toRequiredInfoArray,
+} from "@/lib/fafsa-intake-map";
 import { isAidTaskComplete } from "@/lib/data-helpers";
-import type { AidTask, FafsaIntakeFormData, FafsaIntakeResponse } from "@/lib/types";
+import type { AidTask, FafsaIntakeFormData, FafsaIntakeResponse, FafsaPlanTaskInput } from "@/lib/types";
+
+export type SaveFafsaIntakeAndPlanResult = {
+  intake: FafsaIntakeResponse;
+  planTasks: AidTask[];
+  planError: string | null;
+};
+
+function buildAidTaskPayload(userId: string, task: FafsaPlanTaskInput, status: string, now: string) {
+  return {
+    user_id: userId,
+    title: task.title,
+    description: task.description ?? task.instructions,
+    status,
+    due_date: null,
+    category: "FAFSA",
+    priority: task.priority,
+    task_source: FAFSA_TASK_SOURCE,
+    stage: task.stage,
+    step_order: task.step_order,
+    why_it_matters: task.why_it_matters,
+    instructions: task.instructions,
+    required_info: toRequiredInfoArray(task.required_info),
+    blocking_reason: task.blocking_reason,
+    action_url: task.action_url,
+    plan_key: task.plan_key,
+    updated_at: now,
+  };
+}
+
+async function saveAidTaskRow(
+  supabase: SupabaseClient,
+  existing: AidTask | undefined,
+  payload: ReturnType<typeof buildAidTaskPayload>,
+  requiredInfoAsText: boolean
+) {
+  const sendPayload: Record<string, unknown> = requiredInfoAsText
+    ? {
+        ...payload,
+        required_info:
+          payload.required_info.length > 0 ? payload.required_info.join(" ") : null,
+      }
+    : { ...payload };
+
+  console.error("FAFSA task payload", sendPayload);
+
+  if (existing?.id) {
+    const result = await supabase
+      .from("aid_tasks")
+      .update(sendPayload)
+      .eq("id", existing.id)
+      .select()
+      .single();
+    console.error("FAFSA task save result", { action: "update", plan_key: payload.plan_key, ...result });
+    return result;
+  }
+
+  const result = await supabase.from("aid_tasks").insert(sendPayload).select().single();
+  console.error("FAFSA task save result", { action: "insert", plan_key: payload.plan_key, ...result });
+  return result;
+}
 
 export async function persistFafsaPlan(
   supabase: SupabaseClient,
@@ -18,12 +87,14 @@ export async function persistFafsaPlan(
     .eq("task_source", FAFSA_TASK_SOURCE);
 
   if (existingError) {
-    throw new Error(existingError.message ?? "Could not load existing FAFSA plan tasks.");
+    logFafsaSupabaseError("FAFSA task save result (load existing failed)", existingError, { userId });
+    throw existingError;
   }
 
   const existingByKey = new Map((existingRows ?? []).map((row) => [(row as AidTask).plan_key, row as AidTask]));
   const saved: AidTask[] = [];
   const now = new Date().toISOString();
+  let requiredInfoAsText = false;
 
   for (const task of planned) {
     const existing = task.plan_key ? existingByKey.get(task.plan_key) : undefined;
@@ -32,40 +103,20 @@ export async function persistFafsaPlan(
         ? existing.status
         : task.status;
 
-    const payload = {
-      user_id: userId,
-      title: task.title,
-      description: task.description ?? task.instructions,
-      status,
-      due_date: null,
-      category: "FAFSA",
-      priority: task.priority,
-      task_source: FAFSA_TASK_SOURCE,
-      stage: task.stage,
-      step_order: task.step_order,
-      why_it_matters: task.why_it_matters,
-      instructions: task.instructions,
-      required_info: task.required_info,
-      blocking_reason: task.blocking_reason,
-      action_url: task.action_url,
-      plan_key: task.plan_key,
-      updated_at: now,
-    };
+    const payload = buildAidTaskPayload(userId, task, status, now);
+    let { data, error } = await saveAidTaskRow(supabase, existing, payload, requiredInfoAsText);
 
-    if (existing?.id) {
-      const { data, error } = await supabase
-        .from("aid_tasks")
-        .update(payload)
-        .eq("id", existing.id)
-        .select()
-        .single();
-      if (error) throw new Error(error.message ?? `Could not update FAFSA task ${task.plan_key}.`);
-      saved.push(data as AidTask);
-    } else {
-      const { data, error } = await supabase.from("aid_tasks").insert(payload).select().single();
-      if (error) throw new Error(error.message ?? `Could not create FAFSA task ${task.plan_key}.`);
-      saved.push(data as AidTask);
+    if (error && isRequiredInfoTypeMismatch(error) && !requiredInfoAsText) {
+      requiredInfoAsText = true;
+      ({ data, error } = await saveAidTaskRow(supabase, existing, payload, true));
     }
+
+    if (error) {
+      logFafsaSupabaseError("FAFSA task save result (failed)", error, payload);
+      throw error;
+    }
+
+    saved.push(data as AidTask);
   }
 
   const staleIds = (existingRows ?? [])
@@ -76,51 +127,99 @@ export async function persistFafsaPlan(
   if (staleIds.length > 0) {
     const { error: deleteError } = await supabase.from("aid_tasks").delete().in("id", staleIds);
     if (deleteError) {
-      throw new Error(deleteError.message ?? "Could not remove outdated FAFSA plan tasks.");
+      logFafsaSupabaseError("FAFSA task save result (delete stale failed)", deleteError, { staleIds });
+      throw deleteError;
     }
   }
 
   return saved.sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0));
 }
 
+async function upsertFafsaIntakeRow(
+  supabase: SupabaseClient,
+  userId: string,
+  form: FafsaIntakeFormData,
+  now: string
+) {
+  let schoolsAsText = false;
+  let payload = buildIntakeDbPayload(userId, form, now, { schoolsAsText });
+
+  console.error("FAFSA intake payload", payload);
+
+  const attemptSave = async (row: Record<string, unknown>) => {
+    const { data: existing, error: selectError } = await supabase
+      .from("fafsa_intake_responses")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selectError) {
+      return { data: null, error: selectError };
+    }
+
+    if (existing?.id) {
+      return supabase
+        .from("fafsa_intake_responses")
+        .update(row)
+        .eq("id", existing.id)
+        .select()
+        .single();
+    }
+
+    return supabase.from("fafsa_intake_responses").insert(row).select().single();
+  };
+
+  let result = await attemptSave(payload as Record<string, unknown>);
+  console.error("FAFSA intake save result", {
+    schoolsAsText,
+    error: result.error,
+    data: result.data,
+    message: result.error ? supabaseErrorMessage(result.error) : null,
+  });
+
+  if (result.error && isSchoolsTypeMismatch(result.error) && !schoolsAsText) {
+    schoolsAsText = true;
+    payload = buildIntakeDbPayload(userId, form, now, { schoolsAsText: true });
+    console.error("FAFSA intake payload (retry schools as text)", payload);
+    result = await attemptSave(payload as Record<string, unknown>);
+    console.error("FAFSA intake save result (retry)", {
+      schoolsAsText,
+      error: result.error,
+      data: result.data,
+      message: result.error ? supabaseErrorMessage(result.error) : null,
+    });
+  }
+
+  return result;
+}
+
 export async function saveFafsaIntakeAndPlan(
   supabase: SupabaseClient,
   userId: string,
   form: FafsaIntakeFormData
-): Promise<{ intake: FafsaIntakeResponse; planTasks: AidTask[] }> {
+): Promise<SaveFafsaIntakeAndPlanResult> {
   const now = new Date().toISOString();
-  const parentAccount =
-    form.needs_parent_info === "yes" || form.needs_parent_info === "not_sure"
-      ? form.parent_has_account || "not_sure"
-      : null;
-
-  const payload = {
-    user_id: userId,
-    aid_year: form.aid_year,
-    student_situation: form.student_situation,
-    state: form.state,
-    schools: form.schools,
-    fafsa_progress: form.fafsa_progress,
-    has_studentaid_account: form.has_studentaid_account,
-    needs_parent_info: form.needs_parent_info,
-    parent_has_account: parentAccount,
-    has_tax_info_access: form.has_tax_info_access,
-    received_aid_offer: form.received_aid_offer,
-    verification_requested: form.verification_requested,
-    plan_generated_at: now,
-    updated_at: now,
-  };
-
-  const { data: intake, error: intakeError } = await supabase
-    .from("fafsa_intake_responses")
-    .upsert(payload, { onConflict: "user_id" })
-    .select()
-    .single();
+  const { data: intake, error: intakeError } = await upsertFafsaIntakeRow(supabase, userId, form, now);
 
   if (intakeError) {
-    throw new Error(intakeError.message ?? "Could not save FAFSA readiness answers.");
+    logFafsaSupabaseError("FAFSA intake save result (failed)", intakeError, form);
+    throw intakeError;
   }
 
-  const planTasks = await persistFafsaPlan(supabase, userId, intake as FafsaIntakeResponse);
-  return { intake: intake as FafsaIntakeResponse, planTasks };
+  const normalizedIntake = parseIntakeRow(intake as Record<string, unknown>);
+
+  try {
+    const planTasks = await persistFafsaPlan(supabase, userId, normalizedIntake);
+    return { intake: normalizedIntake, planTasks, planError: null };
+  } catch (planError) {
+    logFafsaSupabaseError("FAFSA task save result (plan generation failed)", planError, {
+      userId,
+      intakeId: normalizedIntake.id,
+    });
+    return {
+      intake: normalizedIntake,
+      planTasks: [],
+      planError: supabaseErrorMessage(planError),
+    };
+  }
 }

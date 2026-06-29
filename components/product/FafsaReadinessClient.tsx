@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
 import { useUserData } from "@/hooks/useUserData";
+import { FAFSA_DEMO_GUEST_USER_ID } from "@/lib/fafsa-demo-fallback";
 import type { FafsaIntakeFormData } from "@/lib/types";
 
 const AID_YEARS = ["2025-26", "2026-27", "2027-28"];
@@ -68,7 +69,7 @@ function PrivacyNote() {
 
 export default function FafsaReadinessClient() {
   const router = useRouter();
-  const { loading, profile, saveFafsaIntakeAndGeneratePlan } = useUserData();
+  const { loading, profile, user, saveFafsaIntakeAndGeneratePlan, applyFafsaDemoFallback } = useUserData();
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -78,17 +79,18 @@ export default function FafsaReadinessClient() {
     state: profile?.state ?? "CA",
     schools: profile?.school ?? "",
     fafsa_progress: "not_started",
-    has_studentaid_account: "not_sure",
-    needs_parent_info: "not_sure",
-    parent_has_account: "not_sure",
-    has_tax_info_access: "not_sure",
-    received_aid_offer: "no",
-    verification_requested: "not_sure",
+    has_student_aid_account: "not_sure",
+    contributor_required: "not_sure",
+    parent_has_student_aid_account: "not_sure",
+    has_tax_info: "not_sure",
+    has_school_portal_access: "not_sure",
+    has_aid_offer: "no",
+    has_verification_request: "not_sure",
   });
 
   const totalSteps = 11;
   const pct = Math.round((step / totalSteps) * 100);
-  const needsParent = form.needs_parent_info === "yes" || form.needs_parent_info === "not_sure";
+  const needsParent = form.contributor_required === "yes" || form.contributor_required === "not_sure";
 
   function updateField<K extends keyof FafsaIntakeFormData>(key: K, value: FafsaIntakeFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -97,15 +99,36 @@ export default function FafsaReadinessClient() {
   async function handleSubmit() {
     setSubmitting(true);
     setError("");
+    const userId = user?.id ?? FAFSA_DEMO_GUEST_USER_ID;
+    let routed = false;
+
     try {
-      await saveFafsaIntakeAndGeneratePlan(form);
-      router.push("/fafsa");
+      const result = await saveFafsaIntakeAndGeneratePlan(form);
+      if (result.demoMode || result.planTasks.length > 0) {
+        routed = true;
+      } else {
+        console.error("FAFSA save returned no plan tasks, applying client local fallback");
+        routed = applyFafsaDemoFallback(form, userId);
+      }
+      if (result.demoMode) {
+        console.error("FAFSA plan saved in demo mode (localStorage fallback)");
+      } else if (result.planError) {
+        console.error("FAFSA plan generation failed after intake saved:", result.planError);
+      }
     } catch (err) {
-      console.error("Failed to save FAFSA readiness:", err);
-      setError(err instanceof Error ? err.message : "Could not save your FAFSA plan. Please try again.");
-    } finally {
-      setSubmitting(false);
+      console.error("FAFSA readiness submit failed, applying client local fallback:", err);
+      routed = applyFafsaDemoFallback(form, userId);
     }
+
+    if (routed) {
+      router.push("/fafsa");
+    } else {
+      setError(
+        "This browser could not save your FAFSA plan locally. Try disabling private browsing or use a different browser."
+      );
+    }
+
+    setSubmitting(false);
   }
 
   if (loading) {
@@ -200,7 +223,7 @@ export default function FafsaReadinessClient() {
           {step === 5 && (
             <div>
               <label style={labelStyle}>6. Do you have a StudentAid.gov account?</label>
-              <select value={form.has_studentaid_account} onChange={(e) => updateField("has_studentaid_account", e.target.value)} style={inputStyle}>
+              <select value={form.has_student_aid_account} onChange={(e) => updateField("has_student_aid_account", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -211,7 +234,7 @@ export default function FafsaReadinessClient() {
           {step === 6 && (
             <div>
               <label style={labelStyle}>7. Do you think FAFSA needs parent or contributor information?</label>
-              <select value={form.needs_parent_info} onChange={(e) => updateField("needs_parent_info", e.target.value)} style={inputStyle}>
+              <select value={form.contributor_required} onChange={(e) => updateField("contributor_required", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -225,7 +248,7 @@ export default function FafsaReadinessClient() {
               <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 12px" }}>
                 {needsParent ? "Many students need a contributor to finish FAFSA." : "You indicated contributor info may not be required — you can still answer for planning."}
               </p>
-              <select value={form.parent_has_account} onChange={(e) => updateField("parent_has_account", e.target.value)} style={inputStyle}>
+              <select value={form.parent_has_student_aid_account} onChange={(e) => updateField("parent_has_student_aid_account", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -239,7 +262,7 @@ export default function FafsaReadinessClient() {
               <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 12px" }}>
                 AidPilot only tracks whether you can access this information — not the actual numbers.
               </p>
-              <select value={form.has_tax_info_access} onChange={(e) => updateField("has_tax_info_access", e.target.value)} style={inputStyle}>
+              <select value={form.has_tax_info} onChange={(e) => updateField("has_tax_info", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -250,7 +273,7 @@ export default function FafsaReadinessClient() {
           {step === 9 && (
             <div>
               <label style={labelStyle}>10. Have you received a financial aid offer yet?</label>
-              <select value={form.received_aid_offer} onChange={(e) => updateField("received_aid_offer", e.target.value)} style={inputStyle}>
+              <select value={form.has_aid_offer} onChange={(e) => updateField("has_aid_offer", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
@@ -261,7 +284,7 @@ export default function FafsaReadinessClient() {
           {step === 10 && (
             <div>
               <label style={labelStyle}>11. Has your school asked for verification documents?</label>
-              <select value={form.verification_requested} onChange={(e) => updateField("verification_requested", e.target.value)} style={inputStyle}>
+              <select value={form.has_verification_request} onChange={(e) => updateField("has_verification_request", e.target.value)} style={inputStyle}>
                 {YES_NO_NOT_SURE.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}

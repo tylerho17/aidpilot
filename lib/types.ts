@@ -74,7 +74,7 @@ export type AidTask = {
   step_order?: number | null;
   why_it_matters?: string | null;
   instructions?: string | null;
-  required_info?: string | null;
+  required_info?: string | string[] | null;
   blocking_reason?: string | null;
   action_url?: string | null;
   plan_key?: string | null;
@@ -91,38 +91,34 @@ export const FAFSA_STAGES = [
 
 export type FafsaStage = (typeof FAFSA_STAGES)[number];
 
-export type FafsaIntakeResponse = {
+export type FafsaWizardAnswer = "yes" | "no" | "not_sure" | "not_applicable" | string;
+
+/** Canonical FAFSA intake fields — matches fafsa_intake_responses columns exactly */
+export type FafsaIntakeFields = {
+  aid_year: string;
+  student_situation: string;
+  state: string;
+  schools: string;
+  fafsa_progress: string;
+  has_student_aid_account: FafsaWizardAnswer;
+  contributor_required: FafsaWizardAnswer;
+  parent_has_student_aid_account: FafsaWizardAnswer;
+  has_tax_info: FafsaWizardAnswer;
+  has_school_portal_access: FafsaWizardAnswer;
+  has_aid_offer: FafsaWizardAnswer;
+  has_verification_request: FafsaWizardAnswer;
+};
+
+export type FafsaIntakeResponse = Omit<FafsaIntakeFields, "parent_has_student_aid_account"> & {
   id: string;
   created_at: string;
   updated_at: string | null;
   user_id: string;
-  aid_year: string;
-  student_situation: string;
-  state: string;
-  schools: string;
-  fafsa_progress: string;
-  has_studentaid_account: string;
-  needs_parent_info: string;
-  parent_has_account: string | null;
-  has_tax_info_access: string;
-  received_aid_offer: string;
-  verification_requested: string;
+  parent_has_student_aid_account: FafsaWizardAnswer | null;
   plan_generated_at: string | null;
 };
 
-export type FafsaIntakeFormData = {
-  aid_year: string;
-  student_situation: string;
-  state: string;
-  schools: string;
-  fafsa_progress: string;
-  has_studentaid_account: string;
-  needs_parent_info: string;
-  parent_has_account: string;
-  has_tax_info_access: string;
-  received_aid_offer: string;
-  verification_requested: string;
-};
+export type FafsaIntakeFormData = FafsaIntakeFields;
 
 export type FafsaPlanTaskInput = {
   plan_key: string;
@@ -188,6 +184,10 @@ export type AidLetter = {
   scholarships_amount: number | null;
   loans_amount: number | null;
   work_study_amount: number | null;
+  subsidized_loans_amount?: number | null;
+  unsubsidized_loans_amount?: number | null;
+  parent_plus_loans_amount?: number | null;
+  private_loans_amount?: number | null;
   estimated_net_cost: number | null;
   status: string;
   notes: string | null;

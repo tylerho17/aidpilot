@@ -13,16 +13,37 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { checkScholarshipAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
+import { formatScholarshipError } from "@/lib/scholarship-errors";
 import {
-  formatScholarshipError,
-  isScholarshipSchemaError,
-  SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE,
-} from "@/lib/scholarship-errors";
+  buildScholarshipMatchActionUpdate,
+  loadScholarshipMatches,
+  loadScholarshipSources,
+  type ScholarshipSchemaMode,
+} from "@/lib/scholarship-queries";
 import { upsertAidRecommendationsForUser } from "@/lib/intelligence/recommendations";
 import { generateScholarshipMatchesForUser } from "@/lib/intelligence/scholarship-matching";
 import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
 import { saveWeeklyReportForUser } from "@/lib/intelligence/weekly-report";
 import { saveFafsaIntakeAndPlan as persistFafsaIntakeAndPlan } from "@/lib/fafsa-plan-persist";
+import { parseIntakeRow } from "@/lib/fafsa-intake-map";
+import {
+  applyFafsaDemoFallbackForUser,
+  buildDemoFafsaPlanTasks,
+  canUseFafsaDemoStorage,
+  clearFafsaDemoFallback,
+  FAFSA_DEMO_GUEST_USER_ID,
+  formToDemoIntake,
+  isDemoFafsaTaskId,
+  resolveFafsaDemoFallback,
+  saveFafsaDemoFallback,
+  updateFafsaDemoTaskStatus,
+} from "@/lib/fafsa-demo-fallback";
+import { normalizeRequiredInfo } from "@/lib/required-info";
+import {
+  aidLetterFromLocalStore,
+  resolveAidLetterFromSources,
+  saveAidLetterLocal,
+} from "@/lib/aid-letter-local";
 import { withCanonicalProfileFields } from "@/lib/student-profile-payload";
 import { toFriendlyError } from "@/lib/friendly-errors";
 import { getFafsaPlanTasks, isFafsaPlanTask, FAFSA_TASK_SOURCE } from "@/lib/fafsa-plan";
@@ -47,6 +68,18 @@ import type {
 type UserDataContextValue = ReturnType<typeof useUserDataState>;
 
 const UserDataContext = createContext<UserDataContextValue | null>(null);
+
+function normalizeAidTask(task: AidTask): AidTask {
+  const requiredInfo = normalizeRequiredInfo(task.required_info);
+  return {
+    ...task,
+    required_info: requiredInfo || null,
+  };
+}
+
+function normalizeAidTasks(tasks: AidTask[]) {
+  return tasks.map(normalizeAidTask);
+}
 
 function buildIntelligenceUserData(state: {
   profile: StudentProfile | null;
@@ -80,6 +113,8 @@ function useUserDataState() {
   const [workflowSteps, setWorkflowSteps] = useState<FafsaWorkflowStep[]>([]);
   const [scholarshipSources, setScholarshipSources] = useState<ScholarshipSource[]>([]);
   const [fafsaIntake, setFafsaIntake] = useState<FafsaIntakeResponse | null>(null);
+  const [fafsaDemoMode, setFafsaDemoMode] = useState(false);
+  const [aidLetterLocalMode, setAidLetterLocalMode] = useState(false);
   const [isScholarshipAdmin, setIsScholarshipAdmin] = useState(false);
   const [scholarshipSchemaError, setScholarshipSchemaError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -88,6 +123,7 @@ function useUserDataState() {
   const hasLoadedOnceRef = useRef(false);
   const adminCacheRef = useRef<{ userId: string; isAdmin: boolean } | null>(null);
   const loadInFlightRef = useRef<Promise<void> | null>(null);
+  const scholarshipSchemaModeRef = useRef<ScholarshipSchemaMode>("extended");
 
   const getIntelligenceUserData = useCallback(
     (): IntelligenceUserData =>
@@ -165,6 +201,8 @@ function useUserDataState() {
             setWorkflowSteps([]);
             setScholarshipSources([]);
             setFafsaIntake(null);
+            setFafsaDemoMode(false);
+            setAidLetterLocalMode(false);
             setIsScholarshipAdmin(false);
             adminCacheRef.current = null;
             setAuthReady(true);
@@ -188,73 +226,92 @@ function useUserDataState() {
             profileRes,
             tasksRes,
             docsRes,
-            scholarshipsRes,
+            scholarshipsLoad,
             deadlinesRes,
             aidLettersRes,
             reportsRes,
             recsRes,
             userStepsRes,
             workflowRes,
-            sourcesRes,
+            sourcesLoad,
             intakeRes,
           ] = await Promise.all([
             adminPromise,
             supabase.from("student_profiles").select("*").eq("id", resolvedUser.id).maybeSingle(),
             supabase.from("aid_tasks").select("*").eq("user_id", resolvedUser.id).order("created_at"),
             supabase.from("document_items").select("*").eq("user_id", resolvedUser.id).order("created_at"),
-            supabase
-              .from("scholarship_matches")
-              .select("*")
-              .eq("user_id", resolvedUser.id)
-              .order("match_percent", { ascending: false }),
+            loadScholarshipMatches(supabase, resolvedUser.id),
             supabase.from("deadlines").select("*").eq("user_id", resolvedUser.id).order("deadline_date"),
             supabase.from("aid_letters").select("*").eq("user_id", resolvedUser.id).order("created_at", { ascending: false }),
             supabase.from("weekly_reports").select("*").eq("user_id", resolvedUser.id).order("report_week_start", { ascending: false }),
             supabase.from("aid_recommendations").select("*").eq("user_id", resolvedUser.id).eq("status", "active").order("priority"),
             supabase.from("user_fafsa_steps").select("*").eq("user_id", resolvedUser.id).order("created_at"),
             supabase.from("fafsa_workflow_steps").select("*").order("step_order"),
-            supabase.from("scholarship_sources").select("*").eq("active", true).order("deadline"),
+            loadScholarshipSources(supabase),
             supabase.from("fafsa_intake_responses").select("*").eq("user_id", resolvedUser.id).maybeSingle(),
           ]);
 
           setIsScholarshipAdmin(adminFlag);
 
+          const scholarshipSchemaWarning =
+            scholarshipsLoad.schemaWarning ?? sourcesLoad.schemaWarning ?? null;
+          scholarshipSchemaModeRef.current =
+            scholarshipsLoad.schemaMode === "extended" && sourcesLoad.schemaMode === "extended"
+              ? "extended"
+              : "base";
+
+          if (!options?.silent) {
+            setScholarshipSchemaError(scholarshipSchemaWarning);
+          }
+
           const errors = [
             profileRes.error,
             tasksRes.error,
             docsRes.error,
-            scholarshipsRes.error,
+            scholarshipsLoad.error,
             deadlinesRes.error,
             aidLettersRes.error,
             reportsRes.error,
             recsRes.error,
             userStepsRes.error,
             workflowRes.error,
-            sourcesRes.error,
-            intakeRes.error,
+            sourcesLoad.error,
           ].filter(Boolean);
 
           if (errors.length > 0) {
             console.error("useUserData: some queries failed", errors);
-            if (errors.some((err) => isScholarshipSchemaError(err))) {
-              setScholarshipSchemaError(SCHOLARSHIP_SCHEMA_OUT_OF_DATE_MESSAGE);
-            } else if (!options?.silent) {
+            if (!options?.silent) {
               setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
             }
           }
 
+          const parsedIntake =
+            intakeRes.error || !intakeRes.data
+              ? null
+              : parseIntakeRow(intakeRes.data as Record<string, unknown>);
+          const fafsaResolved = resolveFafsaDemoFallback(
+            resolvedUser.id,
+            normalizeAidTasks(tasksRes.data ?? []),
+            parsedIntake
+          );
+
+          const remoteAidLetter = ((aidLettersRes.data ?? []) as AidLetter[])[0] ?? null;
+          const aidLetterResolved = resolveAidLetterFromSources(resolvedUser.id, remoteAidLetter);
+
           setProfile(profileRes.data);
-          setTasks(tasksRes.data ?? []);
+          setTasks(normalizeAidTasks(fafsaResolved.tasks));
           setDocuments(docsRes.data ?? []);
-          setScholarships(scholarshipsRes.data ?? []);
+          setScholarships(scholarshipsLoad.data);
           setDeadlines(deadlinesRes.data ?? []);
-          setAidLetters((aidLettersRes.data ?? []) as AidLetter[]);
+          setAidLetters(aidLetterResolved.letter ? [aidLetterResolved.letter] : []);
+          setAidLetterLocalMode(aidLetterResolved.localMode);
           setWeeklyReports((reportsRes.data ?? []) as WeeklyReport[]);
           setRecommendations((recsRes.data ?? []) as AidRecommendation[]);
           setUserFafsaSteps((userStepsRes.data ?? []) as UserFafsaStep[]);
           setWorkflowSteps((workflowRes.data ?? []) as FafsaWorkflowStep[]);
-          setScholarshipSources((sourcesRes.data ?? []) as ScholarshipSource[]);
-          setFafsaIntake(intakeRes.error ? null : ((intakeRes.data as FafsaIntakeResponse | null) ?? null));
+          setScholarshipSources(sourcesLoad.data);
+          setFafsaIntake(fafsaResolved.intake);
+          setFafsaDemoMode(fafsaResolved.demoMode);
 
           const workflowCount = (workflowRes.data ?? []).length;
           const userStepCount = (userStepsRes.data ?? []).length;
@@ -313,6 +370,18 @@ function useUserDataState() {
   }, [loadData, supabase]);
 
   const updateTaskStatus = async (taskId: string, status: string) => {
+    const demoUserId = user?.id ?? FAFSA_DEMO_GUEST_USER_ID;
+    if (isDemoFafsaTaskId(taskId)) {
+      const demoTasks = updateFafsaDemoTaskStatus(demoUserId, taskId, status);
+      if (demoTasks) {
+        setTasks((prev) => {
+          const withoutPlan = prev.filter((task) => !isFafsaPlanTask(task));
+          return normalizeAidTasks([...withoutPlan, ...demoTasks]);
+        });
+        return;
+      }
+    }
+
     const { data, error } = await supabase
       .from("aid_tasks")
       .update({ status, updated_at: new Date().toISOString() })
@@ -340,22 +409,73 @@ function useUserDataState() {
       }
     }
 
-    setTasks(nextTasks);
+    setTasks(normalizeAidTasks(nextTasks));
   };
 
+  const applyFafsaDemoFallback = useCallback(
+    (form: FafsaIntakeFormData, overrideUserId?: string): boolean => {
+      const resolvedUserId = overrideUserId ?? user?.id ?? FAFSA_DEMO_GUEST_USER_ID;
+      const result = applyFafsaDemoFallbackForUser(resolvedUserId, form);
+      if (!result.ok) return false;
+
+      setFafsaDemoMode(true);
+      setFafsaIntake(result.intake);
+      setTasks((prev) => {
+        const withoutPlan = prev.filter((task) => task.task_source !== FAFSA_TASK_SOURCE);
+        return normalizeAidTasks([...withoutPlan, ...result.planTasks]);
+      });
+      return true;
+    },
+    [user]
+  );
+
   const saveFafsaIntakeAndGeneratePlan = async (form: FafsaIntakeFormData) => {
-    if (!user) throw new Error("Not logged in");
-    try {
-      const { intake, planTasks } = await persistFafsaIntakeAndPlan(supabase, user.id, form);
+    const resolvedUserId = user?.id ?? FAFSA_DEMO_GUEST_USER_ID;
+
+    const applyDemoFallback = (reason: unknown, intake: FafsaIntakeResponse) => {
+      console.error("FAFSA save using localStorage demo fallback:", reason);
+      const planTasks = buildDemoFafsaPlanTasks(resolvedUserId, form);
+      if (canUseFafsaDemoStorage()) {
+        saveFafsaDemoFallback(resolvedUserId, intake, planTasks);
+      }
+      setFafsaDemoMode(true);
       setFafsaIntake(intake);
       setTasks((prev) => {
-        const withoutPlan = prev.filter((t) => t.task_source !== FAFSA_TASK_SOURCE);
-        return [...withoutPlan, ...planTasks];
+        const withoutPlan = prev.filter((task) => task.task_source !== FAFSA_TASK_SOURCE);
+        return normalizeAidTasks([...withoutPlan, ...planTasks]);
       });
-      return { intake, planTasks };
+      return { intake, planTasks, planError: null, demoMode: true as const };
+    };
+
+    if (!user) {
+      const intake = formToDemoIntake(resolvedUserId, form);
+      return applyDemoFallback(new Error("No authenticated user session"), intake);
+    }
+
+    try {
+      const { intake, planTasks, planError } = await persistFafsaIntakeAndPlan(supabase, user.id, form);
+      const normalizedPlanTasks = normalizeAidTasks(planTasks);
+
+      if (normalizedPlanTasks.length > 0) {
+        clearFafsaDemoFallback();
+        setFafsaDemoMode(false);
+        setFafsaIntake(intake);
+        setTasks((prev) => {
+          const withoutPlan = prev.filter((task) => task.task_source !== FAFSA_TASK_SOURCE);
+          return [...withoutPlan, ...normalizedPlanTasks];
+        });
+        return { intake, planTasks: normalizedPlanTasks, planError, demoMode: false as const };
+      }
+
+      if (planError) {
+        return applyDemoFallback(planError, intake);
+      }
+
+      return applyDemoFallback(new Error("No FAFSA plan tasks returned from save"), intake);
     } catch (err) {
       console.error("saveFafsaIntakeAndGeneratePlan failed:", err);
-      throw new Error(toFriendlyError(err, "Could not save your FAFSA readiness plan."));
+      const intake = formToDemoIntake(resolvedUserId, form);
+      return applyDemoFallback(err, intake);
     }
   };
 
@@ -463,37 +583,93 @@ function useUserDataState() {
     cost_of_attendance: number;
     grants_amount: number;
     scholarships_amount: number;
-    loans_amount: number;
     work_study_amount: number;
+    subsidized_loans_amount: number;
+    unsubsidized_loans_amount: number;
+    parent_plus_loans_amount: number;
+    private_loans_amount: number;
+    loans_amount: number;
     estimated_net_cost: number;
   }) => {
     if (!user) throw new Error("Not logged in");
+
+    const offerInput = {
+      school_name: input.school_name,
+      cost_of_attendance: input.cost_of_attendance,
+      grants: input.grants_amount,
+      scholarships: input.scholarships_amount,
+      work_study: input.work_study_amount,
+      subsidized_loans: input.subsidized_loans_amount,
+      unsubsidized_loans: input.unsubsidized_loans_amount,
+      parent_plus_loans: input.parent_plus_loans_amount,
+      private_loans: input.private_loans_amount,
+    };
+
+    saveAidLetterLocal(user.id, input.aid_year, offerInput);
+
     const now = new Date().toISOString();
     const payload = {
-      ...input,
+      school_name: input.school_name,
+      aid_year: input.aid_year,
+      cost_of_attendance: input.cost_of_attendance,
+      grants_amount: input.grants_amount,
+      scholarships_amount: input.scholarships_amount,
+      loans_amount: input.loans_amount,
+      work_study_amount: input.work_study_amount,
+      estimated_net_cost: input.estimated_net_cost,
       user_id: user.id,
       status: "entered",
       notes: "Entered manually. Verify all amounts with your school financial aid office.",
       updated_at: now,
     };
 
-    const existing = aidLetters[0];
-    if (existing) {
-      const { data, error } = await supabase
-        .from("aid_letters")
-        .update(payload)
-        .eq("id", existing.id)
-        .select()
-        .single();
-      if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
-      setAidLetters([data as AidLetter, ...aidLetters.filter((l) => l.id !== existing.id)]);
-      return data as AidLetter;
-    }
+    try {
+      const existing = aidLetters[0]?.id?.startsWith("local-aid-letter-") ? null : aidLetters[0];
 
-    const { data, error } = await supabase.from("aid_letters").insert(payload).select().single();
-    if (error) throw new Error(toFriendlyError(error, "Could not update this task. Please try again."));
-    setAidLetters([data as AidLetter, ...aidLetters]);
-    return data as AidLetter;
+      if (existing) {
+        const { data, error } = await supabase
+          .from("aid_letters")
+          .update(payload)
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        const merged: AidLetter = {
+          ...(data as AidLetter),
+          subsidized_loans_amount: input.subsidized_loans_amount,
+          unsubsidized_loans_amount: input.unsubsidized_loans_amount,
+          parent_plus_loans_amount: input.parent_plus_loans_amount,
+          private_loans_amount: input.private_loans_amount,
+        };
+        setAidLetterLocalMode(false);
+        setAidLetters([merged]);
+        return { letter: merged, savedLocally: false as const };
+      }
+
+      const { data, error } = await supabase.from("aid_letters").insert(payload).select().single();
+      if (error) throw error;
+      const merged: AidLetter = {
+        ...(data as AidLetter),
+        subsidized_loans_amount: input.subsidized_loans_amount,
+        unsubsidized_loans_amount: input.unsubsidized_loans_amount,
+        parent_plus_loans_amount: input.parent_plus_loans_amount,
+        private_loans_amount: input.private_loans_amount,
+      };
+      setAidLetterLocalMode(false);
+      setAidLetters([merged]);
+      return { letter: merged, savedLocally: false as const };
+    } catch (err) {
+      console.error("saveAidLetter failed, using local device storage:", err);
+      const localLetter = aidLetterFromLocalStore(user.id, {
+        userId: user.id,
+        aid_year: input.aid_year,
+        input: offerInput,
+        savedAt: now,
+      });
+      setAidLetterLocalMode(true);
+      setAidLetters([localLetter]);
+      return { letter: localLetter, savedLocally: true as const };
+    }
   };
 
   const refreshRecommendations = async () => {
@@ -513,19 +689,24 @@ function useUserDataState() {
     if (!user) throw new Error("Not logged in");
     if (!profile) throw new Error("Complete onboarding before generating scholarship matches.");
     try {
-      await generateScholarshipMatchesForUser(supabase, user.id, getIntelligenceUserData());
+      await generateScholarshipMatchesForUser(
+        supabase,
+        user.id,
+        getIntelligenceUserData(),
+        scholarshipSchemaModeRef.current
+      );
     } catch (err) {
       throw new Error(formatScholarshipError(err, "Could not generate scholarship matches."));
     }
-    const { data, error } = await supabase
-      .from("scholarship_matches")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("match_percent", { ascending: false });
-    if (error) throw new Error(formatScholarshipError(error));
-    const matches = (data ?? []) as ScholarshipMatch[];
-    setScholarships(matches);
-    return matches;
+    const refreshed = await loadScholarshipMatches(supabase, user.id);
+    if (refreshed.schemaWarning && !refreshed.error) {
+      setScholarshipSchemaError(refreshed.schemaWarning);
+    }
+    if (refreshed.error) {
+      throw new Error(formatScholarshipError(refreshed.error));
+    }
+    setScholarships(refreshed.data);
+    return refreshed.data;
   };
 
   const generateWeeklyReport = async () => {
@@ -544,16 +725,10 @@ function useUserDataState() {
 
   const saveScholarship = async (scholarshipId: string) => {
     const now = new Date().toISOString();
+    const update = buildScholarshipMatchActionUpdate("save", now, scholarshipSchemaModeRef.current);
     const { data, error } = await supabase
       .from("scholarship_matches")
-      .update({
-        is_saved: true,
-        status: "saved",
-        saved_at: now,
-        ignored: false,
-        ignored_at: null,
-        updated_at: now,
-      })
+      .update(update)
       .eq("id", scholarshipId)
       .select()
       .single();
@@ -564,19 +739,10 @@ function useUserDataState() {
 
   const applyScholarship = async (scholarshipId: string) => {
     const now = new Date().toISOString();
+    const update = buildScholarshipMatchActionUpdate("apply", now, scholarshipSchemaModeRef.current);
     const { data, error } = await supabase
       .from("scholarship_matches")
-      .update({
-        applied: true,
-        is_started: true,
-        is_saved: true,
-        applied_at: now,
-        saved_at: now,
-        status: "applied",
-        ignored: false,
-        ignored_at: null,
-        updated_at: now,
-      })
+      .update(update)
       .eq("id", scholarshipId)
       .select()
       .single();
@@ -587,14 +753,10 @@ function useUserDataState() {
 
   const ignoreScholarship = async (scholarshipId: string) => {
     const now = new Date().toISOString();
+    const update = buildScholarshipMatchActionUpdate("ignore", now, scholarshipSchemaModeRef.current);
     const { data, error } = await supabase
       .from("scholarship_matches")
-      .update({
-        ignored: true,
-        ignored_at: now,
-        status: "ignored",
-        updated_at: now,
-      })
+      .update(update)
       .eq("id", scholarshipId)
       .select()
       .single();
@@ -627,6 +789,7 @@ function useUserDataState() {
     deadlines,
     aidLetters,
     aidLetter,
+    aidLetterLocalMode,
     weeklyReports,
     weeklyReport,
     recommendations,
@@ -634,6 +797,7 @@ function useUserDataState() {
     workflowSteps,
     scholarshipSources,
     fafsaIntake,
+    fafsaDemoMode,
     isScholarshipAdmin,
     scholarshipSchemaError,
     loadError,
@@ -641,6 +805,7 @@ function useUserDataState() {
     getIntelligenceUserData,
     updateTaskStatus,
     saveFafsaIntakeAndGeneratePlan,
+    applyFafsaDemoFallback,
     updateDocumentStatus,
     updateDeadlineStatus,
     updateFafsaStepStatus,

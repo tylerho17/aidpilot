@@ -1,5 +1,13 @@
 import type { ScholarshipMatch, ScholarshipSource, StudentProfile } from "@/lib/types";
 import { getProfileEducationLevel } from "@/lib/profile-fields";
+import {
+  buildScholarshipMatchWriteRow,
+  SCHOLARSHIP_MATCH_BASE_SELECT,
+  SCHOLARSHIP_MATCH_EXTENDED_SELECT,
+  SCHOLARSHIP_SOURCE_BASE_SELECT,
+  SCHOLARSHIP_SOURCE_EXTENDED_SELECT,
+  type ScholarshipSchemaMode,
+} from "@/lib/scholarship-queries";
 
 export type ScholarshipMatchResult = {
   source: ScholarshipSource;
@@ -261,7 +269,8 @@ export function rankScholarshipSources(sources: ScholarshipSource[], profile: St
 export async function generateScholarshipMatchesForUser(
   supabase: import("@supabase/supabase-js").SupabaseClient,
   userId: string,
-  userData: import("@/lib/types").IntelligenceUserData
+  userData: import("@/lib/types").IntelligenceUserData,
+  schemaMode: ScholarshipSchemaMode = "extended"
 ): Promise<ScholarshipMatch[]> {
   const profile = userData.profile;
 
@@ -273,9 +282,11 @@ export async function generateScholarshipMatchesForUser(
   let sources = userData.scholarshipSources?.filter((source) => source.active !== false) ?? [];
 
   if (!sources.length) {
+    const sourceSelect =
+      schemaMode === "extended" ? SCHOLARSHIP_SOURCE_EXTENDED_SELECT : SCHOLARSHIP_SOURCE_BASE_SELECT;
     const { data, error } = await supabase
       .from("scholarship_sources")
-      .select("*")
+      .select(sourceSelect as "*")
       .eq("active", true)
       .order("deadline");
 
@@ -290,9 +301,10 @@ export async function generateScholarshipMatchesForUser(
   const ranked = rankScholarshipSources(sources, profile).slice(0, 20);
   const now = new Date().toISOString();
 
+  const matchSelect = schemaMode === "extended" ? SCHOLARSHIP_MATCH_EXTENDED_SELECT : SCHOLARSHIP_MATCH_BASE_SELECT;
   const { data: existing, error: existingError } = await supabase
     .from("scholarship_matches")
-    .select("*")
+    .select(matchSelect as "*")
     .eq("user_id", userId);
 
   if (existingError) throwReadable(existingError);
@@ -331,28 +343,31 @@ export async function generateScholarshipMatchesForUser(
       is_saved = false;
     }
 
-    const row = {
-      user_id: userId,
-      scholarship_id: match.source.id,
-      name: match.source.name,
-      amount: match.source.amount,
-      match_percent: match.matchPercent,
-      deadline: match.source.deadline,
-      category: match.source.tags?.[0] ?? "General",
-      why_it_fits: whyItFits,
-      essay_angle: match.essayAngle,
-      effort_level: match.effortLevel,
-      recommended_action: match.recommendedAction,
-      status,
-      is_saved,
-      is_started: previous?.is_started ?? false,
-      ignored: preservedIgnored,
-      applied: preservedApplied,
-      saved_at: previous?.saved_at ?? null,
-      applied_at: previous?.applied_at ?? null,
-      ignored_at: previous?.ignored_at ?? null,
-      updated_at: now,
-    };
+    const row = buildScholarshipMatchWriteRow(
+      {
+        user_id: userId,
+        scholarship_id: match.source.id,
+        name: match.source.name,
+        amount: match.source.amount,
+        match_percent: match.matchPercent,
+        deadline: match.source.deadline,
+        category: match.source.tags?.[0] ?? "General",
+        why_it_fits: whyItFits,
+        essay_angle: match.essayAngle,
+        effort_level: match.effortLevel,
+        recommended_action: match.recommendedAction,
+        status,
+        is_saved,
+        is_started: previous?.is_started ?? false,
+        ignored: preservedIgnored,
+        applied: preservedApplied,
+        saved_at: previous?.saved_at ?? null,
+        applied_at: previous?.applied_at ?? null,
+        ignored_at: previous?.ignored_at ?? null,
+        updated_at: now,
+      },
+      schemaMode
+    );
 
     if (previous) {
       const { data, error } = await supabase

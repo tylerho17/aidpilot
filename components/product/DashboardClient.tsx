@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { CheckSVG, PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
 import { PageErrorBanner, PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
+import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { useUserData } from "@/hooks/useUserData";
 import { getProfileFullName, getProfileSchoolName } from "@/lib/profile-fields";
 import { getTopAttentionItems, getSeverityLabel, attentionSeverityToTone } from "@/lib/attention";
@@ -16,6 +17,7 @@ import {
   getNextFafsaAction,
   getChecklistOnlyTasks,
 } from "@/lib/fafsa-plan";
+import { fafsaStepHref } from "@/lib/fafsa-step-url";
 import { getTopRecommendations } from "@/lib/intelligence/recommendations";
 import {
   getDashboardSummary,
@@ -51,6 +53,7 @@ export default function DashboardClient() {
     workflowSteps,
     loadError,
     fafsaIntake,
+    fafsaDemoMode,
     refreshRecommendations,
     generateWeeklyReport,
   } = useUserData();
@@ -285,6 +288,11 @@ export default function DashboardClient() {
         <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
           Your FAFSA journey
         </h2>
+        {fafsaDemoMode && (
+          <div style={{ marginBottom: 14 }}>
+            <FafsaDemoBanner />
+          </div>
+        )}
         {!fafsaIntake ? (
           <>
             <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
@@ -312,7 +320,16 @@ export default function DashboardClient() {
             {fafsaNextAction ? (
               <div style={{ padding: "14px 16px", borderRadius: 14, background: "#fff", border: "1px solid #EAEEF3", marginBottom: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Next best action</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6 }}>{fafsaNextAction.title}</div>
+                {fafsaNextAction.plan_key ? (
+                  <Link
+                    href={fafsaStepHref(fafsaNextAction.plan_key)}
+                    style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6, display: "inline-block", textDecoration: "none" }}
+                  >
+                    {fafsaNextAction.title} →
+                  </Link>
+                ) : (
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 6 }}>{fafsaNextAction.title}</div>
+                )}
                 <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.55 }}>
                   {fafsaNextAction.instructions ?? fafsaNextAction.description}
                 </p>
