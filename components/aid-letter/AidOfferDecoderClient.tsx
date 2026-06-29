@@ -30,6 +30,52 @@ const primaryBtn = {
   fontFamily: "inherit",
 } as const;
 
+const secondaryBtn = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 40,
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#0B5CAD",
+  background: "#EAF3FF",
+  padding: "10px 16px",
+  borderRadius: 999,
+  textDecoration: "none",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+} as const;
+
+function PageIntro() {
+  return (
+    <>
+      <div style={{ marginBottom: 20 }}>
+        <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
+          Aid Offer Decoder
+        </h1>
+        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+          Understand what a school is really offering and what you may still owe.
+        </p>
+      </div>
+
+      <ProductCard
+        style={{
+          padding: 18,
+          marginBottom: 18,
+          background: "#EAF3FF",
+          border: "1px solid #D7E7FB",
+        }}
+      >
+        <p style={{ fontSize: 14, fontWeight: 500, color: "#1E3A5F", margin: 0, lineHeight: 1.65 }}>
+          Grants and scholarships usually do not need to be repaid. Work-study is earned through a job. Loans must be
+          repaid. Your remaining gap is what still needs a plan.
+        </p>
+      </ProductCard>
+    </>
+  );
+}
+
 export default function AidOfferDecoderClient() {
   const {
     authReady,
@@ -41,7 +87,9 @@ export default function AidOfferDecoderClient() {
     savingId,
     saveOffer,
     deleteOffer,
+    updateOfferStatus,
     markReviewed,
+    reload,
   } = useAidOffers();
 
   const [showForm, setShowForm] = useState(false);
@@ -67,14 +115,17 @@ export default function AidOfferDecoderClient() {
   if (!userId) {
     return (
       <AppShell>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
-            Aid Offer Decoder
-          </h1>
-          <PageErrorBanner message="Log in to compare aid offers from your schools." />
-          <Link href="/login" style={primaryBtn}>
-            Sign in
-          </Link>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <PageIntro />
+          <AidCategoryExplainer />
+          <ProductCard style={{ padding: 24, marginBottom: 20 }}>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+              Log in to save and compare your aid offers.
+            </p>
+            <Link href="/login" style={primaryBtn}>
+              Sign in
+            </Link>
+          </ProductCard>
         </div>
       </AppShell>
     );
@@ -95,31 +146,19 @@ export default function AidOfferDecoderClient() {
   return (
     <AppShell>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ marginBottom: 20 }}>
-          <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
-            Aid Offer Decoder
-          </h1>
-          <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            Understand what a school is really offering and what you may still owe.
-          </p>
-        </div>
+        <PageIntro />
 
-        <ProductCard
-          style={{
-            padding: 18,
-            marginBottom: 18,
-            background: "#EAF3FF",
-            border: "1px solid #D7E7FB",
-          }}
-        >
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#1E3A5F", margin: 0, lineHeight: 1.65 }}>
-            Grants and scholarships usually do not need to be repaid. Work-study is earned through a job. Loans must be
-            repaid. Your remaining gap is what still needs a plan.
-          </p>
-        </ProductCard>
-
-        {loadError && <PageErrorBanner message={loadError} />}
-        {actionError && <PageErrorBanner message={actionError} />}
+        {loadError ? (
+          <ProductCard style={{ padding: 18, marginBottom: 18, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.6 }}>
+              {loadError}
+            </p>
+            <button type="button" style={secondaryBtn} onClick={() => void reload()}>
+              Try again
+            </button>
+          </ProductCard>
+        ) : null}
+        {actionError ? <PageErrorBanner message={actionError} /> : null}
 
         {offers.length > 0 && summaryStats ? (
           <ProductCard style={{ padding: 18, marginBottom: 18 }}>
@@ -150,7 +189,7 @@ export default function AidOfferDecoderClient() {
 
         <AidCategoryExplainer />
 
-        {offers.length === 0 && !showForm ? (
+        {!loadError && offers.length === 0 && !showForm ? (
           <ProductCard style={{ padding: 24, marginBottom: 20 }}>
             <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
               Add your first school aid offer. You can enter the numbers manually from your school portal or aid letter.
@@ -161,7 +200,7 @@ export default function AidOfferDecoderClient() {
           </ProductCard>
         ) : null}
 
-        {(showForm || offers.length > 0) && (
+        {!loadError && (showForm || offers.length > 0) ? (
           <ProductCard style={{ padding: 22, marginBottom: 20 }}>
             <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
               {editingOffer ? `Edit ${editingOffer.school_name}` : showForm ? "Add aid offer" : "Add another school"}
@@ -190,9 +229,9 @@ export default function AidOfferDecoderClient() {
               </button>
             )}
           </ProductCard>
-        )}
+        ) : null}
 
-        {offers.length > 0 ? (
+        {!loadError && offers.length > 0 ? (
           <>
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
               Compare schools
@@ -207,6 +246,7 @@ export default function AidOfferDecoderClient() {
                 key={offer.id}
                 offer={offer}
                 saving={savingId === offer.id}
+                onMarkOfficial={(id) => void updateOfferStatus(id, "official")}
                 onMarkReviewed={(id) => void markReviewed(id)}
                 onEdit={openEditForm}
                 onDelete={(id) => {

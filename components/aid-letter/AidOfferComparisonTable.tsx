@@ -7,15 +7,66 @@ import {
   calculateAidOfferFromRecord,
   compareOffersByNetCost,
 } from "@/lib/aid-letter/calculateAidOffer";
-import type { UserAidOffer } from "@/lib/types";
+import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
 
 type AidOfferComparisonTableProps = {
   offers: UserAidOffer[];
   onSelect?: (offer: UserAidOffer) => void;
 };
 
+const HEADERS = [
+  "School",
+  "Cost of attendance",
+  "Grants/scholarships",
+  "Work-study",
+  "Loans",
+  "Net after gift aid",
+  "Remaining gap",
+  "Status",
+] as const;
+
+const cellStyle = {
+  padding: "12px 14px",
+  fontSize: 14,
+  whiteSpace: "nowrap" as const,
+};
+
+const schoolCellStyle = {
+  ...cellStyle,
+  minWidth: 180,
+  fontWeight: 700,
+  color: "#15212E",
+};
+
+const headerStyle = {
+  textAlign: "left" as const,
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#9AA4B2",
+  padding: "10px 14px",
+  whiteSpace: "nowrap" as const,
+};
+
+const schoolHeaderStyle = {
+  ...headerStyle,
+  minWidth: 180,
+};
+
 function money(value: number) {
   return `$${value.toLocaleString()}`;
+}
+
+function statusTone(status: AidOfferRecordStatus): "gray" | "amber" | "blue" | "green" {
+  switch (status) {
+    case "draft":
+      return "gray";
+    case "estimated":
+      return "amber";
+    case "official":
+      return "blue";
+    case "reviewed":
+      return "green";
+  }
 }
 
 export default function AidOfferComparisonTable({ offers, onSelect }: AidOfferComparisonTableProps) {
@@ -31,27 +82,23 @@ export default function AidOfferComparisonTable({ offers, onSelect }: AidOfferCo
   if (offers.length === 0) return null;
 
   return (
-    <div style={{ overflowX: "auto", marginBottom: 20 }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
+    <div
+      className="overflow-x-auto"
+      style={{
+        marginBottom: 20,
+        width: "100%",
+        maxWidth: "100%",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ borderBottom: "2px solid #EAEEF3" }}>
-            {["School", "Cost of attendance", "Grants/scholarships", "Work-study", "Loans", "Net after gift aid", "Remaining gap", "Status"].map(
-              (header) => (
-                <th
-                  key={header}
-                  style={{
-                    textAlign: "left",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#9AA4B2",
-                    padding: "10px 12px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {header}
-                </th>
-              )
-            )}
+            {HEADERS.map((header) => (
+              <th key={header} style={header === "School" ? schoolHeaderStyle : headerStyle}>
+                {header}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -61,23 +108,17 @@ export default function AidOfferComparisonTable({ offers, onSelect }: AidOfferCo
               style={{ borderBottom: "1px solid #EAEEF3", cursor: onSelect ? "pointer" : "default" }}
               onClick={onSelect ? () => onSelect(offer) : undefined}
             >
-              <td style={{ padding: "12px", fontSize: 14, fontWeight: 700, color: "#15212E" }}>{offer.school_name}</td>
-              <td style={{ padding: "12px", fontSize: 14, color: "#374151" }}>{money(offer.cost_of_attendance)}</td>
-              <td style={{ padding: "12px", fontSize: 14, color: "#15885A", fontWeight: 600 }}>
-                {money(calculation.giftAid)}
-              </td>
-              <td style={{ padding: "12px", fontSize: 14, color: "#374151" }}>{money(calculation.workStudy)}</td>
-              <td style={{ padding: "12px", fontSize: 14, color: "#B7791F", fontWeight: 600 }}>
-                {money(calculation.loanTotal)}
-              </td>
-              <td style={{ padding: "12px", fontSize: 14, fontWeight: 700, color: "#15212E" }}>
-                {money(calculation.netCostAfterGiftAid)}
-              </td>
-              <td style={{ padding: "12px", fontSize: 14, fontWeight: 700, color: "#C04E57" }}>
+              <td style={schoolCellStyle}>{offer.school_name}</td>
+              <td style={{ ...cellStyle, color: "#374151" }}>{money(offer.cost_of_attendance)}</td>
+              <td style={{ ...cellStyle, color: "#15885A", fontWeight: 600 }}>{money(calculation.giftAid)}</td>
+              <td style={{ ...cellStyle, color: "#374151" }}>{money(calculation.workStudy)}</td>
+              <td style={{ ...cellStyle, color: "#B7791F", fontWeight: 600 }}>{money(calculation.loanTotal)}</td>
+              <td style={{ ...cellStyle, fontWeight: 700, color: "#15212E" }}>{money(calculation.netCostAfterGiftAid)}</td>
+              <td style={{ ...cellStyle, fontWeight: 700, color: "#C04E57" }}>
                 {money(calculation.remainingGapAfterAllAid)}
               </td>
-              <td style={{ padding: "12px" }}>
-                <PillBadge tone={offer.offer_status === "reviewed" ? "green" : "blue"}>
+              <td style={cellStyle}>
+                <PillBadge tone={statusTone(offer.offer_status)}>
                   {AID_OFFER_STATUS_LABELS[offer.offer_status]}
                 </PillBadge>
               </td>

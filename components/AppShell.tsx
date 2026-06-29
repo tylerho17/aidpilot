@@ -62,6 +62,12 @@ type NavItem = {
 const CORE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: GridSVG },
   {
+    href: "/protect",
+    label: "Protect Aid",
+    icon: ShieldSVG,
+    isActive: (pathname) => pathname === "/protect",
+  },
+  {
     href: "/fafsa",
     label: "FAFSA Plan",
     icon: FafsaSVG,

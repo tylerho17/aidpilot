@@ -505,6 +505,72 @@ export const AID_OFFER_RECORD_STATUSES = ["draft", "estimated", "official", "rev
 
 export type AidOfferRecordStatus = (typeof AID_OFFER_RECORD_STATUSES)[number];
 
+export const SCHOLARSHIP_TYPES = [
+  "general",
+  "need_based",
+  "merit_based",
+  "local",
+  "major_specific",
+  "identity_based",
+  "first_gen",
+  "transfer",
+  "school_specific",
+] as const;
+
+export type ScholarshipType = (typeof SCHOLARSHIP_TYPES)[number];
+
+export const USER_SCHOLARSHIP_STATUSES = [
+  "saved",
+  "researching",
+  "applying",
+  "submitted",
+  "won",
+  "rejected",
+  "skipped",
+] as const;
+
+export type UserScholarshipStatus = (typeof USER_SCHOLARSHIP_STATUSES)[number];
+
+export const SCHOLARSHIP_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+
+export type ScholarshipPriority = (typeof SCHOLARSHIP_PRIORITIES)[number];
+
+export type CatalogScholarship = {
+  id: string;
+  name: string;
+  provider: string | null;
+  description: string | null;
+  amount_min: number | null;
+  amount_max: number | null;
+  deadline: string | null;
+  eligibility_summary: string | null;
+  application_url: string | null;
+  scholarship_type: ScholarshipType;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserScholarshipMatch = {
+  id: string;
+  user_id: string;
+  scholarship_id: string | null;
+  custom_name: string | null;
+  custom_provider: string | null;
+  custom_amount: number | null;
+  custom_deadline: string | null;
+  custom_application_url: string | null;
+  match_reason: string | null;
+  fit_score: number | null;
+  status: UserScholarshipStatus;
+  priority: ScholarshipPriority;
+  notes: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  scholarship?: CatalogScholarship | null;
+};
+
 export type IntelligenceUserData = {
   profile: StudentProfile | null;
   tasks: AidTask[];

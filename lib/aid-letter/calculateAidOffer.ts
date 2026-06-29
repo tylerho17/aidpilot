@@ -21,6 +21,7 @@ export type AidOfferCalculation = {
   directCostEstimate: number;
   netCostAfterGiftAid: number;
   remainingGapAfterAllAid: number;
+  surplusAid: number;
   loanTotal: number;
   workStudy: number;
   flags: string[];
@@ -47,7 +48,9 @@ export function calculateAidOffer(input: AidOfferCalculationInput): AidOfferCalc
   const totalAidShown = giftAid + selfHelpAid;
   const directCostEstimate = tuition_and_fees + housing_and_food;
   const netCostAfterGiftAid = Math.max(0, cost_of_attendance - giftAid);
-  const remainingGapAfterAllAid = Math.max(0, cost_of_attendance - totalAidShown);
+  const rawGap = cost_of_attendance - totalAidShown;
+  const remainingGapAfterAllAid = Math.max(0, rawGap);
+  const surplusAid = Math.max(0, -rawGap);
 
   const flags: string[] = [];
 
@@ -63,6 +66,10 @@ export function calculateAidOffer(input: AidOfferCalculationInput): AidOfferCalc
     flags.push("You still need a plan for the remaining gap.");
   }
 
+  if (surplusAid > 0) {
+    flags.push(`Aid shown exceeds cost of attendance by ${surplusAid.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}. Confirm line items with your school.`);
+  }
+
   if (!input.renewal_notes?.trim()) {
     flags.push("Check whether scholarships renew next year.");
   }
@@ -74,6 +81,7 @@ export function calculateAidOffer(input: AidOfferCalculationInput): AidOfferCalc
     directCostEstimate,
     netCostAfterGiftAid,
     remainingGapAfterAllAid,
+    surplusAid,
     loanTotal,
     workStudy: work_study,
     flags,
@@ -86,6 +94,7 @@ export function calculateAidOfferFromRecord(offer: UserAidOffer): AidOfferCalcul
 
 export const AID_OFFER_LOAD_ERROR = "We couldn't load your aid offers right now. Please try again in a moment.";
 export const AID_OFFER_SAVE_ERROR = "We couldn't save this aid offer right now. Please try again.";
+export const AID_OFFER_UPDATE_ERROR = "We couldn't update this aid offer right now. Please try again.";
 
 export const AID_OFFER_STATUS_LABELS: Record<UserAidOffer["offer_status"], string> = {
   draft: "Draft",

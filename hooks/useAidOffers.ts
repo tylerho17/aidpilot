@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toFriendlyError } from "@/lib/friendly-errors";
-import { AID_OFFER_LOAD_ERROR, AID_OFFER_SAVE_ERROR } from "@/lib/aid-letter/calculateAidOffer";
-import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
+import { AID_OFFER_LOAD_ERROR, AID_OFFER_SAVE_ERROR, AID_OFFER_UPDATE_ERROR } from "@/lib/aid-letter/calculateAidOffer";
+import { AID_OFFER_RECORD_STATUSES, type AidOfferRecordStatus, type UserAidOffer } from "@/lib/types";
 
 export type AidOfferInput = {
   school_name: string;
@@ -26,9 +26,28 @@ export type AidOfferInput = {
   notes?: string;
 };
 
+const isDev = process.env.NODE_ENV === "development";
+
+function devLog(message: string, detail?: unknown) {
+  if (!isDev) return;
+  if (detail === undefined) {
+    console.log(message);
+  } else {
+    console.log(message, detail);
+  }
+}
+
 function toNumber(value: unknown): number {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function sanitizeNumeric(value: number): number {
+  return Math.max(0, Number.isFinite(value) ? value : 0);
+}
+
+function sanitizeOfferStatus(status: AidOfferRecordStatus): AidOfferRecordStatus {
+  return AID_OFFER_RECORD_STATUSES.includes(status) ? status : "draft";
 }
 
 function mapRow(row: Record<string, unknown>): UserAidOffer {
@@ -36,7 +55,7 @@ function mapRow(row: Record<string, unknown>): UserAidOffer {
     id: String(row.id),
     user_id: String(row.user_id),
     school_name: String(row.school_name ?? ""),
-    offer_status: (row.offer_status as AidOfferRecordStatus) ?? "draft",
+    offer_status: sanitizeOfferStatus((row.offer_status as AidOfferRecordStatus) ?? "draft"),
     academic_year: row.academic_year ? String(row.academic_year) : null,
     cost_of_attendance: toNumber(row.cost_of_attendance),
     tuition_and_fees: toNumber(row.tuition_and_fees),
@@ -57,6 +76,31 @@ function mapRow(row: Record<string, unknown>): UserAidOffer {
   };
 }
 
+function buildPayload(userId: string, input: AidOfferInput) {
+  const now = new Date().toISOString();
+  return {
+    user_id: userId,
+    school_name: input.school_name.trim(),
+    offer_status: sanitizeOfferStatus(input.offer_status),
+    academic_year: input.academic_year?.trim() || null,
+    cost_of_attendance: sanitizeNumeric(input.cost_of_attendance),
+    tuition_and_fees: sanitizeNumeric(input.tuition_and_fees),
+    housing_and_food: sanitizeNumeric(input.housing_and_food),
+    books_and_supplies: sanitizeNumeric(input.books_and_supplies),
+    transportation: sanitizeNumeric(input.transportation),
+    personal_expenses: sanitizeNumeric(input.personal_expenses),
+    grants_and_scholarships: sanitizeNumeric(input.grants_and_scholarships),
+    work_study: sanitizeNumeric(input.work_study),
+    federal_student_loans: sanitizeNumeric(input.federal_student_loans),
+    parent_plus_loans: sanitizeNumeric(input.parent_plus_loans),
+    private_loans: sanitizeNumeric(input.private_loans),
+    other_aid: sanitizeNumeric(input.other_aid),
+    renewal_notes: input.renewal_notes?.trim() || null,
+    notes: input.notes?.trim() || null,
+    updated_at: now,
+  };
+}
+
 export function useAidOffers() {
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -67,38 +111,114 @@ export function useAidOffers() {
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
+  const loadVersionRef = useRef(0);
+
+  const loadOffersForUser = useCallback(
+    async (resolvedUserId: string | null, options?: { silent?: boolean }) => {
+      const loadVersion = ++loadVersionRef.current;
+
+      if (!options?.silent) {
+        setLoading(true);
+      }
+      setLoadError(null);
+
+      if (!resolvedUserId) {
+        setOffers([]);
+        if (!options?.silent) setLoading(false);
+        return;
+      }
+
+      devLog("Aid offers query started");
+
+      try {
+        const { data, error } = await supabase
+          .from("user_aid_offers")
+          .select("*")
+          .eq("user_id", resolvedUserId)
+          .order("created_at", { ascending: false });
+
+        if (loadVersion !== loadVersionRef.current) return;
+        if (error) throw error;
+
+        const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+        setOffers(rows);
+        devLog("Aid offers loaded", rows.length);
+      } catch (error) {
+        if (loadVersion !== loadVersionRef.current) return;
+        console.error("Aid offers query failed:", error);
+        devLog("Aid offers query failed");
+        setOffers([]);
+        setLoadError(toFriendlyError(error, AID_OFFER_LOAD_ERROR));
+      } finally {
+        if (loadVersion === loadVersionRef.current && !options?.silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [supabase]
+  );
+
+  const reload = useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const resolvedUserId = (user ?? session?.user)?.id ?? null;
+    setUserId(resolvedUserId);
+    setAuthReady(true);
+    await loadOffersForUser(resolvedUserId);
+  }, [loadOffersForUser, supabase]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
+      setLoadError(null);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const resolvedUser = user ?? session?.user ?? null;
+      const resolvedUserId = resolvedUser?.id ?? null;
+
+      if (cancelled) return;
+
+      devLog("Aid offers user loaded", resolvedUserId ?? "logged-out");
+      setUserId(resolvedUserId);
+      setAuthReady(true);
+
+      if (!resolvedUserId) {
+        setOffers([]);
+        setLoading(false);
+        return;
+      }
+
+      devLog("Aid offers query started");
+
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (cancelled) return;
-
-        setUserId(user?.id ?? null);
-        setAuthReady(true);
-
-        if (!user) {
-          setOffers([]);
-          return;
-        }
-
         const { data, error } = await supabase
           .from("user_aid_offers")
           .select("*")
-          .eq("user_id", user.id)
-          .order("school_name");
+          .eq("user_id", resolvedUserId)
+          .order("created_at", { ascending: false });
 
         if (cancelled) return;
         if (error) throw error;
 
-        setOffers((data ?? []).map((row) => mapRow(row as Record<string, unknown>)));
+        const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+        setOffers(rows);
+        devLog("Aid offers loaded", rows.length);
       } catch (error) {
         if (cancelled) return;
-        console.error("useAidOffers load failed:", error);
+        console.error("Aid offers query failed:", error);
+        devLog("Aid offers query failed");
+        setOffers([]);
         setLoadError(toFriendlyError(error, AID_OFFER_LOAD_ERROR));
       } finally {
         if (!cancelled) setLoading(false);
@@ -107,10 +227,41 @@ export function useAidOffers() {
 
     void bootstrap();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
+
+      if (event === "INITIAL_SESSION") {
+        const initialUserId = session?.user?.id ?? null;
+        setUserId(initialUserId);
+        setAuthReady(true);
+        if (initialUserId) {
+          void loadOffersForUser(initialUserId, { silent: true });
+        }
+        return;
+      }
+
+      const nextUserId = session?.user?.id ?? null;
+      setUserId(nextUserId);
+      setAuthReady(true);
+
+      if (!nextUserId) {
+        setOffers([]);
+        setLoadError(null);
+        setLoading(false);
+        return;
+      }
+
+      void loadOffersForUser(nextUserId);
+    });
+
     return () => {
       cancelled = true;
+      loadVersionRef.current += 1;
+      subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [loadOffersForUser, supabase]);
 
   const saveOffer = useCallback(
     async (input: AidOfferInput, offerId?: string) => {
@@ -118,28 +269,7 @@ export function useAidOffers() {
       setActionError(null);
       setSavingId(offerId ?? "new");
 
-      const now = new Date().toISOString();
-      const payload = {
-        user_id: userId,
-        school_name: input.school_name.trim(),
-        offer_status: input.offer_status,
-        academic_year: input.academic_year?.trim() || null,
-        cost_of_attendance: input.cost_of_attendance,
-        tuition_and_fees: input.tuition_and_fees,
-        housing_and_food: input.housing_and_food,
-        books_and_supplies: input.books_and_supplies,
-        transportation: input.transportation,
-        personal_expenses: input.personal_expenses,
-        grants_and_scholarships: input.grants_and_scholarships,
-        work_study: input.work_study,
-        federal_student_loans: input.federal_student_loans,
-        parent_plus_loans: input.parent_plus_loans,
-        private_loans: input.private_loans,
-        other_aid: input.other_aid,
-        renewal_notes: input.renewal_notes?.trim() || null,
-        notes: input.notes?.trim() || null,
-        updated_at: now,
-      };
+      const payload = buildPayload(userId, input);
 
       try {
         if (offerId) {
@@ -153,7 +283,9 @@ export function useAidOffers() {
           if (error) throw error;
           const saved = mapRow(data as Record<string, unknown>);
           setOffers((prev) =>
-            prev.map((offer) => (offer.id === offerId ? saved : offer)).sort((a, b) => a.school_name.localeCompare(b.school_name))
+            prev
+              .map((offer) => (offer.id === offerId ? saved : offer))
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           );
           return saved;
         }
@@ -161,7 +293,9 @@ export function useAidOffers() {
         const { data, error } = await supabase.from("user_aid_offers").insert(payload).select().single();
         if (error) throw error;
         const saved = mapRow(data as Record<string, unknown>);
-        setOffers((prev) => [...prev, saved].sort((a, b) => a.school_name.localeCompare(b.school_name)));
+        setOffers((prev) =>
+          [saved, ...prev].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        );
         return saved;
       } catch (error) {
         console.error("saveOffer failed:", error);
@@ -196,34 +330,49 @@ export function useAidOffers() {
     [supabase, userId]
   );
 
-  const markReviewed = useCallback(
-    async (offerId: string) => {
-      const offer = offers.find((item) => item.id === offerId);
-      if (!offer) return null;
-      return saveOffer(
-        {
-          school_name: offer.school_name,
-          offer_status: "reviewed",
-          academic_year: offer.academic_year ?? undefined,
-          cost_of_attendance: offer.cost_of_attendance,
-          tuition_and_fees: offer.tuition_and_fees,
-          housing_and_food: offer.housing_and_food,
-          books_and_supplies: offer.books_and_supplies,
-          transportation: offer.transportation,
-          personal_expenses: offer.personal_expenses,
-          grants_and_scholarships: offer.grants_and_scholarships,
-          work_study: offer.work_study,
-          federal_student_loans: offer.federal_student_loans,
-          parent_plus_loans: offer.parent_plus_loans,
-          private_loans: offer.private_loans,
-          other_aid: offer.other_aid,
-          renewal_notes: offer.renewal_notes ?? undefined,
-          notes: offer.notes ?? undefined,
-        },
-        offerId
-      );
+  const updateOfferStatus = useCallback(
+    async (offerId: string, status: AidOfferRecordStatus) => {
+      if (!userId) return null;
+      setActionError(null);
+      setSavingId(offerId);
+
+      const sanitizedStatus = sanitizeOfferStatus(status);
+      const now = new Date().toISOString();
+
+      try {
+        const { data, error } = await supabase
+          .from("user_aid_offers")
+          .update({ offer_status: sanitizedStatus, updated_at: now })
+          .eq("id", offerId)
+          .eq("user_id", userId)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const saved = mapRow(data as Record<string, unknown>);
+        setOffers((prev) =>
+          prev
+            .map((offer) => (offer.id === offerId ? saved : offer))
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        );
+
+        await loadOffersForUser(userId, { silent: true });
+        return saved;
+      } catch (error) {
+        console.error("updateOfferStatus failed:", error);
+        setActionError(toFriendlyError(error, AID_OFFER_UPDATE_ERROR));
+        return null;
+      } finally {
+        setSavingId(null);
+      }
     },
-    [offers, saveOffer]
+    [loadOffersForUser, supabase, userId]
+  );
+
+  const markReviewed = useCallback(
+    async (offerId: string) => updateOfferStatus(offerId, "reviewed"),
+    [updateOfferStatus]
   );
 
   return {
@@ -236,7 +385,9 @@ export function useAidOffers() {
     savingId,
     saveOffer,
     deleteOffer,
+    updateOfferStatus,
     markReviewed,
+    reload,
     clearActionError: () => setActionError(null),
   };
 }

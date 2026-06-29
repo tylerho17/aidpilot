@@ -42,7 +42,12 @@ export function isMissingTableError(error: unknown): boolean {
   const message = supabaseErrorText(error).toLowerCase();
   const code = supabaseErrorCode(error);
 
-  return code === "42P01" || (message.includes("relation") && message.includes("does not exist"));
+  return (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    (message.includes("relation") && message.includes("does not exist")) ||
+    (message.includes("could not find the table") && message.includes("schema cache"))
+  );
 }
 
 export function isAuthSessionError(error: unknown): boolean {

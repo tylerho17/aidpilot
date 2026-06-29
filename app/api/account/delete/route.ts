@@ -16,6 +16,7 @@ const USER_TABLES = [
   "fafsa_step_progress",
   "user_school_aid_tasks",
   "user_school_aid_statuses",
+  "user_scholarship_matches",
   "student_profiles",
 ] as const;
 

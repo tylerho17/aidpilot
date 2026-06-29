@@ -3,7 +3,7 @@
 import { PillBadge, ProductCard } from "@/components/ProductUI";
 import AidOfferFlags from "@/components/aid-letter/AidOfferFlags";
 import { AID_OFFER_STATUS_LABELS, calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
-import type { UserAidOffer } from "@/lib/types";
+import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
 
 const secondaryBtn = {
   display: "inline-flex",
@@ -25,9 +25,23 @@ function money(value: number) {
   return `$${value.toLocaleString()}`;
 }
 
+function statusTone(status: AidOfferRecordStatus): "gray" | "amber" | "blue" | "green" {
+  switch (status) {
+    case "draft":
+      return "gray";
+    case "estimated":
+      return "amber";
+    case "official":
+      return "blue";
+    case "reviewed":
+      return "green";
+  }
+}
+
 type AidOfferSummaryCardProps = {
   offer: UserAidOffer;
   saving?: boolean;
+  onMarkOfficial?: (offerId: string) => void;
   onMarkReviewed?: (offerId: string) => void;
   onEdit?: (offer: UserAidOffer) => void;
   onDelete?: (offerId: string) => void;
@@ -36,22 +50,25 @@ type AidOfferSummaryCardProps = {
 export default function AidOfferSummaryCard({
   offer,
   saving,
+  onMarkOfficial,
   onMarkReviewed,
   onEdit,
   onDelete,
 }: AidOfferSummaryCardProps) {
   const calc = calculateAidOfferFromRecord(offer);
+  const status = offer.offer_status;
 
   return (
     <ProductCard style={{ padding: 22, marginBottom: 16 }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
         <div>
-          <h3 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
+          <h3 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
             {offer.school_name}
           </h3>
-          <PillBadge tone={offer.offer_status === "reviewed" ? "green" : "blue"}>
-            {AID_OFFER_STATUS_LABELS[offer.offer_status]}
-          </PillBadge>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Offer status</span>
+            <PillBadge tone={statusTone(status)}>{AID_OFFER_STATUS_LABELS[status]}</PillBadge>
+          </div>
         </div>
         {offer.academic_year ? (
           <span style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>{offer.academic_year}</span>
@@ -64,14 +81,22 @@ export default function AidOfferSummaryCard({
         <Stat label="Loans" value={money(calc.loanTotal)} color="#B7791F" />
         <Stat label="Net after gift aid" value={money(calc.netCostAfterGiftAid)} color="#15212E" />
         <Stat label="Remaining gap" value={money(calc.remainingGapAfterAllAid)} color="#C04E57" />
+        {calc.surplusAid > 0 ? (
+          <Stat label="Surplus aid shown" value={money(calc.surplusAid)} color="#15885A" />
+        ) : null}
       </div>
 
       <AidOfferFlags flags={calc.flags} />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-        {offer.offer_status !== "reviewed" && onMarkReviewed ? (
+        {(status === "draft" || status === "estimated") && onMarkOfficial ? (
+          <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
+            Mark official
+          </button>
+        ) : null}
+        {status === "official" && onMarkReviewed ? (
           <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkReviewed(offer.id)}>
-            Mark as reviewed
+            Mark reviewed
           </button>
         ) : null}
         {onEdit ? (

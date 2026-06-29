@@ -30,19 +30,32 @@ create index if not exists user_aid_offers_user_id_idx on public.user_aid_offers
 
 alter table public.user_aid_offers enable row level security;
 
+drop policy if exists "Users can select their own aid offers" on public.user_aid_offers;
+drop policy if exists "Users can insert their own aid offers" on public.user_aid_offers;
+drop policy if exists "Users can update their own aid offers" on public.user_aid_offers;
+drop policy if exists "Users can delete their own aid offers" on public.user_aid_offers;
 drop policy if exists "Users can select own aid offers" on public.user_aid_offers;
 drop policy if exists "Users can insert own aid offers" on public.user_aid_offers;
 drop policy if exists "Users can update own aid offers" on public.user_aid_offers;
 drop policy if exists "Users can delete own aid offers" on public.user_aid_offers;
 
-create policy "Users can select own aid offers"
-  on public.user_aid_offers for select using (auth.uid() = user_id);
+create policy "Users can select their own aid offers"
+  on public.user_aid_offers
+  for select
+  using (auth.uid() = user_id);
 
-create policy "Users can insert own aid offers"
-  on public.user_aid_offers for insert with check (auth.uid() = user_id);
+create policy "Users can insert their own aid offers"
+  on public.user_aid_offers
+  for insert
+  with check (auth.uid() = user_id);
 
-create policy "Users can update own aid offers"
-  on public.user_aid_offers for update using (auth.uid() = user_id);
+create policy "Users can update their own aid offers"
+  on public.user_aid_offers
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
-create policy "Users can delete own aid offers"
-  on public.user_aid_offers for delete using (auth.uid() = user_id);
+create policy "Users can delete their own aid offers"
+  on public.user_aid_offers
+  for delete
+  using (auth.uid() = user_id);
