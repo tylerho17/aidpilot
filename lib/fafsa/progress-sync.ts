@@ -16,14 +16,21 @@ type FafsaStepProgressRow = {
 
 const VALID_PLAN_KEYS = new Set(FAFSA_STEPS.map((step) => step.planKey));
 
-export function mergeCompletedPlanKeys(localKeys: string[], cloudKeys: string[]): string[] {
-  const merged = new Set([...localKeys, ...cloudKeys].filter((key) => VALID_PLAN_KEYS.has(key)));
+export function mergeCompletedPlanKeys(
+  localKeys: string[],
+  cloudKeys: string[],
+  cloudIncompleteKeys: string[] = []
+): string[] {
+  const cloudIncomplete = new Set(cloudIncompleteKeys.filter((key) => VALID_PLAN_KEYS.has(key)));
+  const merged = new Set(
+    [...localKeys, ...cloudKeys].filter((key) => VALID_PLAN_KEYS.has(key) && !cloudIncomplete.has(key))
+  );
   return [...merged];
 }
 
 export async function fetchCloudFafsaProgress(
   userId: string
-): Promise<{ completedPlanKeys: string[]; error: unknown | null }> {
+): Promise<{ completedPlanKeys: string[]; incompletePlanKeys: string[]; error: unknown | null }> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
@@ -32,16 +39,18 @@ export async function fetchCloudFafsaProgress(
       .eq("user_id", userId);
 
     if (error) {
-      return { completedPlanKeys: [], error };
+      return { completedPlanKeys: [], incompletePlanKeys: [], error };
     }
 
-    const completedPlanKeys = ((data ?? []) as FafsaStepProgressRow[])
-      .filter((row) => row.completed && VALID_PLAN_KEYS.has(row.plan_key))
-      .map((row) => row.plan_key);
+    const rows = ((data ?? []) as FafsaStepProgressRow[]).filter((row) =>
+      VALID_PLAN_KEYS.has(row.plan_key)
+    );
+    const completedPlanKeys = rows.filter((row) => row.completed).map((row) => row.plan_key);
+    const incompletePlanKeys = rows.filter((row) => !row.completed).map((row) => row.plan_key);
 
-    return { completedPlanKeys, error: null };
+    return { completedPlanKeys, incompletePlanKeys, error: null };
   } catch (error) {
-    return { completedPlanKeys: [], error };
+    return { completedPlanKeys: [], incompletePlanKeys: [], error };
   }
 }
 
