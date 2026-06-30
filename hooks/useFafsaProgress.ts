@@ -56,19 +56,25 @@ export function useFafsaProgress() {
     async (userId: string) => {
       userIdRef.current = userId;
       const localKeys = normalizeCompletedKeys(readFafsaProgressLocal().completedPlanKeys);
-      const { completedPlanKeys: cloudKeys, error } = await fetchCloudFafsaProgress(userId);
+      const {
+        completedPlanKeys: cloudKeys,
+        incompletePlanKeys: cloudIncompleteKeys,
+        error,
+      } = await fetchCloudFafsaProgress(userId);
 
       if (error) {
         applySyncFailure(error);
         return;
       }
 
-      const merged = mergeCompletedPlanKeys(localKeys, normalizeCompletedKeys(cloudKeys));
+      const normalizedCloudKeys = normalizeCompletedKeys(cloudKeys);
+      const normalizedCloudIncompleteKeys = normalizeCompletedKeys(cloudIncompleteKeys);
+      const merged = mergeCompletedPlanKeys(localKeys, normalizedCloudKeys, normalizedCloudIncompleteKeys);
       persistLocal(merged);
       setSyncStatus("synced");
       setSyncMessage(null);
 
-      const onlyLocal = merged.filter((key) => !cloudKeys.includes(key));
+      const onlyLocal = merged.filter((key) => !normalizedCloudKeys.includes(key));
       if (onlyLocal.length > 0) {
         const pushResult = await pushCloudFafsaProgress(userId, onlyLocal);
         if (pushResult.error) {
