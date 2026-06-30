@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toFriendlyError } from "@/lib/friendly-errors";
 import { AID_OFFER_LOAD_ERROR, AID_OFFER_SAVE_ERROR, AID_OFFER_UPDATE_ERROR } from "@/lib/aid-letter/calculateAidOffer";
+import { completeAidOfferTasks, syncAidOfferTasks } from "@/lib/aid-letter/sync-aid-offer-tasks";
 import { AID_OFFER_RECORD_STATUSES, type AidOfferRecordStatus, type UserAidOffer } from "@/lib/types";
 
 export type AidOfferInput = {
@@ -113,6 +114,18 @@ export function useAidOffers() {
   const supabase = useMemo(() => createClient(), []);
   const loadVersionRef = useRef(0);
 
+  const syncTasksForOffer = useCallback(
+    async (offer: UserAidOffer) => {
+      if (!userId) return;
+      try {
+        await syncAidOfferTasks(supabase, userId, offer);
+      } catch (error) {
+        console.error("syncAidOfferTasks failed:", error);
+      }
+    },
+    [supabase, userId]
+  );
+
   const loadOffersForUser = useCallback(
     async (resolvedUserId: string | null, options?: { silent?: boolean }) => {
       const loadVersion = ++loadVersionRef.current;
@@ -158,18 +171,21 @@ export function useAidOffers() {
     [supabase]
   );
 
-  const reload = useCallback(async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const resolvedUserId = (user ?? session?.user)?.id ?? null;
-    setUserId(resolvedUserId);
-    setAuthReady(true);
-    await loadOffersForUser(resolvedUserId);
-  }, [loadOffersForUser, supabase]);
+  const reload = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const resolvedUserId = (user ?? session?.user)?.id ?? null;
+      setUserId(resolvedUserId);
+      setAuthReady(true);
+      await loadOffersForUser(resolvedUserId, options);
+    },
+    [loadOffersForUser, supabase]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -287,6 +303,7 @@ export function useAidOffers() {
               .map((offer) => (offer.id === offerId ? saved : offer))
               .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           );
+          await syncTasksForOffer(saved);
           return saved;
         }
 
@@ -296,6 +313,7 @@ export function useAidOffers() {
         setOffers((prev) =>
           [saved, ...prev].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         );
+        await syncTasksForOffer(saved);
         return saved;
       } catch (error) {
         console.error("saveOffer failed:", error);
@@ -305,7 +323,7 @@ export function useAidOffers() {
         setSavingId(null);
       }
     },
-    [supabase, userId]
+    [supabase, syncTasksForOffer, userId]
   );
 
   const deleteOffer = useCallback(
@@ -317,6 +335,7 @@ export function useAidOffers() {
       try {
         const { error } = await supabase.from("user_aid_offers").delete().eq("id", offerId).eq("user_id", userId);
         if (error) throw error;
+        await completeAidOfferTasks(supabase, userId, offerId);
         setOffers((prev) => prev.filter((offer) => offer.id !== offerId));
         return true;
       } catch (error) {
@@ -358,6 +377,7 @@ export function useAidOffers() {
         );
 
         await loadOffersForUser(userId, { silent: true });
+        await syncTasksForOffer(saved);
         return saved;
       } catch (error) {
         console.error("updateOfferStatus failed:", error);
@@ -367,7 +387,7 @@ export function useAidOffers() {
         setSavingId(null);
       }
     },
-    [loadOffersForUser, supabase, userId]
+    [loadOffersForUser, supabase, syncTasksForOffer, userId]
   );
 
   const markReviewed = useCallback(

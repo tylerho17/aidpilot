@@ -57,7 +57,7 @@ function PageIntro() {
 }
 
 export default function ProtectHubClient() {
-  const { authReady, userId, loading, loadError, snapshot, topAction, reload } = useProtectHub();
+  const { authReady, userId, loading, loadError, dataWarning, snapshot, topAction, reload } = useProtectHub();
 
   if (!authReady || loading) {
     return <PageLoading message="Loading your aid protection status..." />;
@@ -110,6 +110,16 @@ export default function ProtectHubClient() {
           </ProductCard>
         ) : (
           <>
+            {dataWarning ? (
+              <ProductCard style={{ padding: 18, marginBottom: 18, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.6 }}>
+                  {dataWarning}
+                </p>
+                <button type="button" style={secondaryBtn} onClick={() => void reload()}>
+                  Try again
+                </button>
+              </ProductCard>
+            ) : null}
             <ProtectStatusOverview snapshot={snapshot} />
             <ProtectNextActionCard action={topAction} />
             <div

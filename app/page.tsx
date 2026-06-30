@@ -122,15 +122,6 @@ const BADGE_PAL: Record<"done" | TaskTone, { bg: string; fg: string }> = {
   coral: { bg: "#FFE4E6", fg: "#C04E57" },
 };
 
-const PROBLEM_CARDS = [
-  "FAFSA status",
-  "Missing documents",
-  "Verification requests",
-  "Aid deadlines",
-  "Scholarship opportunities",
-  "Confusing aid letters",
-];
-
 const PRODUCT_CARDS = [
   {
     title: "Aid dashboard",
@@ -158,15 +149,6 @@ const PRODUCT_CARDS = [
   },
 ];
 
-const PRICING_BULLETS = [
-  "Weekly aid check-ins",
-  "Personalized aid checklist",
-  "Document status tracker",
-  "Scholarship report",
-  "Aid deadline reminders",
-  "Aid letter decoder when available",
-];
-
 const FAQ_ITEMS = [
   {
     q: "Is AidPilot part of FAFSA or my school?",
@@ -187,10 +169,6 @@ const FAQ_ITEMS = [
   {
     q: "Who is AidPilot for?",
     a: "AidPilot is built for students who want help protecting financial aid, managing deadlines, tracking documents, and finding more scholarship opportunities.",
-  },
-  {
-    q: "Why is early access $49/year?",
-    a: "The early access price is a test to understand whether students value a weekly financial aid copilot. No payment is collected today.",
   },
   {
     q: "What happens after I join the waitlist?",
@@ -296,9 +274,7 @@ export default function Home() {
           </span>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 28, flexShrink: 0, whiteSpace: "nowrap" }}>
-          <a href="#problem" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Problem</a>
           <a href="#product" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Product</a>
-          <a href="#pricing" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Pricing</a>
           <a href="#faq" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>FAQ</a>
           <Link href="/dashboard" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Demo</Link>
           <Link href="/login" style={{ fontSize: 15, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Log in</Link>
@@ -449,29 +425,6 @@ export default function Home() {
               <span key={i} style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap", background: "#fff", border: "1px solid #E5E7EB", borderRadius: 12, padding: "8px 12px", gap: 8, fontSize: 13, fontWeight: 600, color: "#6B7280", boxShadow: "0 2px 6px rgba(31,41,55,.04)" }}>
                 {item.icon}<span>{item.label}</span>
               </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PROBLEM ── */}
-      <section id="problem" style={{ background: "#F4F8FE", padding: "104px 48px", borderBottom: "1px solid #EAECEF" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto 52px", textAlign: "center" }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#C04E57", textTransform: "uppercase", letterSpacing: "1.2px" }}>The problem</span>
-            <h2 className="font-display" style={{ fontSize: 42, fontWeight: 900, letterSpacing: "-1px", margin: "14px 0 16px", color: "#15212E", lineHeight: 1.1 }}>
-              Financial aid should not feel this confusing.
-            </h2>
-            <p style={{ fontSize: 18, fontWeight: 500, color: "#5B6573", margin: 0, lineHeight: 1.65 }}>
-              FAFSA, missing documents, verification, deadlines, scholarships, and aid letters all live in different places. AidPilot brings the next step into one calm weekly check-in.
-            </p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
-            {PROBLEM_CARDS.map((label) => (
-              <div key={label} style={{ background: "#fff", border: "1px solid #E6EDF6", borderRadius: 18, padding: "22px 24px", boxShadow: "0 12px 28px -18px rgba(11,92,173,.18)" }}>
-                <span style={{ display: "inline-flex", width: 10, height: 10, borderRadius: "50%", background: "#C04E57", marginBottom: 14 }} />
-                <div className="font-display" style={{ fontSize: 18, fontWeight: 800, color: "#15212E", lineHeight: 1.3 }}>{label}</div>
-              </div>
             ))}
           </div>
         </div>
@@ -802,46 +755,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing" style={{ background: "#fff", padding: "104px 48px", borderTop: "1px solid #EAECEF" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <span style={{ fontSize: 13, fontWeight: 800, color: "#0B5CAD", textTransform: "uppercase", letterSpacing: "1.2px" }}>Pricing test</span>
-          <h2 className="font-display" style={{ fontSize: 40, fontWeight: 900, letterSpacing: "-1px", margin: "14px 0 14px", color: "#15212E" }}>
-            Early access pricing
-          </h2>
-          <p style={{ fontSize: 18, fontWeight: 500, color: "#5B6573", margin: "0 0 40px", lineHeight: 1.65 }}>
-            AidPilot is currently in early access while we test what students need most.
-          </p>
-          <div style={{ background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB", borderRadius: 28, padding: "40px 36px", textAlign: "left", boxShadow: "0 28px 56px -24px rgba(11,92,173,.24)" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#0B5CAD", textTransform: "uppercase", letterSpacing: ".8px", marginBottom: 8 }}>Early access</div>
-                <div className="font-display" style={{ fontSize: 48, fontWeight: 900, color: "#15212E", letterSpacing: "-1.2px", lineHeight: 1 }}>
-                  $49<span style={{ fontSize: 22, fontWeight: 700, color: "#6B7280" }}>/year</span>
-                </div>
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#15885A", background: "#EAFBF1", padding: "8px 14px", borderRadius: 999, border: "1px solid #D5F0E2" }}>Pricing test only</span>
-            </div>
-            <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-              {PRICING_BULLETS.map((item) => (
-                <li key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15.5, fontWeight: 600, color: "#374151" }}>
-                  <span style={{ display: "flex", width: 22, height: 22, borderRadius: "50%", background: "#EAF3FF", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <CheckSVG size={12} color="#0B5CAD" strokeWidth={3} />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <a href="#waitlist" style={{ display: "inline-block", fontSize: 17, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "15px 32px", borderRadius: 14, boxShadow: "0 14px 28px rgba(11,92,173,.28)", textDecoration: "none" }}>
-              Join early access
-            </a>
-            <p style={{ fontSize: 13.5, fontWeight: 500, color: "#6B7280", margin: "18px 0 0", lineHeight: 1.6 }}>
-              No payment is collected today. Join the waitlist to help shape AidPilot before launch.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* ── FINAL CTA ── */}
       <section style={{ background: "#F9FAFB", padding: "0 48px 96px" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", background: "linear-gradient(135deg,#EAF3FF,#EAFBF1)", border: "1px solid #DCEAF7", borderRadius: 32, padding: "72px 48px", textAlign: "center", position: "relative", overflow: "hidden" }}>
@@ -952,9 +865,7 @@ export default function Home() {
             </span>
           </div>
           <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center" }}>
-            <a href="#problem" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Problem</a>
             <a href="#product" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Product</a>
-            <a href="#pricing" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Pricing</a>
             <a href="#faq" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>FAQ</a>
             <Link href="/privacy" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Privacy</Link>
             <Link href="/disclaimer" style={{ fontSize: 14.5, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>Disclaimer</Link>

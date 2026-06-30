@@ -82,56 +82,17 @@ export function useSchoolAidTracker() {
     [supabase, userId]
   );
 
-  const loadTracker = useCallback(async () => {
-    setLoadError(null);
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setUserId(user?.id ?? null);
-      setAuthReady(true);
-
-      if (!user) {
-        setStatuses([]);
-        setTasks([]);
-        return;
+  const loadTracker = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setLoading(true);
       }
+      setLoadError(null);
 
-      const [statusRes, taskRes] = await Promise.all([
-        supabase
-          .from("user_school_aid_statuses")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("school_name"),
-        supabase
-          .from("user_school_aid_tasks")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at"),
-      ]);
-
-      if (statusRes.error) throw statusRes.error;
-      if (taskRes.error) throw taskRes.error;
-
-      setStatuses((statusRes.data ?? []) as UserSchoolAidStatus[]);
-      setTasks((taskRes.data ?? []) as UserSchoolAidTask[]);
-    } catch (error) {
-      console.error("useSchoolAidTracker load failed:", error);
-      setLoadError(toFriendlyError(error, SCHOOL_AID_LOAD_ERROR));
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function bootstrap() {
       try {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (cancelled) return;
 
         setUserId(user?.id ?? null);
         setAuthReady(true);
@@ -155,19 +116,29 @@ export function useSchoolAidTracker() {
             .order("created_at"),
         ]);
 
-        if (cancelled) return;
         if (statusRes.error) throw statusRes.error;
         if (taskRes.error) throw taskRes.error;
 
         setStatuses((statusRes.data ?? []) as UserSchoolAidStatus[]);
         setTasks((taskRes.data ?? []) as UserSchoolAidTask[]);
       } catch (error) {
-        if (cancelled) return;
         console.error("useSchoolAidTracker load failed:", error);
         setLoadError(toFriendlyError(error, SCHOOL_AID_LOAD_ERROR));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!options?.silent) {
+          setLoading(false);
+        }
       }
+    },
+    [supabase]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      if (cancelled) return;
+      await loadTracker();
     }
 
     void bootstrap();
@@ -175,7 +146,7 @@ export function useSchoolAidTracker() {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [loadTracker]);
 
   const addSchool = useCallback(
     async (input: AddSchoolInput) => {
@@ -317,11 +288,7 @@ export function useSchoolAidTracker() {
     updateSchool,
     markPortalCheckedToday,
     updateTaskStatus,
-    reload: async () => {
-      setLoading(true);
-      await loadTracker();
-      setLoading(false);
-    },
+    reload: (options?: { silent?: boolean }) => loadTracker(options),
     clearActionError: () => setActionError(null),
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ProductCard } from "@/components/ProductUI";
@@ -10,6 +11,8 @@ import AidOfferForm from "@/components/aid-letter/AidOfferForm";
 import AidOfferSummaryCard from "@/components/aid-letter/AidOfferSummaryCard";
 import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
 import { useAidOffers } from "@/hooks/useAidOffers";
+import { useUserData } from "@/hooks/useUserData";
+import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { UserAidOffer } from "@/lib/types";
 
@@ -77,6 +80,8 @@ function PageIntro() {
 }
 
 export default function AidOfferDecoderClient() {
+  const router = useRouter();
+  const { loadData } = useUserData();
   const {
     authReady,
     userId,
@@ -212,9 +217,11 @@ export default function AidOfferDecoderClient() {
                 onSubmit={async (input, offerId) => {
                   const saved = await saveOffer(input, offerId);
                   if (saved) {
+                    void loadData();
                     setShowForm(false);
                     setEditingOffer(null);
                     setSelectedId(saved.id);
+                    router.push(getAidOfferReportHref(saved.id));
                   }
                   return saved;
                 }}
@@ -236,7 +243,10 @@ export default function AidOfferDecoderClient() {
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
               Compare schools
             </h2>
-            <AidOfferComparisonTable offers={offers} onSelect={(offer) => setSelectedId(offer.id)} />
+            <AidOfferComparisonTable
+              offers={offers}
+              onSelect={(offer) => router.push(getAidOfferReportHref(offer.id))}
+            />
 
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
               School breakdowns
@@ -246,8 +256,12 @@ export default function AidOfferDecoderClient() {
                 key={offer.id}
                 offer={offer}
                 saving={savingId === offer.id}
-                onMarkOfficial={(id) => void updateOfferStatus(id, "official")}
-                onMarkReviewed={(id) => void markReviewed(id)}
+                onMarkOfficial={(id) => {
+                  void updateOfferStatus(id, "official").then(() => loadData());
+                }}
+                onMarkReviewed={(id) => {
+                  void markReviewed(id).then(() => loadData());
+                }}
                 onEdit={openEditForm}
                 onDelete={(id) => {
                   void deleteOffer(id);

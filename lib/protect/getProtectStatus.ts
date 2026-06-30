@@ -130,6 +130,17 @@ export function getAidOffersCategoryStatus(offers: UserAidOffer[]): ProtectCateg
   return "in_progress";
 }
 
+export function getFafsaProtectHref(completedFafsaPlanKeys: string[]): string {
+  const nextFafsaStep = getNextIncompleteStep(completedFafsaPlanKeys);
+  const href = nextFafsaStep ? `/fafsa/steps/${nextFafsaStep.planKey}` : "/fafsa";
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(`Protect FAFSA href: ${href}`);
+  }
+
+  return href;
+}
+
 export function getProtectStatus(input: ProtectStatusInput): ProtectStatusSnapshot {
   const completedCount = input.completedFafsaPlanKeys.filter((key) =>
     FAFSA_STEPS.some((step) => step.planKey === key)
@@ -159,13 +170,14 @@ export function getProtectStatus(input: ProtectStatusInput): ProtectStatusSnapsh
   const schoolStatus = getSchoolFollowUpCategoryStatus(input.schoolAidStatuses);
   const verificationStatus = getVerificationCategoryStatus(input.schoolAidStatuses);
   const aidOffersStatus = getAidOffersCategoryStatus(input.userAidOffers);
+  const fafsaHref = getFafsaProtectHref(input.completedFafsaPlanKeys);
 
   const categories: ProtectCategorySnapshot[] = [
     {
       key: "fafsa",
       title: "FAFSA Guide",
       status: fafsaStatus,
-      href: nextFafsaStep ? `/fafsa/steps/${nextFafsaStep.planKey}` : "/fafsa",
+      href: fafsaHref,
       ctaLabel: "Continue FAFSA",
       summaryLines: [
         `${completedCount} of ${FAFSA_STEPS.length} steps complete`,

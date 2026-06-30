@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getProtectStatus } from "@/lib/protect/getProtectStatus";
 import { FAFSA_STEPS } from "@/lib/fafsa/steps";
 import { getAidActions } from "@/lib/aid-actions/getAidActions";
@@ -43,11 +43,25 @@ export function useProtectHub() {
   const userId = user?.id ?? schoolUserId ?? offersUserId ?? null;
   const authReady = userAuthReady && schoolAuthReady && offersAuthReady;
   const loading = !authReady || userLoading || (userId !== null && (schoolLoading || offersLoading));
+  const refreshStartedRef = useRef(false);
 
-  const loadError =
-    userLoadError || (userId && (schoolLoadError || offersLoadError) ? PROTECT_LOAD_ERROR : null)
-      ? PROTECT_LOAD_ERROR
-      : null;
+  const loadError = userLoadError ? PROTECT_LOAD_ERROR : null;
+  const dataWarning =
+    userId && !userLoadError && (schoolLoadError || offersLoadError) ? PROTECT_LOAD_ERROR : null;
+
+  const refreshData = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!userId) return;
+      await Promise.all([reloadSchool(options), reloadOffers(options)]);
+    },
+    [reloadOffers, reloadSchool, userId]
+  );
+
+  useEffect(() => {
+    if (!authReady || !userId || loading || refreshStartedRef.current) return;
+    refreshStartedRef.current = true;
+    void refreshData({ silent: true });
+  }, [authReady, loading, refreshData, userId]);
 
   const actions = useMemo(() => {
     if (!userId) return [];
@@ -77,16 +91,18 @@ export function useProtectHub() {
   );
 
   const reload = useCallback(async () => {
-    await Promise.all([reloadSchool(), reloadOffers()]);
-  }, [reloadOffers, reloadSchool]);
+    await refreshData();
+  }, [refreshData]);
 
   return {
     authReady,
     userId,
     loading,
     loadError,
+    dataWarning,
     snapshot,
     topAction,
     reload,
+    refreshData,
   };
 }

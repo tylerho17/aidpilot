@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { PillBadge, ProductCard } from "@/components/ProductUI";
 import AidOfferFlags from "@/components/aid-letter/AidOfferFlags";
+import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 import { AID_OFFER_STATUS_LABELS, calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
 
@@ -89,6 +91,9 @@ export default function AidOfferSummaryCard({
       <AidOfferFlags flags={calc.flags} />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+        <Link href={getAidOfferReportHref(offer.id)} style={{ ...secondaryBtn, textDecoration: "none" }}>
+          View Aid Health Report
+        </Link>
         {(status === "draft" || status === "estimated") && onMarkOfficial ? (
           <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
             Mark official

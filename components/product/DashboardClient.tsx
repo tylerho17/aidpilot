@@ -43,6 +43,7 @@ import { useProtectHub } from "@/hooks/useProtectHub";
 import { AID_ACTION_EMPTY_MESSAGE } from "@/components/aid-actions/AidActionList";
 import ProtectRiskBadge from "@/components/protect/ProtectRiskBadge";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
+import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 
 const primaryBtn = {
   display: "inline-flex",
@@ -470,8 +471,8 @@ export default function DashboardClient() {
             Enter aid offers manually to compare gift aid, loans, and remaining cost across schools.
           </p>
         )}
-        <Link href="/aid-letter" style={primaryBtn}>
-          Open Aid Offer Decoder
+        <Link href={aidOfferStats ? getAidOfferReportHref(aidOfferStats.lowestNet.offer.id) : "/aid-letter"} style={primaryBtn}>
+          {aidOfferStats ? "View Aid Health Report" : "Open Aid Offer Decoder"}
         </Link>
       </ProductCard>
 
@@ -547,7 +548,7 @@ export default function DashboardClient() {
           <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
             Aid offer
           </h2>
-          {!aidOfferSummary ? (
+          {!aidOfferStats && !aidOfferSummary ? (
             <>
               <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.65 }}>
                 Decode your aid offer when you receive it. AidPilot separates free money from loans — no SSNs or tax numbers needed.
@@ -556,7 +557,36 @@ export default function DashboardClient() {
                 Open aid decoder
               </Link>
             </>
-          ) : (
+          ) : aidOfferStats ? (
+            <>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2", margin: "0 0 12px" }}>
+                {aidOfferStats.lowestNet.offer.school_name}
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                <div style={{ padding: 12, borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15885A" }}>Gift aid</div>
+                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
+                    ${aidOfferStats.lowestNet.calculation.giftAid.toLocaleString()}
+                  </div>
+                </div>
+                <div style={{ padding: 12, borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#B7791F" }}>Loans</div>
+                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
+                    ${aidOfferStats.lowestNet.calculation.loanTotal.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", margin: "0 0 16px" }}>
+                Remaining gap:{" "}
+                <span style={{ color: "#C04E57" }}>
+                  ${aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()}
+                </span>
+              </p>
+              <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
+                View Aid Health Report →
+              </Link>
+            </>
+          ) : aidOfferSummary ? (
             <>
               <p style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2", margin: "0 0 12px" }}>{aidOfferSummary.schoolName}</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
@@ -580,7 +610,7 @@ export default function DashboardClient() {
                 Review aid offer →
               </Link>
             </>
-          )}
+          ) : null}
         </ProductCard>
 
         <ProductCard style={{ padding: 24, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
