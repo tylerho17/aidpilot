@@ -83,7 +83,9 @@ export default function DocumentsClient() {
         {safeDocuments.length === 0 ? (
           <PageEmptyState
             title="No documents tracked yet"
-            description="Your school may request verification documents — add them here when you are ready. AidPilot tracks status only."
+            description="Your school may request verification documents — add them from your checklist or track status here."
+            actionHref="/checklist"
+            actionLabel="Open checklist"
           />
         ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { CheckSVG, PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
+import { PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
 import { PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { useUserData } from "@/hooks/useUserData";
 import { getProfileFullName, getProfileSchoolName } from "@/lib/profile-fields";
-import { getTopAttentionItems, getSeverityLabel, attentionSeverityToTone } from "@/lib/attention";
+import { getTopAttentionItems } from "@/lib/attention";
 import {
   getFafsaBlockers,
   getNextFafsaAction,
@@ -45,6 +45,9 @@ import ProtectRiskBadge from "@/components/protect/ProtectRiskBadge";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import { getAidOfferReportHref, getOpenAidOfferActionTasks } from "@/lib/aid-letter/buildAidHealthReport";
 import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison";
+import WeeklyAidCheckInSection from "@/components/product/WeeklyAidCheckInSection";
+import { buildWeeklyAidCheckIn } from "@/lib/weekly-aid-checkin";
+import ProductPageHeader, { ProductFlowNav } from "@/components/product/ProductPageHeader";
 
 const primaryBtn = {
   display: "inline-flex",
@@ -108,6 +111,38 @@ export default function DashboardClient() {
     }
     return "";
   });
+
+  const weeklyCheckIn = useMemo(
+    () =>
+      buildWeeklyAidCheckIn({
+        tasks: tasks ?? [],
+        documents: documents ?? [],
+        deadlines: deadlines ?? [],
+        aidOffers,
+        scholarships: scholarships ?? [],
+        fafsaIntake: fafsaIntake ?? null,
+        protectAction:
+          protectUserId && protectSnapshot.overallStatus !== "protected"
+            ? {
+                id: "protect-hub",
+                label: protectSnapshot.topAction?.title ?? protectSnapshot.headline,
+                href: protectSnapshot.topAction?.href ?? "/protect",
+              }
+            : null,
+      }),
+    [
+      aidOffers,
+      deadlines,
+      documents,
+      fafsaIntake,
+      protectSnapshot.headline,
+      protectSnapshot.overallStatus,
+      protectSnapshot.topAction,
+      protectUserId,
+      scholarships,
+      tasks,
+    ]
+  );
 
   if (!authReady && loading) {
     return <PageLoading message="Loading your aid check-in..." />;
@@ -230,10 +265,8 @@ export default function DashboardClient() {
     totalTasks,
     missingDocs,
     scholarshipStats,
-    protectItems,
     fafsaBlockers,
     aidProtection,
-    aidOfferSummary,
     aidOfferActionTasks,
     weeklyFocus,
     urgent,
@@ -320,17 +353,25 @@ export default function DashboardClient() {
         </ProductCard>
       )}
 
-      <div style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: "0 0 6px" }}>
-          Good morning, {firstName}.
+      <ProductPageHeader
+        title="Your financial aid command center"
+        subtitle="See what needs attention this week."
+        primaryAction={{ href: "/aid-letter", label: "Add aid offer" }}
+        secondaryAction={{ href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" }}
+      >
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: 0 }}>
+          {firstName} · {schoolLabel}
         </p>
-        <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 6px", color: "#15212E", lineHeight: 1.1 }}>
-          Your aid command center
-        </h1>
-        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          {schoolLabel} · Here is what to do next for FAFSA, blockers, and your aid offer.
-        </p>
-      </div>
+      </ProductPageHeader>
+
+      <ProductFlowNav
+        links={[
+          { href: "/aid-letter", label: "Aid Offers" },
+          { href: AID_OFFER_COMPARE_HREF, label: "Compare Offers" },
+          { href: "/protect", label: "Protect Aid" },
+          { href: "/checklist", label: "Checklist" },
+        ]}
+      />
 
       {fafsaDemoMode && (
         <div style={{ marginBottom: 20 }}>
@@ -342,12 +383,14 @@ export default function DashboardClient() {
         <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
       )}
 
+      <WeeklyAidCheckInSection checkIn={weeklyCheckIn} />
+
       <ProductCard
         style={{
-          padding: 28,
+          padding: 24,
           marginBottom: 20,
-          background: "linear-gradient(135deg,#F4FBF7,#F4F8FE)",
-          border: "1px solid #D5F0E2",
+          background: "#fff",
+          border: "1px solid #E3EBF3",
         }}
       >
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 14 }}>
@@ -400,14 +443,7 @@ export default function DashboardClient() {
         </div>
       </ProductCard>
 
-      <ProductCard
-        style={{
-          padding: 28,
-          marginBottom: 20,
-          background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)",
-          border: "1px solid #D7E7FB",
-        }}
-      >
+      <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
         <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
           Your next aid action
         </h2>
@@ -448,8 +484,8 @@ export default function DashboardClient() {
         )}
       </ProductCard>
 
-      <ProductCard style={{ padding: 28, marginBottom: 20 }}>
-        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+      <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 14px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
           Compare your aid offers
         </h2>
         {aidOffersUserId && !aidOffersLoading && aidOfferStats ? (
@@ -490,18 +526,23 @@ export default function DashboardClient() {
             ) : null}
           </>
         ) : (
-          <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-            Enter aid offers manually to compare gift aid, loans, and remaining cost across schools.
+          <p style={{ fontSize: 15, fontWeight: 500, color: "#5B6B7F", margin: "0 0 18px", lineHeight: 1.65 }}>
+            No aid offers yet. Add your first aid offer to generate your Aid Health Report.
           </p>
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          <Link href={aidOfferStats ? getAidOfferReportHref(aidOfferStats.lowestNet.offer.id) : "/aid-letter"} style={primaryBtn}>
-            {aidOfferStats ? "View Aid Health Report" : "Open Aid Offer Decoder"}
+          <Link href="/aid-letter" style={primaryBtn}>
+            Add aid offer
           </Link>
           {aidOfferStats ? (
-            <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
-              Compare aid offers
-            </Link>
+            <>
+              <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
+                View Aid Health Report
+              </Link>
+              <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
+                Compare aid offers
+              </Link>
+            </>
           ) : null}
         </div>
       </ProductCard>
@@ -566,91 +607,9 @@ export default function DashboardClient() {
         </ProductCard>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 18,
-          marginBottom: 28,
-        }}
-      >
-        <ProductCard style={{ padding: 24 }}>
-          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-            Aid offer
-          </h2>
-          {!aidOfferStats && !aidOfferSummary ? (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.65 }}>
-                Decode your aid offer when you receive it. AidPilot separates free money from loans — no SSNs or tax numbers needed.
-              </p>
-              <Link href="/aid-letter" style={primaryBtn}>
-                Open aid decoder
-              </Link>
-            </>
-          ) : aidOfferStats ? (
-            <>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2", margin: "0 0 12px" }}>
-                {aidOfferStats.lowestNet.offer.school_name}
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-                <div style={{ padding: 12, borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15885A" }}>Gift aid</div>
-                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
-                    ${aidOfferStats.lowestNet.calculation.giftAid.toLocaleString()}
-                  </div>
-                </div>
-                <div style={{ padding: 12, borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#B7791F" }}>Loans</div>
-                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
-                    ${aidOfferStats.lowestNet.calculation.loanTotal.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", margin: "0 0 16px" }}>
-                Remaining gap:{" "}
-                <span style={{ color: "#C04E57" }}>
-                  ${aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()}
-                </span>
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
-                  View Aid Health Report →
-                </Link>
-                <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
-                  Compare aid offers
-                </Link>
-              </div>
-            </>
-          ) : aidOfferSummary ? (
-            <>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2", margin: "0 0 12px" }}>{aidOfferSummary.schoolName}</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-                <div style={{ padding: 12, borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15885A" }}>Free money</div>
-                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
-                    ${aidOfferSummary.freeMoney.toLocaleString()}
-                  </div>
-                </div>
-                <div style={{ padding: 12, borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#B7791F" }}>Loans</div>
-                  <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#15212E" }}>
-                    ${aidOfferSummary.loans.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", margin: "0 0 16px" }}>
-                Estimated gap after aid: <span style={{ color: "#C04E57" }}>${aidOfferSummary.gap.toLocaleString()}</span>
-              </p>
-              <Link href="/aid-letter" style={secondaryBtn}>
-                Review aid offer →
-              </Link>
-            </>
-          ) : null}
-        </ProductCard>
-
-        <ProductCard style={{ padding: 24, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
-          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-            This week
+      <ProductCard style={{ padding: 24, marginBottom: 28, border: "1px solid #E3EBF3" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 12px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
+            Quick links
           </h2>
           <ul style={{ margin: "0 0 18px", paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 }}>
             {weeklyFocus.map((item) => (
@@ -664,7 +623,7 @@ export default function DashboardClient() {
               FAFSA plan
             </Link>
             <Link href="/aid-letter" style={secondaryBtn}>
-              Aid decoder
+              Aid offers
             </Link>
             <Link href="/documents" style={secondaryBtn}>
               Documents
@@ -672,9 +631,11 @@ export default function DashboardClient() {
             <Link href="/deadlines" style={secondaryBtn}>
               Deadlines
             </Link>
+            <Link href="/scholarships" style={secondaryBtn}>
+              Scholarships
+            </Link>
           </div>
         </ProductCard>
-      </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
         <StatCard label="Checklist" value={`${completed} of ${totalTasks}`} color="#0B5CAD" style={{ flex: "1 1 120px" }} sub={`${progress}%`} />
@@ -682,61 +643,7 @@ export default function DashboardClient() {
         <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new`} color="#0B5CAD" style={{ flex: "1 1 120px" }} />
       </div>
 
-      <ProductCard style={{ padding: 26, marginBottom: 22 }}>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>
-          Protect your aid
-        </h2>
-        <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.55 }}>
-          These are items AidPilot thinks may affect your aid, deadlines, or money if left unresolved.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {protectItems.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-              Nothing urgent in AidPilot right now. Keep checking your school, FAFSA, and scholarship portals for official updates.
-            </p>
-          ) : (
-            protectItems.map((item) => (
-              <div
-                key={item.id}
-                style={{ padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{item.title}</div>
-                  <PillBadge tone={attentionSeverityToTone(item.severity)}>{getSeverityLabel(item.severity)}</PillBadge>
-                </div>
-                {item.dueDate ? (
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2", marginBottom: 8 }}>
-                    Due {formatDueDate(item.dueDate)}
-                  </div>
-                ) : null}
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 6px", lineHeight: 1.55 }}>
-                  {item.whyItMatters}
-                </p>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#5B6573", margin: "0 0 12px", lineHeight: 1.55 }}>
-                  Next step: {item.nextStep}
-                </p>
-                <Link
-                  href={item.href}
-                  style={{
-                    display: "inline-flex",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#0B5CAD",
-                    background: "#EAF3FF",
-                    padding: "8px 14px",
-                    borderRadius: 999,
-                    textDecoration: "none",
-                  }}
-                >
-                  {item.actionLabel}
-                </Link>
-              </div>
-            ))
-          )}
-        </div>
-      </ProductCard>
-
-      <ProductCard style={{ padding: 26, marginBottom: 22 }}>
+      <ProductCard style={{ padding: 26, marginBottom: 22, border: "1px solid #E3EBF3" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
             <div>
               <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Top 3 next actions</h2>
@@ -767,34 +674,15 @@ export default function DashboardClient() {
           </div>
         </ProductCard>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 22, alignItems: "start", marginBottom: 22 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 22, alignItems: "start", marginBottom: 22 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <ProductCard style={{ padding: 28, background: "linear-gradient(135deg,#EAFBF1,#F4FBF7)", border: "1px solid #D5F0E2" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ display: "flex", width: 24, height: 24, borderRadius: "50%", background: "#15885A", alignItems: "center", justifyContent: "center" }}>
-                <CheckSVG size={13} strokeWidth={2.6} />
-              </span>
-              <PillBadge tone="green">Protected this week</PillBadge>
-              <PillBadge tone="blue">{summary.weeklyCheckIn}</PillBadge>
-            </div>
-            <h2 className="font-display" style={{ fontSize: 24, fontWeight: 900, margin: "0 0 10px", color: "#15212E", lineHeight: 1.25 }}>
-              Your aid is safe this week.
-            </h2>
-            <p style={{ fontSize: 15.5, fontWeight: 500, color: "#5B6573", margin: "0 0 22px", lineHeight: 1.65 }}>
-              AidPilot is watching your eligibility, enrollment, documents, and deadlines. {attention} tasks need attention before {nextDeadlineLabel}.
-            </p>
-            <Link href="/checklist" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#15885A", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(21,136,90,.22)" }}>
-              Review tasks
-            </Link>
-          </ProductCard>
-
-          <ProductCard style={{ padding: 26 }}>
+          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>What needs attention</h2>
             <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Top 3 urgent tasks from your {totalTasks}-step checklist</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {urgent.length === 0 ? (
                 <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-                  No urgent tasks yet. Your checklist will populate as you add tasks or run starter setup from Settings.
+                  No urgent tasks right now. Add an aid offer or complete your FAFSA plan to generate tasks.
                 </p>
               ) : (
                 urgent.map((row) => (
@@ -845,8 +733,8 @@ export default function DashboardClient() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <ProductCard style={{ padding: 26, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>This week&apos;s AidPilot report</h2>
+          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>Weekly report</h2>
             <div style={{ marginBottom: 14 }}>
               <PillBadge tone={reportStatusTone}>Aid status: {report?.aid_status ?? summary.aidStatus}</PillBadge>
             </div>
@@ -883,19 +771,25 @@ export default function DashboardClient() {
             </div>
           </ProductCard>
 
-          <ProductCard style={{ padding: 26, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>We found money for you this week.</h2>
+          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
+            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Scholarship matches</h2>
+            {scholarshipStats.newCount === 0 ? (
+              <p style={{ fontSize: 14, color: "#5B6B7F", margin: "0 0 16px", lineHeight: 1.6 }}>
+                No scholarship matches yet. Complete your profile and visit Scholarships to review opportunities.
+              </p>
+            ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
               {[
                 { label: `${scholarshipStats.newCount} new matches`, color: "#0B5CAD" },
                 { label: `${scholarshipStats.totalPotentialLabel} potential awards`, color: "#15885A" },
                 { label: `${scholarshipStats.strongMatches} strong matches`, color: "#0B5CAD" },
               ].map((s) => (
-                <div key={s.label} className="font-display" style={{ fontSize: 22, fontWeight: 900, color: s.color }}>{s.label}</div>
+                <div key={s.label} style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.label}</div>
               ))}
             </div>
-            <Link href="/scholarships" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}>
-              View scholarship report
+            )}
+            <Link href="/scholarships" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "10px 18px", borderRadius: 8, textDecoration: "none" }}>
+              View scholarships
             </Link>
           </ProductCard>
         </div>

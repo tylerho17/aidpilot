@@ -10,6 +10,7 @@ import AidOfferComparisonTable from "@/components/aid-letter/AidOfferComparisonT
 import AidOfferForm from "@/components/aid-letter/AidOfferForm";
 import AidOfferSummaryCard from "@/components/aid-letter/AidOfferSummaryCard";
 import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
+import ProductPageHeader, { ProductFlowNav, primaryBtn, secondaryBtn } from "@/components/product/ProductPageHeader";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
@@ -17,65 +18,38 @@ import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { UserAidOffer } from "@/lib/types";
 
-const primaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 44,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "10px 18px",
-  borderRadius: 12,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
+const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "10px 16px",
-  borderRadius: 999,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
-
-function PageIntro() {
+function PageIntro({ hasOffers }: { hasOffers: boolean }) {
   return (
     <>
-      <div style={{ marginBottom: 20 }}>
-        <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
-          Aid Offer Decoder
-        </h1>
-        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Understand what a school is really offering and what you may still owe.
-        </p>
-      </div>
-
-      <ProductCard
+      <ProductFlowNav
+        links={[
+          { href: "/dashboard", label: "Dashboard" },
+          { href: AID_OFFER_COMPARE_HREF, label: "Compare Offers" },
+        ]}
+      />
+      <ProductPageHeader
+        title="Aid Offers"
+        subtitle="Understand what a school is really offering and what you may still owe."
+        primaryAction={{ href: "#add-offer", label: "Add aid offer" }}
+        secondaryAction={hasOffers ? { href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" } : undefined}
+      />
+      <div
         style={{
-          padding: 18,
+          padding: 14,
           marginBottom: 18,
-          background: "#EAF3FF",
-          border: "1px solid #D7E7FB",
+          background: "#fff",
+          border: "1px solid #E3EBF3",
+          borderRadius: 8,
+          fontFamily: pageFont,
         }}
       >
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#1E3A5F", margin: 0, lineHeight: 1.65 }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: "#5B6B7F", margin: 0, lineHeight: 1.65 }}>
           Grants and scholarships usually do not need to be repaid. Work-study is earned through a job. Loans must be
           repaid. Your remaining gap is what still needs a plan.
         </p>
-      </ProductCard>
+      </div>
     </>
   );
 }
@@ -122,9 +96,8 @@ export default function AidOfferDecoderClient() {
     return (
       <AppShell>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <PageIntro />
-          <AidCategoryExplainer />
-          <ProductCard style={{ padding: 24, marginBottom: 20 }}>
+          <PageIntro hasOffers={false} />
+          <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
             <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
               Log in to save and compare your aid offers.
             </p>
@@ -152,7 +125,9 @@ export default function AidOfferDecoderClient() {
   return (
     <AppShell>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <PageIntro />
+        <PageIntro hasOffers={offers.length > 0} />
+
+        <AidCategoryExplainer />
 
         {loadError ? (
           <ProductCard style={{ padding: 18, marginBottom: 18, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
@@ -193,17 +168,20 @@ export default function AidOfferDecoderClient() {
           </ProductCard>
         ) : null}
 
-        <AidCategoryExplainer />
-
         {!loadError && offers.length === 0 && !showForm ? (
-          <ProductCard style={{ padding: 24, marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-              Add your first school aid offer. You can enter the numbers manually from your school portal or aid letter.
+          <div id="add-offer">
+          <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "#5B6B7F", margin: "0 0 10px", lineHeight: 1.65, fontFamily: pageFont }}>
+              No aid offers yet. Add your first aid offer to generate your Aid Health Report.
+            </p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.6, fontFamily: pageFont }}>
+              Enter the numbers manually from your school portal or aid letter.
             </p>
             <button type="button" style={primaryBtn} onClick={openAddForm}>
               Add aid offer
             </button>
           </ProductCard>
+          </div>
         ) : null}
 
         {!loadError && (showForm || offers.length > 0) ? (

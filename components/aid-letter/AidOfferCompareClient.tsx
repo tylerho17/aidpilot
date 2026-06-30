@@ -12,35 +12,12 @@ import {
   type AidOfferComparisonRow,
 } from "@/lib/aid-letter/buildAidOfferComparison";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
+import { ProductFlowNav, linkBtn, secondaryBtn } from "@/components/product/ProductPageHeader";
 
 const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 const navy = "#0F2744";
 const muted = "#5B6B7F";
 const border = "#E3EBF3";
-
-const linkBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "10px 16px",
-  borderRadius: 6,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: pageFont,
-} as const;
-
-const secondaryBtn = {
-  ...linkBtn,
-  color: "#0B5CAD",
-  background: "#fff",
-  border: `1px solid ${border}`,
-} as const;
 
 function money(value: number) {
   return `$${value.toLocaleString()}`;
@@ -193,14 +170,17 @@ export default function AidOfferCompareClient() {
   return (
     <AppShell>
       <div style={{ maxWidth: 1100, margin: "0 auto", fontFamily: pageFont, color: navy }}>
-        <Link href="/aid-letter" style={{ fontSize: 14, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>
-          ← Back to aid offers
-        </Link>
+        <ProductFlowNav
+          links={[
+            { href: "/dashboard", label: "Dashboard" },
+            { href: "/aid-letter", label: "Aid Offers" },
+          ]}
+        />
 
-        <header style={{ margin: "16px 0 24px" }}>
+        <header style={{ margin: "0 0 24px" }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 8px", color: navy }}>Compare aid offers</h1>
           <p style={{ fontSize: 15, color: muted, margin: 0, lineHeight: 1.6, maxWidth: 640 }}>
-            See which school leaves you with the lowest real out-of-pocket gap after gift aid, loans, and work-study.
+            See which school leaves you with the lowest real gap.
           </p>
         </header>
 
@@ -304,6 +284,7 @@ export default function AidOfferCompareClient() {
                       "Remaining gap",
                       "Status",
                       "Risk",
+                      "Report",
                     ].map((header) => (
                       <th key={header} style={headerCell}>
                         {header}
@@ -349,6 +330,14 @@ export default function AidOfferCompareClient() {
                         <td style={bodyCell}>
                           <RiskBadge level={row.riskLevel} />
                         </td>
+                        <td style={bodyCell} onClick={(e) => e.stopPropagation()}>
+                          <Link
+                            href={getAidOfferReportHref(row.offer.id)}
+                            style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}
+                          >
+                            Health Report
+                          </Link>
+                        </td>
                       </tr>
                     );
                   })}
@@ -382,11 +371,14 @@ export default function AidOfferCompareClient() {
             ) : null}
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <Link href="/dashboard" style={secondaryBtn}>
+                Dashboard
+              </Link>
               <Link href="/aid-letter" style={secondaryBtn}>
                 Manage offers
               </Link>
               {comparison.focusOffer ? (
-                <Link href={getAidOfferReportHref(comparison.focusOffer.id)} style={secondaryBtn}>
+                <Link href={getAidOfferReportHref(comparison.focusOffer.id)} style={linkBtn}>
                   View Aid Health Report
                 </Link>
               ) : null}

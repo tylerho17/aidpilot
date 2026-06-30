@@ -4,6 +4,7 @@ import {
   aidOfferTaskPrefix,
   buildRecommendedAidOfferTasks,
 } from "@/lib/aid-letter/buildAidHealthReport";
+import { buildScholarshipGapTasks } from "@/lib/aid-letter/buildScholarshipGapPlan";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import { isAidTaskComplete } from "@/lib/data-helpers";
 import type { UserAidOffer } from "@/lib/types";
@@ -14,7 +15,10 @@ export async function syncAidOfferTasks(
   offer: UserAidOffer
 ): Promise<void> {
   const calc = calculateAidOfferFromRecord(offer);
-  const recommended = buildRecommendedAidOfferTasks(offer, calc);
+  const recommended = [
+    ...buildRecommendedAidOfferTasks(offer, calc),
+    ...buildScholarshipGapTasks(offer, calc),
+  ];
   const recommendedKeys = new Set(recommended.map((task) => task.plan_key));
   const prefix = aidOfferTaskPrefix(offer.id);
   const now = new Date().toISOString();

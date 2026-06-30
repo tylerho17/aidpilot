@@ -6,14 +6,22 @@ import { AppShell } from "@/components/AppShell";
 import { PillBadge } from "@/components/ProductUI";
 import AidActionPlanSection from "@/components/aid-letter/AidActionPlanSection";
 import AidOfficeDraftSection from "@/components/aid-letter/AidOfficeDraftSection";
+import ScholarshipGapPlanSection from "@/components/aid-letter/ScholarshipGapPlanSection";
 import { PageLoading } from "@/components/product/PageSafety";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { buildAidOfficeDraft } from "@/lib/aid-letter/buildAidOfficeDraft";
 import { buildAidHealthReport, getAidOfferActionTasks } from "@/lib/aid-letter/buildAidHealthReport";
+import {
+  buildScholarshipGapPlan,
+  getScholarshipGapActionTasks,
+  scholarshipGapTaskPrefix,
+} from "@/lib/aid-letter/buildScholarshipGapPlan";
 import { syncAidOfferTasks } from "@/lib/aid-letter/sync-aid-offer-tasks";
 import { AID_OFFER_STATUS_LABELS } from "@/lib/aid-letter/calculateAidOffer";
+import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison";
 import { createClient } from "@/lib/supabase/client";
+import ProductPageHeader, { ProductFlowNav, primaryBtn, secondaryBtn } from "@/components/product/ProductPageHeader";
 
 const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 const navy = "#0F2744";
@@ -62,7 +70,7 @@ type AidHealthReportClientProps = {
 
 export default function AidHealthReportClient({ offerId }: AidHealthReportClientProps) {
   const { authReady, userId, loading, offers } = useAidOffers();
-  const { tasks, loadData, updateTaskStatus } = useUserData();
+  const { tasks, loadData, updateTaskStatus, profile, fafsaIntake } = useUserData();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const syncedOfferRef = useRef<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
@@ -74,8 +82,19 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
     () => (offer && report ? buildAidOfficeDraft(offer, report.calculation) : null),
     [offer, report]
   );
-  const actionPlanTasks = useMemo(
-    () => (offer ? getAidOfferActionTasks(tasks, offer.id) : []),
+  const scholarshipGapPlan = useMemo(
+    () => (offer && report ? buildScholarshipGapPlan(offer, report.calculation, profile, fafsaIntake) : null),
+    [fafsaIntake, offer, profile, report]
+  );
+  const actionPlanTasks = useMemo(() => {
+    if (!offer) return [];
+    const prefix = scholarshipGapTaskPrefix(offer.id);
+    return getAidOfferActionTasks(tasks, offer.id).filter(
+      (task) => !task.plan_key?.startsWith(prefix)
+    );
+  }, [offer, tasks]);
+  const scholarshipGapTasks = useMemo(
+    () => (offer ? getScholarshipGapActionTasks(tasks, offer.id) : []),
     [offer, tasks]
   );
 
@@ -119,13 +138,17 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
     return (
       <AppShell>
         <div style={{ maxWidth: 720, margin: "0 auto", fontFamily: pageFont, background: "#fff" }}>
-          <Link href="/aid-letter" style={{ fontSize: 14, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>
-            ← Back to aid offers
-          </Link>
-          <h1 className="font-display" style={{ fontSize: 30, fontWeight: 900, margin: "16px 0 8px", color: "#15212E" }}>
-            Aid Health Report
-          </h1>
-          <p style={mutedStyle}>We could not find that aid offer. It may have been deleted.</p>
+          <ProductFlowNav
+            links={[
+              { href: "/dashboard", label: "Dashboard" },
+              { href: "/aid-letter", label: "Aid Offers" },
+            ]}
+          />
+          <ProductPageHeader
+            title="Your Aid Health Report"
+            subtitle="We could not find that aid offer. It may have been deleted."
+            primaryAction={{ href: "/aid-letter", label: "Add aid offer" }}
+          />
         </div>
       </AppShell>
     );
@@ -136,17 +159,24 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
   return (
     <AppShell>
       <div style={{ maxWidth: 720, margin: "0 auto", fontFamily: pageFont, background: "#fff" }}>
-        <Link href="/aid-letter" style={{ fontSize: 14, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>
-          ← Back to aid offers
-        </Link>
+        <ProductFlowNav
+          links={[
+            { href: "/dashboard", label: "Dashboard" },
+            { href: "/aid-letter", label: "Aid Offers" },
+            { href: AID_OFFER_COMPARE_HREF, label: "Compare Offers" },
+          ]}
+        />
 
-        <header style={{ margin: "16px 0 28px" }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "#9AA4B2", margin: "0 0 6px", letterSpacing: "0.02em" }}>
-            AID HEALTH REPORT
+        <header style={{ margin: "0 0 28px" }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: muted, margin: "0 0 6px", letterSpacing: "0.04em" }}>
+            YOUR AID HEALTH REPORT
           </p>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 8px", color: navy, lineHeight: 1.15 }}>
             {offer.school_name}
           </h1>
+          <p style={{ ...mutedStyle, marginBottom: 12 }}>
+            Understand your real cost, remaining gap, and next steps.
+          </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <PillBadge tone={offer.offer_status === "reviewed" ? "green" : "blue"}>
               {AID_OFFER_STATUS_LABELS[offer.offer_status]}
@@ -222,6 +252,15 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
 
         {officeDraft ? <AidOfficeDraftSection draft={officeDraft} /> : null}
 
+        {scholarshipGapPlan ? (
+          <ScholarshipGapPlanSection
+            plan={scholarshipGapPlan}
+            gapTasks={scholarshipGapTasks}
+            onToggleTask={handleToggleTask}
+            togglingId={togglingId}
+          />
+        ) : null}
+
         <AidActionPlanSection
           tasks={actionPlanTasks}
           onToggleTask={handleToggleTask}
@@ -237,37 +276,16 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
         </p>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
-          <Link
-            href="/aid-letter"
-            style={{
-              display: "inline-flex",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#fff",
-              background: "#0B5CAD",
-              padding: "10px 16px",
-              borderRadius: 6,
-              textDecoration: "none",
-              fontFamily: pageFont,
-            }}
-          >
+          <Link href="/dashboard" style={primaryBtn}>
+            Back to dashboard
+          </Link>
+          <Link href="/aid-letter" style={secondaryBtn}>
             Edit aid offer
           </Link>
-          <Link
-            href="/checklist"
-            style={{
-              display: "inline-flex",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#0B5CAD",
-              background: "#fff",
-              padding: "10px 16px",
-              borderRadius: 6,
-              border: `1px solid ${border}`,
-              textDecoration: "none",
-              fontFamily: pageFont,
-            }}
-          >
+          <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
+            Compare aid offers
+          </Link>
+          <Link href="/checklist" style={secondaryBtn}>
             Open checklist
           </Link>
         </div>

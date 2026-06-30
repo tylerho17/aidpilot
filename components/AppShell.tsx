@@ -73,17 +73,20 @@ const CORE_NAV: NavItem[] = [
     icon: FafsaSVG,
     isActive: (pathname) => pathname === "/fafsa" || pathname.startsWith("/fafsa/"),
   },
-  { href: "/aid-letter", label: "Aid Offer Decoder", icon: LetterSVG },
+  {
+    href: "/aid-letter",
+    label: "Aid Offers",
+    icon: LetterSVG,
+    isActive: (pathname) => pathname === "/aid-letter" || pathname.startsWith("/aid-letter/"),
+  },
+  { href: "/scholarships", label: "Scholarships", icon: DocSVG },
   { href: "/documents", label: "Documents", icon: DocSVG },
   { href: "/deadlines", label: "Deadlines", icon: CalendarSVG },
+  { href: "/checklist", label: "Checklist", icon: FafsaSVG },
   { href: "/settings", label: "Settings", icon: GearSVG },
 ];
 
-const COMING_SOON_NAV = [
-  { href: "/scholarships", label: "Scholarships" },
-  { href: "/report", label: "Reports" },
-  { href: "/schools", label: "Schools" },
-];
+const COMING_SOON_NAV = [{ href: "/schools", label: "Schools" }];
 
 function isNavItemActive(item: NavItem, pathname: string) {
   if (item.isActive) return item.isActive(pathname);

@@ -177,6 +177,8 @@ export default function DeadlinesClient() {
               <PageEmptyState
                 title="No active aid deadlines"
                 description="Verify official dates with your school and scholarship providers, then add deadlines here."
+                actionHref="/deadlines"
+                actionLabel="Learn about deadlines"
               />
             ) : (
               active.map((item) => (

@@ -25,13 +25,43 @@ export function PageErrorBanner({ message }: { message?: string | null }) {
   );
 }
 
-export function PageEmptyState({ title, description }: { title: string; description: string }) {
+export function PageEmptyState({
+  title,
+  description,
+  actionHref,
+  actionLabel,
+}: {
+  title: string;
+  description: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   return (
     <ProductCard style={{ padding: 24, textAlign: "center" }}>
-      <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
         {title}
       </h2>
-      <p style={{ fontSize: 14, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>{description}</p>
+      <p style={{ fontSize: 14, color: "#5B6B7F", margin: actionHref ? "0 0 16px" : 0, lineHeight: 1.6, fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
+        {description}
+      </p>
+      {actionHref && actionLabel ? (
+        <Link
+          href={actionHref}
+          style={{
+            display: "inline-flex",
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#fff",
+            background: "#0B5CAD",
+            padding: "10px 16px",
+            borderRadius: 8,
+            textDecoration: "none",
+            fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif',
+          }}
+        >
+          {actionLabel}
+        </Link>
+      ) : null}
     </ProductCard>
   );
 }
