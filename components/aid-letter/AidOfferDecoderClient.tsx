@@ -13,6 +13,7 @@ import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
+import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { UserAidOffer } from "@/lib/types";
 
@@ -240,9 +241,14 @@ export default function AidOfferDecoderClient() {
 
         {!loadError && offers.length > 0 ? (
           <>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-              Compare schools
-            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: 0, color: "#15212E" }}>
+                Compare schools
+              </h2>
+              <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
+                Compare aid offers
+              </Link>
+            </div>
             <AidOfferComparisonTable
               offers={offers}
               onSelect={(offer) => router.push(getAidOfferReportHref(offer.id))}

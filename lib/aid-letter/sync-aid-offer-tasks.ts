@@ -45,7 +45,7 @@ export async function syncAidOfferTasks(
   for (const task of recommended) {
     const { data: row } = await supabase
       .from("aid_tasks")
-      .select("id")
+      .select("id, status")
       .eq("user_id", userId)
       .eq("plan_key", task.plan_key)
       .maybeSingle();
@@ -64,7 +64,18 @@ export async function syncAidOfferTasks(
     };
 
     if (row?.id) {
-      const { error } = await supabase.from("aid_tasks").update(payload).eq("id", row.id).eq("user_id", userId);
+      const updatePayload = isAidTaskComplete(row.status)
+        ? {
+            title: payload.title,
+            description: payload.description,
+            priority: payload.priority,
+            category: payload.category,
+            action_url: payload.action_url,
+            updated_at: now,
+          }
+        : payload;
+
+      const { error } = await supabase.from("aid_tasks").update(updatePayload).eq("id", row.id).eq("user_id", userId);
       if (error) throw error;
     } else {
       const { error } = await supabase.from("aid_tasks").insert(payload);

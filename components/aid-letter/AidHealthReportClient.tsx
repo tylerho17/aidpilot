@@ -1,24 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PillBadge } from "@/components/ProductUI";
+import AidActionPlanSection from "@/components/aid-letter/AidActionPlanSection";
+import AidOfficeDraftSection from "@/components/aid-letter/AidOfficeDraftSection";
 import { PageLoading } from "@/components/product/PageSafety";
 import { useAidOffers } from "@/hooks/useAidOffers";
-import { buildAidHealthReport } from "@/lib/aid-letter/buildAidHealthReport";
+import { useUserData } from "@/hooks/useUserData";
+import { buildAidOfficeDraft } from "@/lib/aid-letter/buildAidOfficeDraft";
+import { buildAidHealthReport, getAidOfferActionTasks } from "@/lib/aid-letter/buildAidHealthReport";
+import { syncAidOfferTasks } from "@/lib/aid-letter/sync-aid-offer-tasks";
 import { AID_OFFER_STATUS_LABELS } from "@/lib/aid-letter/calculateAidOffer";
+import { createClient } from "@/lib/supabase/client";
 
-const sectionStyle = { marginBottom: 32 };
+const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
+const navy = "#0F2744";
+const muted = "#5B6B7F";
+const border = "#E3EBF3";
+
+const sectionStyle = { marginBottom: 28 };
 const h2Style = {
-  fontSize: 18,
-  fontWeight: 800,
+  fontSize: 16,
+  fontWeight: 700,
   margin: "0 0 12px",
-  color: "#15212E",
-  fontFamily: "inherit",
+  color: navy,
+  fontFamily: pageFont,
 } as const;
-const bodyStyle = { fontSize: 15, fontWeight: 500, color: "#374151", margin: 0, lineHeight: 1.65 };
-const mutedStyle = { fontSize: 14, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 };
+const bodyStyle = { fontSize: 15, fontWeight: 500, color: navy, margin: 0, lineHeight: 1.65, fontFamily: pageFont };
+const mutedStyle = { fontSize: 14, fontWeight: 500, color: muted, margin: 0, lineHeight: 1.6, fontFamily: pageFont };
 
 function money(value: number) {
   return `$${value.toLocaleString()}`;
@@ -32,10 +43,11 @@ function LineItem({ label, value, emphasize }: { label: string; value: string; e
         justifyContent: "space-between",
         gap: 16,
         padding: "8px 0",
-        borderBottom: "1px solid #F3F4F6",
+        borderBottom: `1px solid ${border}`,
         fontSize: 14,
         fontWeight: emphasize ? 700 : 500,
-        color: emphasize ? "#15212E" : "#374151",
+        color: emphasize ? navy : muted,
+        fontFamily: pageFont,
       }}
     >
       <span>{label}</span>
@@ -50,10 +62,41 @@ type AidHealthReportClientProps = {
 
 export default function AidHealthReportClient({ offerId }: AidHealthReportClientProps) {
   const { authReady, userId, loading, offers } = useAidOffers();
+  const { tasks, loadData, updateTaskStatus } = useUserData();
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const syncedOfferRef = useRef<string | null>(null);
+  const supabase = useMemo(() => createClient(), []);
 
   const offer = offers.find((item) => item.id === offerId) ?? null;
 
   const report = useMemo(() => (offer ? buildAidHealthReport(offer) : null), [offer]);
+  const officeDraft = useMemo(
+    () => (offer && report ? buildAidOfficeDraft(offer, report.calculation) : null),
+    [offer, report]
+  );
+  const actionPlanTasks = useMemo(
+    () => (offer ? getAidOfferActionTasks(tasks, offer.id) : []),
+    [offer, tasks]
+  );
+
+  useEffect(() => {
+    if (!userId || !offer || syncedOfferRef.current === offer.id) return;
+    syncedOfferRef.current = offer.id;
+    void syncAidOfferTasks(supabase, userId, offer)
+      .then(() => loadData({ silent: true }))
+      .catch((error) => console.error("syncAidOfferTasks on report failed:", error));
+  }, [loadData, offer, supabase, userId]);
+
+  async function handleToggleTask(taskId: string, complete: boolean) {
+    setTogglingId(taskId);
+    try {
+      await updateTaskStatus(taskId, complete ? "Complete" : "Needs Review");
+    } catch (error) {
+      console.error("updateTaskStatus failed:", error);
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   if (!authReady || loading) {
     return <PageLoading message="Loading aid health report..." />;
@@ -62,7 +105,7 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
   if (!userId) {
     return (
       <AppShell>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", fontFamily: pageFont, background: "#fff" }}>
           <p style={bodyStyle}>Log in to view your Aid Health Report.</p>
           <Link href="/login" style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none" }}>
             Sign in
@@ -75,7 +118,7 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
   if (!offer || !report) {
     return (
       <AppShell>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", fontFamily: pageFont, background: "#fff" }}>
           <Link href="/aid-letter" style={{ fontSize: 14, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>
             ← Back to aid offers
           </Link>
@@ -92,7 +135,7 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", fontFamily: pageFont, background: "#fff" }}>
         <Link href="/aid-letter" style={{ fontSize: 14, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>
           ← Back to aid offers
         </Link>
@@ -101,7 +144,7 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
           <p style={{ fontSize: 13, fontWeight: 700, color: "#9AA4B2", margin: "0 0 6px", letterSpacing: "0.02em" }}>
             AID HEALTH REPORT
           </p>
-          <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, margin: "0 0 8px", color: "#15212E", lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 8px", color: navy, lineHeight: 1.15 }}>
             {offer.school_name}
           </h1>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -109,7 +152,7 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
               {AID_OFFER_STATUS_LABELS[offer.offer_status]}
             </PillBadge>
             {offer.academic_year ? (
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#6B7280" }}>{offer.academic_year}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: muted }}>{offer.academic_year}</span>
             ) : (
               <span style={{ fontSize: 14, fontWeight: 600, color: "#B7791F" }}>Academic year not set</span>
             )}
@@ -177,36 +220,23 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
           )}
         </section>
 
-        <section style={sectionStyle}>
-          <h2 style={h2Style}>Recommended next actions</h2>
-          {report.recommendedTasks.length > 0 ? (
-            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-              {report.recommendedTasks.map((task) => (
-                <li
-                  key={task.plan_key}
-                  style={{ padding: "12px 0", borderBottom: "1px solid #F3F4F6", fontSize: 15, lineHeight: 1.55 }}
-                >
-                  <div style={{ fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{task.title}</div>
-                  <div style={{ color: "#6B7280", marginBottom: 6 }}>{task.description}</div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>
-                    {task.priority} priority · {task.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p style={mutedStyle}>No follow-up tasks needed for this offer right now.</p>
-          )}
-          <p style={{ ...mutedStyle, marginTop: 14 }}>
-            These tasks are also added to your{" "}
-            <Link href="/checklist" style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none" }}>
-              checklist
-            </Link>{" "}
-            when you save or update this offer.
-          </p>
-        </section>
+        {officeDraft ? <AidOfficeDraftSection draft={officeDraft} /> : null}
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+        <AidActionPlanSection
+          tasks={actionPlanTasks}
+          onToggleTask={handleToggleTask}
+          togglingId={togglingId}
+        />
+
+        <p style={{ ...mutedStyle, marginBottom: 24 }}>
+          These tasks are also added to your{" "}
+          <Link href="/checklist" style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none" }}>
+            checklist
+          </Link>{" "}
+          when you save or update this offer.
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
           <Link
             href="/aid-letter"
             style={{
@@ -215,9 +245,10 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
               fontWeight: 700,
               color: "#fff",
               background: "#0B5CAD",
-              padding: "10px 18px",
-              borderRadius: 12,
+              padding: "10px 16px",
+              borderRadius: 6,
               textDecoration: "none",
+              fontFamily: pageFont,
             }}
           >
             Edit aid offer
@@ -229,10 +260,12 @@ export default function AidHealthReportClient({ offerId }: AidHealthReportClient
               fontSize: 14,
               fontWeight: 700,
               color: "#0B5CAD",
-              background: "#EAF3FF",
-              padding: "10px 18px",
-              borderRadius: 999,
+              background: "#fff",
+              padding: "10px 16px",
+              borderRadius: 6,
+              border: `1px solid ${border}`,
               textDecoration: "none",
+              fontFamily: pageFont,
             }}
           >
             Open checklist

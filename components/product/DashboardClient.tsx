@@ -43,7 +43,8 @@ import { useProtectHub } from "@/hooks/useProtectHub";
 import { AID_ACTION_EMPTY_MESSAGE } from "@/components/aid-actions/AidActionList";
 import ProtectRiskBadge from "@/components/protect/ProtectRiskBadge";
 import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
-import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
+import { getAidOfferReportHref, getOpenAidOfferActionTasks } from "@/lib/aid-letter/buildAidHealthReport";
+import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison";
 
 const primaryBtn = {
   display: "inline-flex",
@@ -149,7 +150,14 @@ export default function DashboardClient() {
         attentionCount: attention,
         scholarshipNewCount: scholarshipStats.newCount,
       });
-      const urgent = getUrgentTasksFromDb(checklistTasks, 3).map((t) => ({
+      const aidOfferActionTasks = getOpenAidOfferActionTasks(tasks ?? [], 3);
+      const urgent = [...aidOfferActionTasks, ...getUrgentTasksFromDb(
+        checklistTasks.filter((task) => task.task_source !== "aid_offer"),
+        3
+      )]
+        .filter((task, index, list) => list.findIndex((item) => item.id === task.id) === index)
+        .slice(0, 3)
+        .map((t) => ({
         id: t.id,
         title: t.title,
         description: t.description ?? "",
@@ -176,6 +184,7 @@ export default function DashboardClient() {
         fafsaBlockers,
         aidProtection,
         aidOfferSummary,
+        aidOfferActionTasks,
         weeklyFocus,
         urgent,
         upcomingDeadlines,
@@ -203,6 +212,7 @@ export default function DashboardClient() {
       fafsaBlockers: [],
       aidProtection: calculateAidProtectionScore({ fafsaIntake: null, tasks: [], aidLetter: null }),
       aidOfferSummary: null,
+      aidOfferActionTasks: [],
       weeklyFocus: [],
       urgent: [],
       upcomingDeadlines: [],
@@ -224,6 +234,7 @@ export default function DashboardClient() {
     fafsaBlockers,
     aidProtection,
     aidOfferSummary,
+    aidOfferActionTasks,
     weeklyFocus,
     urgent,
     upcomingDeadlines,
@@ -465,15 +476,34 @@ export default function DashboardClient() {
                 {aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()})
               </span>
             </p>
+            {aidOfferActionTasks.length > 0 ? (
+              <div style={{ marginBottom: 18, paddingTop: 14, borderTop: "1px solid #EAEEF3" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 10 }}>Aid Action Plan</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {aidOfferActionTasks.map((task) => (
+                    <div key={task.id} style={{ fontSize: 13, fontWeight: 600, color: "#15212E", lineHeight: 1.5 }}>
+                      {task.title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </>
         ) : (
           <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
             Enter aid offers manually to compare gift aid, loans, and remaining cost across schools.
           </p>
         )}
-        <Link href={aidOfferStats ? getAidOfferReportHref(aidOfferStats.lowestNet.offer.id) : "/aid-letter"} style={primaryBtn}>
-          {aidOfferStats ? "View Aid Health Report" : "Open Aid Offer Decoder"}
-        </Link>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <Link href={aidOfferStats ? getAidOfferReportHref(aidOfferStats.lowestNet.offer.id) : "/aid-letter"} style={primaryBtn}>
+            {aidOfferStats ? "View Aid Health Report" : "Open Aid Offer Decoder"}
+          </Link>
+          {aidOfferStats ? (
+            <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
+              Compare aid offers
+            </Link>
+          ) : null}
+        </div>
       </ProductCard>
 
       <div
@@ -582,9 +612,14 @@ export default function DashboardClient() {
                   ${aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()}
                 </span>
               </p>
-              <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
-                View Aid Health Report →
-              </Link>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
+                  View Aid Health Report →
+                </Link>
+                <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
+                  Compare aid offers
+                </Link>
+              </div>
             </>
           ) : aidOfferSummary ? (
             <>
