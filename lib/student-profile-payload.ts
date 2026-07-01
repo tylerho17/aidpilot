@@ -1,6 +1,7 @@
 import type { OnboardingFormData, School, StudentProfile } from "@/lib/types";
 import { parseCommaSeparated } from "@/lib/data-helpers";
 import type { ScholarshipPreferences } from "@/lib/scholarship-preferences";
+import { goalsForAidStage, type AidStage } from "@/lib/onboarding-aid-stage";
 
 /** Columns guaranteed by supabase/schema.sql — safe for required onboarding save. */
 export const STUDENT_PROFILE_REQUIRED_SAVE_COLUMNS = [
@@ -52,6 +53,13 @@ export type OnboardingProfileContext = {
   matchedSchool: School | undefined;
 };
 
+function parseAcademicYearStart(academicYear: string): number | null {
+  const match = academicYear.match(/^(\d{4})/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  return Number.isFinite(year) ? year + 1 : null;
+}
+
 function buildScholarshipPreferences(form: OnboardingFormData): ScholarshipPreferences {
   return {
     interested_categories: form.interested_categories,
@@ -59,6 +67,11 @@ function buildScholarshipPreferences(form: OnboardingFormData): ScholarshipPrefe
     effort_preference: form.effort_preference as ScholarshipPreferences["effort_preference"],
     state_preference: form.state,
     major_interests: form.major_interests.trim(),
+    aid_stage: form.aid_stage,
+    academic_year: form.academic_year,
+    first_aid_offer_school: form.first_aid_offer_school.trim() || undefined,
+    housing_status: form.housing_status || undefined,
+    aid_goal: form.aid_goal.trim() || undefined,
   };
 }
 
@@ -70,6 +83,8 @@ export function mapOnboardingToProfileValues({
 }: OnboardingProfileContext): Record<string, unknown> {
   const now = new Date().toISOString();
   const majors = form.majors.length ? form.majors : parseCommaSeparated(form.major_interests);
+  const mainGoals =
+    form.main_goals.length > 0 ? form.main_goals : goalsForAidStage(form.aid_stage as AidStage);
 
   return {
     id: userId,
@@ -77,11 +92,11 @@ export function mapOnboardingToProfileValues({
     email: form.email.trim(),
     school: resolvedSchool,
     year: form.year,
-    state: form.state,
+    state: form.state.trim() || null,
     student_type: form.student_type,
     fafsa_status: form.fafsa_status,
     aid_types: form.aid_types,
-    main_goals: form.main_goals,
+    main_goals: mainGoals,
     is_onboarded: true,
     updated_at: now,
     user_id: userId,
@@ -89,7 +104,7 @@ export function mapOnboardingToProfileValues({
     school_id: matchedSchool?.id ?? form.school_id,
     school_name: resolvedSchool,
     education_level: form.year,
-    graduation_year: null,
+    graduation_year: parseAcademicYearStart(form.academic_year),
     majors,
     interests: form.interests,
     gpa: form.gpa.trim() ? Number(form.gpa) : null,

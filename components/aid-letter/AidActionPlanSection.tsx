@@ -1,9 +1,9 @@
 "use client";
 
 import { isAidTaskComplete } from "@/lib/data-helpers";
+import { fontFamily } from "@/lib/design-tokens";
 import type { AidTask } from "@/lib/types";
 
-const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 const navy = "#0F2744";
 const muted = "#5B6B7F";
 const border = "#E3EBF3";
@@ -18,7 +18,7 @@ export default function AidActionPlanSection({ tasks, onToggleTask, togglingId }
   const openCount = tasks.filter((task) => !isAidTaskComplete(task.status)).length;
 
   return (
-    <section style={{ marginBottom: 28, fontFamily: pageFont }}>
+    <section style={{ marginBottom: 28, fontFamily: fontFamily }}>
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 6px", color: navy }}>Your Aid Action Plan</h2>
       <p style={{ margin: "0 0 14px", fontSize: 14, color: muted, lineHeight: 1.55 }}>
         {openCount > 0
@@ -62,7 +62,7 @@ export default function AidActionPlanSection({ tasks, onToggleTask, togglingId }
                     fontWeight: 700,
                     cursor: onToggleTask ? "pointer" : "default",
                     flexShrink: 0,
-                    fontFamily: pageFont,
+                    fontFamily: fontFamily,
                   }}
                 >
                   {done ? "✓" : ""}

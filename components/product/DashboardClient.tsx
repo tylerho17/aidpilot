@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { FeedbackWidget } from "@/components/FeedbackWidget";
-import { PillBadge, ProductCard, StatCard, ProgressBar } from "@/components/ProductUI";
+import { PillBadge, ProgressBar } from "@/components/ProductUI";
+import {
+  PrimaryButtonLink,
+  SecondaryButtonLink,
+  SecondaryButton,
+  SoftButtonLink,
+  SectionCard,
+  MetricCard,
+} from "@/components/ui";
+import { H2, H3, Body, BodyMuted, BodyStrong, Label, MetricValue } from "@/components/ui/Typography";
+import { buttons, colors, layout, taskRowStyle, text } from "@/lib/design-tokens";
 import { PageLoading, friendlyActionError, runSafe } from "@/components/product/PageSafety";
 import { FafsaDemoBanner } from "@/components/product/FafsaDemoBanner";
 import { useUserData } from "@/hooks/useUserData";
@@ -48,28 +57,19 @@ import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison
 import WeeklyAidCheckInSection from "@/components/product/WeeklyAidCheckInSection";
 import { buildWeeklyAidCheckIn } from "@/lib/weekly-aid-checkin";
 import ProductPageHeader, { ProductFlowNav } from "@/components/product/ProductPageHeader";
+import DashboardFirstTimeEmpty from "@/components/product/DashboardFirstTimeEmpty";
+import BetaTesterChecklist from "@/components/product/BetaTesterChecklist";
+import BetaFeedbackBox from "@/components/product/BetaFeedbackBox";
+import TrustDisclaimer from "@/components/product/TrustDisclaimer";
+import { SAMPLE_AID_REPORT_HREF } from "@/lib/aid-letter/sampleAidOffer";
+import { getProfileAidStage } from "@/lib/profile-aid-stage";
 
-const primaryBtn = {
-  display: "inline-flex",
-  fontSize: 15,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "12px 22px",
-  borderRadius: 13,
-  textDecoration: "none",
-  boxShadow: "0 10px 20px rgba(11,92,173,.22)",
-} as const;
-
-const secondaryBtn = {
-  display: "inline-flex",
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "10px 16px",
-  borderRadius: 999,
-  textDecoration: "none",
+const cardMb = { marginBottom: layout.sectionGap } as const;
+const btnRow = { display: "flex", flexWrap: "wrap" as const, gap: buttons.gap, alignItems: "center" as const };
+const metricGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+  gap: layout.stackGapSm,
 } as const;
 
 export default function DashboardClient() {
@@ -256,11 +256,10 @@ export default function DashboardClient() {
     }
   );
 
-  const firstName = getProfileFullName(profile) || "there";
+  const firstName = getProfileFullName(profile)?.split(" ")[0] || "there";
   const schoolLabel = getProfileSchoolName(profile) || "Your school";
   const {
     attention,
-    progress,
     completed,
     totalTasks,
     missingDocs,
@@ -275,6 +274,18 @@ export default function DashboardClient() {
     topActions,
     summary,
   } = view;
+
+  const aidStage = getProfileAidStage(profile);
+
+  const isBetaEmpty =
+    aidOffersUserId &&
+    !aidOffersLoading &&
+    aidOffers.length === 0 &&
+    (tasks ?? []).length === 0 &&
+    (documents ?? []).length === 0 &&
+    (deadlines ?? []).length === 0 &&
+    (scholarships ?? []).length === 0 &&
+    !fafsaIntake;
 
   if (loading) {
     return <PageLoading message="Loading your aid check-in..." />;
@@ -348,176 +359,139 @@ export default function DashboardClient() {
   return (
     <AppShell>
       {profileNotice && (
-        <ProductCard style={{ padding: 18, marginBottom: 22, background: "#EAF3FF", border: "1px solid #D7E7FB" }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#0B5CAD", margin: 0, lineHeight: 1.6 }}>{profileNotice}</p>
-        </ProductCard>
+        <SectionCard style={{ ...cardMb, background: colors.softBlue, borderColor: colors.borderSoft }}>
+          <Body style={{ color: colors.primary, fontWeight: 500 }}>{profileNotice}</Body>
+        </SectionCard>
       )}
 
       <ProductPageHeader
-        title="Your financial aid command center"
+        title={`Good morning, ${firstName}.`}
         subtitle="See what needs attention this week."
         primaryAction={{ href: "/aid-letter", label: "Add aid offer" }}
-        secondaryAction={{ href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" }}
+        secondaryAction={
+          aidOfferStats
+            ? { href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" }
+            : { href: SAMPLE_AID_REPORT_HREF, label: "View sample report" }
+        }
       >
-        <p style={{ fontSize: 14, fontWeight: 600, color: "#9AA4B2", margin: 0 }}>
-          {firstName} · {schoolLabel}
-        </p>
+        <Label>{schoolLabel}</Label>
       </ProductPageHeader>
 
       <ProductFlowNav
         links={[
           { href: "/aid-letter", label: "Aid Offers" },
-          { href: AID_OFFER_COMPARE_HREF, label: "Compare Offers" },
+          { href: aidOfferStats ? AID_OFFER_COMPARE_HREF : SAMPLE_AID_REPORT_HREF, label: aidOfferStats ? "Compare Offers" : "Sample Report" },
           { href: "/protect", label: "Protect Aid" },
-          { href: "/checklist", label: "Checklist" },
+          { href: "#feedback", label: "Feedback" },
         ]}
       />
 
+      {isBetaEmpty ? (
+        <>
+          <DashboardFirstTimeEmpty aidStage={aidStage} />
+          <BetaTesterChecklist />
+          <BetaFeedbackBox />
+          <TrustDisclaimer />
+        </>
+      ) : (
+        <>
       {fafsaDemoMode && (
-        <div style={{ marginBottom: 20 }}>
+        <div style={cardMb}>
           <FafsaDemoBanner />
         </div>
       )}
 
       {actionError && (
-        <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>{actionError}</p>
+        <Body style={{ color: colors.coral, marginBottom: layout.stackGap }}>{actionError}</Body>
       )}
 
       <WeeklyAidCheckInSection checkIn={weeklyCheckIn} />
 
-      <ProductCard
-        style={{
-          padding: 24,
-          marginBottom: 20,
-          background: "#fff",
-          border: "1px solid #E3EBF3",
-        }}
-      >
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 14 }}>
-          <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: 0, color: "#15212E" }}>
-            Protect your aid
-          </h2>
+      <SectionCard style={{ ...cardMb, background: colors.softBlue }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: layout.stackGapSm, alignItems: "center", marginBottom: layout.stackGapSm }}>
+          <H3>Protect your aid</H3>
           {protectUserId && !protectLoading ? <ProtectRiskBadge status={protectSnapshot.overallStatus} /> : null}
         </div>
         {protectLoadError ? (
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.65 }}>
-            {protectLoadError}
-          </p>
+          <Body style={{ color: colors.amber, marginBottom: layout.stackGapSm }}>{protectLoadError}</Body>
         ) : protectLoading ? (
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 14px", lineHeight: 1.65 }}>
-            Loading your protection status...
-          </p>
+          <BodyMuted style={{ marginBottom: layout.stackGapSm }}>Loading your protection status...</BodyMuted>
         ) : protectUserId ? (
           <>
-            <p className="font-display" style={{ fontSize: 18, fontWeight: 800, margin: "0 0 8px", color: "#15212E", lineHeight: 1.35 }}>
-              {protectSnapshot.headline}
-            </p>
+            <BodyStrong style={{ marginBottom: layout.stackGapXs }}>{protectSnapshot.headline}</BodyStrong>
             {topAction ? (
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-                Most important: <span style={{ fontWeight: 700, color: "#15212E" }}>{topAction.title}</span>
-              </p>
+              <BodyMuted style={{ marginBottom: layout.stackGap }}>
+                Most important: <span style={text.bodyStrong}>{topAction.title}</span>
+              </BodyMuted>
             ) : (
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-                {protectSnapshot.description}
-              </p>
+              <BodyMuted style={{ marginBottom: layout.stackGap }}>{protectSnapshot.description}</BodyMuted>
             )}
           </>
         ) : (
-          <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+          <BodyMuted style={{ marginBottom: layout.stackGap }}>
             Track FAFSA, school portals, verification, and aid offers in one place.
-          </p>
+          </BodyMuted>
         )}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          <Link href="/protect" style={primaryBtn}>
-            Open Protect Hub
-          </Link>
+        <div style={btnRow}>
+          <PrimaryButtonLink href="/protect">Open Protect Hub</PrimaryButtonLink>
           {topAction ? (
-            <Link href={topAction.href} style={secondaryBtn}>
-              {topAction.ctaLabel}
-            </Link>
+            <SecondaryButtonLink href={topAction.href}>{topAction.ctaLabel}</SecondaryButtonLink>
           ) : (
-            <Link href="/actions" style={secondaryBtn}>
-              View all actions
-            </Link>
+            <SecondaryButtonLink href="/actions">View all actions</SecondaryButtonLink>
           )}
         </div>
-      </ProductCard>
+      </SectionCard>
 
-      <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
-        <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
-          Your next aid action
-        </h2>
+      <SectionCard style={cardMb}>
+        <H2 style={{ marginBottom: layout.stackGapSm }}>Your next aid action</H2>
         {aidActionsLoadError ? (
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.65 }}>
-            {aidActionsLoadError}
-          </p>
+          <Body style={{ color: colors.amber, marginBottom: layout.stackGapSm }}>{aidActionsLoadError}</Body>
         ) : aidActionsLoading ? (
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 14px", lineHeight: 1.65 }}>
-            Loading your aid actions...
-          </p>
+          <BodyMuted style={{ marginBottom: layout.stackGapSm }}>Loading your aid actions...</BodyMuted>
         ) : topAction ? (
           <>
-            <p style={{ fontSize: 17, fontWeight: 800, color: "#15212E", margin: "0 0 8px", lineHeight: 1.4 }}>
-              {topAction.title}
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-              {topAction.description}
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              <Link href={topAction.href} style={primaryBtn}>
-                {topAction.ctaLabel}
-              </Link>
-              <Link href="/actions" style={secondaryBtn}>
-                View all actions
-              </Link>
+            <BodyStrong style={{ marginBottom: layout.stackGapXs }}>{topAction.title}</BodyStrong>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>{topAction.description}</BodyMuted>
+            <div style={btnRow}>
+              <PrimaryButtonLink href={topAction.href}>{topAction.ctaLabel}</PrimaryButtonLink>
+              <SecondaryButtonLink href="/actions">View all actions</SecondaryButtonLink>
             </div>
           </>
         ) : (
           <>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-              {AID_ACTION_EMPTY_MESSAGE}
-            </p>
-            <Link href="/actions" style={secondaryBtn}>
-              View all actions
-            </Link>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>{AID_ACTION_EMPTY_MESSAGE}</BodyMuted>
+            <SecondaryButtonLink href="/actions">View all actions</SecondaryButtonLink>
           </>
         )}
-      </ProductCard>
+      </SectionCard>
 
-      <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 14px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
-          Compare your aid offers
-        </h2>
+      <SectionCard style={cardMb}>
+        <H3 style={{ marginBottom: layout.stackGapSm }}>Compare your aid offers</H3>
         {aidOffersUserId && !aidOffersLoading && aidOfferStats ? (
           <>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Saved offers</div>
-                <div className="font-display" style={{ fontSize: 24, fontWeight: 900, color: "#15212E" }}>
-                  {aidOfferStats.count}
-                </div>
-              </div>
+            <div style={{ ...metricGrid, marginBottom: layout.stackGapSm, maxWidth: 200 }}>
+              <MetricCard label="Saved offers" value={String(aidOfferStats.count)} />
             </div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 6px", lineHeight: 1.65 }}>
+            <BodyMuted style={{ marginBottom: layout.stackGapXs }}>
               Lowest net after gift aid:{" "}
-              <span style={{ fontWeight: 700, color: "#15885A" }}>
+              <span style={{ ...text.bodyStrong, color: colors.green }}>
                 {aidOfferStats.lowestNet.offer.school_name} ($
                 {aidOfferStats.lowestNet.calculation.netCostAfterGiftAid.toLocaleString()})
               </span>
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+            </BodyMuted>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>
               Highest remaining gap:{" "}
-              <span style={{ fontWeight: 700, color: "#C04E57" }}>
+              <span style={{ ...text.bodyStrong, color: colors.coral }}>
                 {aidOfferStats.highestGap.offer.school_name} ($
                 {aidOfferStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()})
               </span>
-            </p>
+            </BodyMuted>
             {aidOfferActionTasks.length > 0 ? (
-              <div style={{ marginBottom: 18, paddingTop: 14, borderTop: "1px solid #EAEEF3" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 10 }}>Aid Action Plan</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ marginBottom: layout.stackGap, paddingTop: layout.stackGapSm, borderTop: `1px solid ${colors.borderSoft}` }}>
+                <Label style={{ display: "block", marginBottom: layout.stackGapSm }}>Aid Action Plan</Label>
+                <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapXs }}>
                   {aidOfferActionTasks.map((task) => (
-                    <div key={task.id} style={{ fontSize: 13, fontWeight: 600, color: "#15212E", lineHeight: 1.5 }}>
+                    <div key={task.id} style={text.bodyStrong}>
                       {task.title}
                     </div>
                   ))}
@@ -526,281 +500,244 @@ export default function DashboardClient() {
             ) : null}
           </>
         ) : (
-          <p style={{ fontSize: 15, fontWeight: 500, color: "#5B6B7F", margin: "0 0 18px", lineHeight: 1.65 }}>
+          <Body style={{ marginBottom: layout.stackGap }}>
             No aid offers yet. Add your first aid offer to generate your Aid Health Report.
-          </p>
+          </Body>
         )}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          <Link href="/aid-letter" style={primaryBtn}>
-            Add aid offer
-          </Link>
+        <div style={btnRow}>
+          <SecondaryButtonLink href="/aid-letter">View offers</SecondaryButtonLink>
           {aidOfferStats ? (
             <>
-              <Link href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)} style={secondaryBtn}>
+              <SecondaryButtonLink href={getAidOfferReportHref(aidOfferStats.lowestNet.offer.id)}>
                 View Aid Health Report
-              </Link>
-              <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
-                Compare aid offers
-              </Link>
+              </SecondaryButtonLink>
+              <SecondaryButtonLink href={AID_OFFER_COMPARE_HREF}>Compare aid offers</SecondaryButtonLink>
             </>
           ) : null}
         </div>
-      </ProductCard>
+      </SectionCard>
 
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 18,
-          marginBottom: 20,
+          gap: layout.sectionGap,
+          marginBottom: layout.sectionGap,
         }}
       >
-        <ProductCard style={{ padding: 24 }}>
-          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-            Aid Protection Score
-          </h2>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
-            <span className="font-display" style={{ fontSize: 40, fontWeight: 900, color: protectionColor }}>
-              {aidProtection.score}
-            </span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: "#9AA4B2" }}>/ {aidProtection.maxScore}</span>
+        <SectionCard>
+          <H3 style={{ marginBottom: layout.stackGapSm }}>Aid Protection Score</H3>
+          <div style={{ display: "flex", alignItems: "baseline", gap: layout.stackGapSm, marginBottom: layout.stackGapSm }}>
+            <MetricValue color={protectionColor}>{aidProtection.score}</MetricValue>
+            <Label>/ {aidProtection.maxScore}</Label>
             <PillBadge tone={aidProtection.score >= 80 ? "green" : aidProtection.score >= 40 ? "blue" : "amber"}>
               {aidProtection.label}
             </PillBadge>
           </div>
-          <ProgressBar pct={aidProtection.score} color={`linear-gradient(90deg,${protectionColor},#37A0E0)`} />
-          <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          <ProgressBar pct={aidProtection.score} color={protectionColor} />
+          <div style={{ marginTop: layout.stackGap, display: "flex", flexDirection: "column", gap: layout.stackGapXs }}>
             {aidProtection.pillars.map((pillar) => (
-              <div key={pillar.id} style={{ fontSize: 13, fontWeight: 500, color: pillar.earned ? "#15885A" : "#6B7280", lineHeight: 1.5 }}>
+              <Body key={pillar.id} style={{ color: pillar.earned ? colors.green : colors.textMuted }}>
                 {pillar.earned ? "✓" : "○"} {pillar.label}
-                {!pillar.earned && (
-                  <span style={{ display: "block", fontSize: 12, color: "#9AA4B2", marginTop: 2 }}>{pillar.detail}</span>
-                )}
-              </div>
+                {!pillar.earned ? <span style={{ display: "block", ...text.label, marginTop: 2 }}>{pillar.detail}</span> : null}
+              </Body>
             ))}
           </div>
-        </ProductCard>
+        </SectionCard>
 
-        <ProductCard style={{ padding: 24 }}>
-          <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-            Blockers
-          </h2>
+        <SectionCard>
+          <H3 style={{ marginBottom: layout.stackGapSm }}>Blockers</H3>
           {fafsaBlockers.length === 0 ? (
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#15885A", margin: 0, lineHeight: 1.65 }}>
-              No major blockers detected yet. Keep working through your FAFSA plan on StudentAid.gov.
-            </p>
+            <Body style={{ color: colors.green }}>No major blockers detected yet. Keep working through your FAFSA plan on StudentAid.gov.</Body>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
               {fafsaBlockers.slice(0, 4).map((blocker) => (
-                <div key={blocker.id} style={{ padding: "12px 14px", borderRadius: 12, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#78350F", marginBottom: 4 }}>{blocker.title}</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "#6B7280" }}>{blocker.blocking_reason}</div>
-                  {blocker.plan_key && (
-                    <Link href={fafsaStepHref(blocker.plan_key)} style={{ ...secondaryBtn, marginTop: 10, display: "inline-flex" }}>
+                <div key={blocker.id} style={{ ...taskRowStyle, background: colors.softAmber, borderColor: colors.softAmber, flexDirection: "column", alignItems: "stretch" }}>
+                  <BodyStrong style={{ color: colors.amber, marginBottom: 4 }}>{blocker.title}</BodyStrong>
+                  <Body>{blocker.blocking_reason}</Body>
+                  {blocker.plan_key ? (
+                    <SoftButtonLink href={fafsaStepHref(blocker.plan_key)} style={{ marginTop: layout.stackGapSm, alignSelf: "flex-start" }}>
                       Resolve step
-                    </Link>
-                  )}
+                    </SoftButtonLink>
+                  ) : null}
                 </div>
               ))}
             </div>
           )}
-        </ProductCard>
+        </SectionCard>
       </div>
 
-      <ProductCard style={{ padding: 24, marginBottom: 28, border: "1px solid #E3EBF3" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 12px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
-            Quick links
-          </h2>
-          <ul style={{ margin: "0 0 18px", paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-            {weeklyFocus.map((item) => (
-              <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "#374151", lineHeight: 1.6 }}>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            <Link href="/fafsa" style={secondaryBtn}>
-              FAFSA plan
-            </Link>
-            <Link href="/aid-letter" style={secondaryBtn}>
-              Aid offers
-            </Link>
-            <Link href="/documents" style={secondaryBtn}>
-              Documents
-            </Link>
-            <Link href="/deadlines" style={secondaryBtn}>
-              Deadlines
-            </Link>
-            <Link href="/scholarships" style={secondaryBtn}>
-              Scholarships
-            </Link>
-          </div>
-        </ProductCard>
+      <SectionCard style={cardMb}>
+        <H3 style={{ marginBottom: layout.stackGapSm }}>Quick links</H3>
+        <ul style={{ margin: `0 0 ${layout.stackGap}px`, paddingLeft: 20, display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
+          {weeklyFocus.map((item) => (
+            <li key={item} style={text.body}>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div style={btnRow}>
+          <SecondaryButtonLink href="/fafsa">FAFSA plan</SecondaryButtonLink>
+          <SecondaryButtonLink href="/aid-letter">Aid offers</SecondaryButtonLink>
+          <SecondaryButtonLink href="/documents">Documents</SecondaryButtonLink>
+          <SecondaryButtonLink href="/deadlines">Deadlines</SecondaryButtonLink>
+          <SecondaryButtonLink href="/scholarships">Scholarships</SecondaryButtonLink>
+        </div>
+      </SectionCard>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Checklist" value={`${completed} of ${totalTasks}`} color="#0B5CAD" style={{ flex: "1 1 120px" }} sub={`${progress}%`} />
-        <StatCard label="Next deadline" value={nextDeadlineLabel} color="#B7791F" style={{ flex: "1 1 120px" }} />
-        <StatCard label="Scholarships" value={`${scholarshipStats.newCount} new`} color="#0B5CAD" style={{ flex: "1 1 120px" }} />
+      <div style={{ ...metricGrid, marginBottom: layout.sectionGap }}>
+        <MetricCard label="Checklist" value={`${completed} of ${totalTasks}`} />
+        <MetricCard label="Next deadline" value={nextDeadlineLabel} tone="warning" />
+        <MetricCard label="Scholarships" value={`${scholarshipStats.newCount} new`} />
       </div>
 
-      <ProductCard style={{ padding: 26, marginBottom: 22, border: "1px solid #E3EBF3" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
-            <div>
-              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Top 3 next actions</h2>
-              <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>Suggested next steps based on your aid profile. Verify with your school aid office.</p>
-            </div>
-            <button type="button" onClick={() => handleRefreshRecommendations()} disabled={refreshing} style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", border: "none", padding: "8px 14px", borderRadius: 999, cursor: refreshing ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-              {refreshing ? "Refreshing..." : "Refresh recommendations"}
-            </button>
+      <SectionCard style={cardMb}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: layout.stackGap, marginBottom: layout.stackGap, flexWrap: "wrap" }}>
+          <div>
+            <H2 style={{ marginBottom: layout.stackGapXs }}>Top 3 next actions</H2>
+            <BodyMuted>Suggested next steps based on your aid profile. Verify with your school aid office.</BodyMuted>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {topActions.length === 0 ? (
-              <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>No active recommendations. Click refresh to generate suggestions.</p>
-            ) : (
-              topActions.map((rec) => (
-                <div key={rec.title} style={{ padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E" }}>{rec.title}</div>
+          <SecondaryButton onClick={() => handleRefreshRecommendations()} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh recommendations"}
+          </SecondaryButton>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
+          {topActions.length === 0 ? (
+            <BodyMuted>No active recommendations. Click refresh to generate suggestions.</BodyMuted>
+          ) : (
+            topActions.map((rec) => (
+              <div key={rec.title} style={taskRowStyle}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: layout.stackGapSm, marginBottom: layout.stackGapXs }}>
+                    <BodyStrong>{rec.title}</BodyStrong>
                     <PillBadge tone={priorityTone(rec.priority)}>{rec.priority} priority</PillBadge>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 8px", lineHeight: 1.55 }}>{rec.description}</p>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                  <BodyMuted style={{ marginBottom: layout.stackGapXs }}>{rec.description}</BodyMuted>
+                  <Label>
                     {rec.category}
                     {"due_date" in rec && rec.due_date ? ` · Due ${formatDueDate(rec.due_date)}` : ""}
-                  </div>
+                  </Label>
                 </div>
-              ))
-            )}
-          </div>
-        </ProductCard>
+              </div>
+            ))
+          )}
+        </div>
+      </SectionCard>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 22, alignItems: "start", marginBottom: 22 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>What needs attention</h2>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Top 3 urgent tasks from your {totalTasks}-step checklist</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: layout.sectionGap, alignItems: "start", marginBottom: layout.sectionGap }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: layout.sectionGap }}>
+          <SectionCard>
+            <H2 style={{ marginBottom: layout.stackGapXs }}>What needs attention</H2>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>Top 3 urgent tasks from your {totalTasks}-step checklist</BodyMuted>
+            <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
               {urgent.length === 0 ? (
-                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-                  No urgent tasks right now. Add an aid offer or complete your FAFSA plan to generate tasks.
-                </p>
+                <BodyMuted>No urgent tasks right now. Add an aid offer or complete your FAFSA plan to generate tasks.</BodyMuted>
               ) : (
                 urgent.map((row) => (
-                  <div key={row.id ?? row.title} className="animate-slide-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{row.title}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 500, color: "#6B7280", marginBottom: 6, lineHeight: 1.5 }}>{row.description}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                  <div key={row.id ?? row.title} className="animate-slide-in" style={taskRowStyle}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <BodyStrong style={{ marginBottom: 4 }}>{row.title}</BodyStrong>
+                      <BodyMuted style={{ marginBottom: layout.stackGapXs }}>{row.description}</BodyMuted>
+                      <Label>
                         {row.category} · Due {row.dueDate}
-                      </div>
+                      </Label>
                     </div>
                     <PillBadge tone={toneFn(row.status)}>{row.status}</PillBadge>
                   </div>
                 ))
               )}
             </div>
-            <Link href="/checklist" style={{ display: "inline-block", marginTop: 16, fontSize: 14, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}>
+            <Link href="/checklist" style={{ display: "inline-block", marginTop: layout.stackGap, ...text.bodyStrong, color: colors.primary, textDecoration: "none" }}>
               View all {totalTasks} tasks
             </Link>
-          </ProductCard>
+          </SectionCard>
 
-          <ProductCard style={{ padding: 26 }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Upcoming deadlines</h2>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px" }}>Next 3 deadlines from your aid calendar</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <SectionCard>
+            <H2 style={{ marginBottom: layout.stackGapXs }}>Upcoming deadlines</H2>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>Next 3 deadlines from your aid calendar</BodyMuted>
+            <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
               {upcomingDeadlines.length === 0 ? (
-                <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0, lineHeight: 1.6 }}>
-                  No upcoming deadlines yet. Add deadlines from the Deadlines page when you are ready.
-                </p>
+                <BodyMuted>No upcoming deadlines yet. Add deadlines from the Deadlines page when you are ready.</BodyMuted>
               ) : (
                 upcomingDeadlines.map((d) => (
-                  <div key={d.id} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
+                  <div key={d.id} style={taskRowStyle}>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#15212E", marginBottom: 4 }}>{d.title}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+                      <BodyStrong style={{ marginBottom: 4 }}>{d.title}</BodyStrong>
+                      <Label>
                         {formatDueDate(d.deadline_date)} · {d.category} · {d.priority} priority
-                      </div>
+                      </Label>
                     </div>
                     <PillBadge tone={deadlineStatusToTone(d.status)}>{d.status}</PillBadge>
                   </div>
                 ))
               )}
             </div>
-            <Link href="/deadlines" style={{ display: "inline-block", marginTop: 16, fontSize: 14, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}>
+            <Link href="/deadlines" style={{ display: "inline-block", marginTop: layout.stackGap, ...text.bodyStrong, color: colors.primary, textDecoration: "none" }}>
               View all deadlines
             </Link>
-          </ProductCard>
+          </SectionCard>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>Weekly report</h2>
-            <div style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: layout.sectionGap }}>
+          <SectionCard>
+            <H2 style={{ marginBottom: layout.stackGapSm }}>Weekly report</H2>
+            <div style={{ marginBottom: layout.stackGapSm }}>
               <PillBadge tone={reportStatusTone}>Aid status: {report?.aid_status ?? summary.aidStatus}</PillBadge>
             </div>
-            <p style={{ fontSize: 14.5, fontWeight: 500, color: "#5B6573", margin: "0 0 16px", lineHeight: 1.6 }}>
+            <BodyMuted style={{ marginBottom: layout.stackGap }}>
               {report?.summary ?? "Your weekly report will appear here after onboarding."}
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
-              <div style={{ padding: 12, borderRadius: 12, background: "#fff", border: "1px solid #E6EDF6" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Tasks due</div>
-                <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#0B5CAD" }}>{report?.tasks_due_count ?? attention}</div>
-              </div>
-              <div style={{ padding: 12, borderRadius: 12, background: "#fff", border: "1px solid #E6EDF6" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Missing documents</div>
-                <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#C04E57" }}>{report?.missing_documents_count ?? missingDocs}</div>
-              </div>
-              <div style={{ padding: 12, borderRadius: 12, background: "#fff", border: "1px solid #E6EDF6" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Scholarship matches</div>
-                <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color: "#0B5CAD" }}>{report?.scholarship_count ?? scholarshipStats.newCount}</div>
-              </div>
-              <div style={{ padding: 12, borderRadius: 12, background: "#fff", border: "1px solid #E6EDF6" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2" }}>Potential amount</div>
-                <div className="font-display" style={{ fontSize: 18, fontWeight: 900, color: "#15885A" }}>
-                  ${(report?.potential_scholarship_amount ?? scholarshipStats.totalPotential).toLocaleString()}
-                </div>
-              </div>
+            </BodyMuted>
+            <div style={{ ...metricGrid, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", marginBottom: layout.stackGap }}>
+              <MetricCard label="Tasks due" value={String(report?.tasks_due_count ?? attention)} />
+              <MetricCard label="Missing documents" value={String(report?.missing_documents_count ?? missingDocs)} tone="alert" />
+              <MetricCard label="Scholarship matches" value={String(report?.scholarship_count ?? scholarshipStats.newCount)} />
+              <MetricCard
+                label="Potential amount"
+                value={`$${(report?.potential_scholarship_amount ?? scholarshipStats.totalPotential).toLocaleString()}`}
+                tone="success"
+              />
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Link href="/report" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none", boxShadow: "0 10px 20px rgba(11,92,173,.22)" }}>
-                View weekly report
-              </Link>
-              <button type="button" onClick={() => handleGenerateReport()} disabled={generatingReport} style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #DCE7F5", padding: "12px 22px", borderRadius: 13, cursor: generatingReport ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            <div style={btnRow}>
+              <PrimaryButtonLink href="/report">View weekly report</PrimaryButtonLink>
+              <SecondaryButton onClick={() => void handleGenerateReport()} disabled={generatingReport}>
                 {generatingReport ? "Generating..." : "Generate report"}
-              </button>
+              </SecondaryButton>
             </div>
-          </ProductCard>
+          </SectionCard>
 
-          <ProductCard style={{ padding: 26, border: "1px solid #E3EBF3" }}>
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>Scholarship matches</h2>
+          <SectionCard>
+            <H2 style={{ marginBottom: layout.stackGapSm }}>Scholarship matches</H2>
             {scholarshipStats.newCount === 0 ? (
-              <p style={{ fontSize: 14, color: "#5B6B7F", margin: "0 0 16px", lineHeight: 1.6 }}>
+              <BodyMuted style={{ marginBottom: layout.stackGap }}>
                 No scholarship matches yet. Complete your profile and visit Scholarships to review opportunities.
-              </p>
+              </BodyMuted>
             ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
-              {[
-                { label: `${scholarshipStats.newCount} new matches`, color: "#0B5CAD" },
-                { label: `${scholarshipStats.totalPotentialLabel} potential awards`, color: "#15885A" },
-                { label: `${scholarshipStats.strongMatches} strong matches`, color: "#0B5CAD" },
-              ].map((s) => (
-                <div key={s.label} style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.label}</div>
-              ))}
-            </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm, marginBottom: layout.sectionGap }}>
+                {[
+                  { label: `${scholarshipStats.newCount} new matches`, color: colors.primary },
+                  { label: `${scholarshipStats.totalPotentialLabel} potential awards`, color: colors.green },
+                  { label: `${scholarshipStats.strongMatches} strong matches`, color: colors.primary },
+                ].map((s) => (
+                  <MetricValue key={s.label} color={s.color} style={{ fontSize: 18, lineHeight: "26px" }}>
+                    {s.label}
+                  </MetricValue>
+                ))}
+              </div>
             )}
-            <Link href="/scholarships" style={{ display: "inline-flex", fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "10px 18px", borderRadius: 8, textDecoration: "none" }}>
-              View scholarships
-            </Link>
-          </ProductCard>
+            <PrimaryButtonLink href="/scholarships">View scholarships</PrimaryButtonLink>
+          </SectionCard>
         </div>
       </div>
 
-      <p style={{ marginTop: 12, fontSize: 12, color: "#9AA4B2", lineHeight: 1.6 }}>
+      <Body style={{ marginTop: layout.stackGapSm, fontSize: 13, lineHeight: "18px" }}>
         AidPilot is an organizational and educational tool, not official financial aid advice. AidPilot does not collect FAFSA login credentials, Social Security numbers, or tax documents.{" "}
-        <Link href="/disclaimer" style={{ color: "#0B5CAD", textDecoration: "underline" }}>Read disclaimer</Link>
-      </p>
+        <Link href="/disclaimer" style={{ color: colors.primary, textDecoration: "underline" }}>Read disclaimer</Link>
+      </Body>
 
-      <FeedbackWidget page="/dashboard" />
+      <BetaFeedbackBox />
+      <TrustDisclaimer />
+        </>
+      )}
     </AppShell>
   );
 }

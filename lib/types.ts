@@ -321,6 +321,11 @@ export type OnboardingFormData = {
   cal_grant_eligible: boolean;
   gpa: string;
   profile_essay_preference: string;
+  academic_year: string;
+  aid_stage: string;
+  housing_status: string;
+  aid_goal: string;
+  first_aid_offer_school: string;
 };
 
 export type AidRecommendation = {

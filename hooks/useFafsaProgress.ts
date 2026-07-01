@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isRecoverableWithLocalFallback } from "@/lib/friendly-errors";
 import {
   canUseFafsaProgressStorage,
   readFafsaProgressLocal,
@@ -12,6 +11,9 @@ import {
   FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE,
   fetchCloudFafsaProgress,
   getAuthenticatedUserId,
+  isFafsaCloudSyncPaused,
+  isFafsaProgressSyncRecoverable,
+  markFafsaCloudSyncSuccess,
   mergeCompletedPlanKeys,
   pushCloudFafsaProgress,
   upsertCloudFafsaStep,
@@ -30,7 +32,7 @@ function readInitialCompletedKeys(): string[] {
 }
 
 function syncStatusForError(error: unknown): FafsaProgressSyncStatus {
-  return isRecoverableWithLocalFallback(error) ? "local-only" : "sync-error";
+  return isFafsaProgressSyncRecoverable(error) ? "local-only" : "sync-error";
 }
 
 export function useFafsaProgress() {
@@ -38,11 +40,15 @@ export function useFafsaProgress() {
   const [syncStatus, setSyncStatus] = useState<FafsaProgressSyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
+  const hydrateInFlightRef = useRef<Promise<void> | null>(null);
+  const syncFailureShownRef = useRef(false);
 
-  const applySyncFailure = useCallback((error: unknown) => {
-    console.error("FAFSA progress cloud sync failed:", error);
-    setSyncStatus(syncStatusForError(error));
-    setSyncMessage(FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE);
+  const applyLocalOnlyFallback = useCallback((error?: unknown) => {
+    setSyncStatus(error ? syncStatusForError(error) : "local-only");
+    if (!syncFailureShownRef.current) {
+      syncFailureShownRef.current = true;
+      setSyncMessage(FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE);
+    }
   }, []);
 
   const persistLocal = useCallback((keys: string[]) => {
@@ -54,29 +60,60 @@ export function useFafsaProgress() {
 
   const hydrateFromCloud = useCallback(
     async (userId: string) => {
-      userIdRef.current = userId;
-      const localKeys = normalizeCompletedKeys(readFafsaProgressLocal().completedPlanKeys);
-      const { completedPlanKeys: cloudKeys, error } = await fetchCloudFafsaProgress(userId);
-
-      if (error) {
-        applySyncFailure(error);
+      if (hydrateInFlightRef.current) {
+        await hydrateInFlightRef.current;
         return;
       }
 
-      const merged = mergeCompletedPlanKeys(localKeys, normalizeCompletedKeys(cloudKeys));
-      persistLocal(merged);
-      setSyncStatus("synced");
-      setSyncMessage(null);
+      const hydratePromise = (async () => {
+        userIdRef.current = userId;
+        const localKeys = normalizeCompletedKeys(readFafsaProgressLocal().completedPlanKeys);
 
-      const onlyLocal = merged.filter((key) => !cloudKeys.includes(key));
-      if (onlyLocal.length > 0) {
-        const pushResult = await pushCloudFafsaProgress(userId, onlyLocal);
-        if (pushResult.error) {
-          applySyncFailure(pushResult.error);
+        if (isFafsaCloudSyncPaused()) {
+          persistLocal(localKeys);
+          applyLocalOnlyFallback();
+          return;
+        }
+
+        const { completedPlanKeys: cloudKeys, error, skipped } = await fetchCloudFafsaProgress(userId);
+
+        if (skipped) {
+          persistLocal(localKeys);
+          applyLocalOnlyFallback();
+          return;
+        }
+
+        if (error) {
+          persistLocal(localKeys);
+          applyLocalOnlyFallback(error);
+          return;
+        }
+
+        const merged = mergeCompletedPlanKeys(localKeys, normalizeCompletedKeys(cloudKeys));
+        persistLocal(merged);
+        setSyncStatus("synced");
+        setSyncMessage(null);
+        syncFailureShownRef.current = false;
+
+        const onlyLocal = merged.filter((key) => !cloudKeys.includes(key));
+        if (onlyLocal.length > 0) {
+          const pushResult = await pushCloudFafsaProgress(userId, onlyLocal);
+          if (pushResult.error) {
+            applyLocalOnlyFallback(pushResult.error);
+          }
+        }
+      })();
+
+      hydrateInFlightRef.current = hydratePromise;
+      try {
+        await hydratePromise;
+      } finally {
+        if (hydrateInFlightRef.current === hydratePromise) {
+          hydrateInFlightRef.current = null;
         }
       }
     },
-    [applySyncFailure, persistLocal]
+    [applyLocalOnlyFallback, persistLocal]
   );
 
   useEffect(() => {
@@ -88,9 +125,16 @@ export function useFafsaProgress() {
 
       if (!userId) {
         userIdRef.current = null;
+        markFafsaCloudSyncSuccess();
+        syncFailureShownRef.current = false;
         setSyncStatus("local-only");
         setSyncMessage(null);
         return;
+      }
+
+      if (userIdRef.current && userIdRef.current !== userId) {
+        markFafsaCloudSyncSuccess();
+        syncFailureShownRef.current = false;
       }
 
       await hydrateFromCloud(userId);
@@ -105,12 +149,19 @@ export function useFafsaProgress() {
       if (cancelled) return;
 
       const userId = session?.user?.id ?? null;
-      userIdRef.current = userId;
 
       if (!userId) {
+        userIdRef.current = null;
+        markFafsaCloudSyncSuccess();
+        syncFailureShownRef.current = false;
         setSyncStatus("local-only");
         setSyncMessage(null);
         return;
+      }
+
+      if (userIdRef.current && userIdRef.current !== userId) {
+        markFafsaCloudSyncSuccess();
+        syncFailureShownRef.current = false;
       }
 
       void hydrateFromCloud(userId);
@@ -132,16 +183,28 @@ export function useFafsaProgress() {
       }
 
       userIdRef.current = userId;
-      const { error } = await upsertCloudFafsaStep(userId, planKey, completed);
+
+      if (isFafsaCloudSyncPaused()) {
+        applyLocalOnlyFallback();
+        return;
+      }
+
+      const { error, skipped } = await upsertCloudFafsaStep(userId, planKey, completed);
+      if (skipped) {
+        applyLocalOnlyFallback();
+        return;
+      }
+
       if (error) {
-        applySyncFailure(error);
+        applyLocalOnlyFallback(error);
         return;
       }
 
       setSyncStatus("synced");
       setSyncMessage(null);
+      syncFailureShownRef.current = false;
     },
-    [applySyncFailure]
+    [applyLocalOnlyFallback]
   );
 
   const isCompleted = useCallback(

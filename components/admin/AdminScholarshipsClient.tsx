@@ -43,7 +43,7 @@ export default function AdminScholarshipsClient() {
 
   return (
     <AdminGate>
-      <div style={{ minHeight: "100vh", background: "#F4F8FE", padding: "32px 24px", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#F4F8FE", padding: "32px 24px",  }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 28, flexWrap: "wrap" }}>
             <div>

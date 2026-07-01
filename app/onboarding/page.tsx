@@ -1,30 +1,24 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
 import {
-  EFFORT_PREFERENCE_OPTIONS,
-  ESSAY_PREFERENCE_OPTIONS,
-  SCHOLARSHIP_CATEGORY_OPTIONS,
-  parseScholarshipPreferences,
-} from "@/lib/scholarship-preferences";
-import { joinCommaSeparated, parseCommaSeparated } from "@/lib/data-helpers";
-import {
-  PROFILE_OPTIONAL_SAVE_NOTICE_KEY,
-  PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE,
-  saveOnboardingProfile,
-} from "@/lib/onboarding-profile";
+  ACADEMIC_YEAR_OPTIONS,
+  AID_STAGE_OPTIONS,
+  HOUSING_STATUS_OPTIONS,
+  type AidStage,
+} from "@/lib/onboarding-aid-stage";
+import { saveOnboardingProfile } from "@/lib/onboarding-profile";
+import { parseScholarshipPreferences } from "@/lib/scholarship-preferences";
 import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
-import type { OnboardingFormData, School } from "@/lib/types";
-
-const PROFILE_ESSAY_OPTIONS = [
-  { value: "any", label: "Any (essays okay)" },
-  { value: "prefer_no_essay", label: "Prefer no essay" },
-  { value: "okay_with_essay", label: "Okay with essays" },
-];
+import { SectionCard } from "@/components/ui/SectionCard";
+import { PrimaryButton, PrimaryButtonLink, SecondaryButtonLink } from "@/components/ui";
+import { H1, Body } from "@/components/ui/Typography";
+import { cardBase, colors, formFieldStyle, formLabelStyle, layout, radius, text } from "@/lib/design-tokens";
+import type { OnboardingFormData, School, StudentProfile } from "@/lib/types";
 
 const SCHOOL_FALLBACK = [
   { label: "UC Irvine", value: "UC Irvine" },
@@ -36,37 +30,23 @@ const SCHOOL_FALLBACK = [
 ];
 
 const YEAR_OPTIONS = ["Freshman", "Sophomore", "Junior", "Senior", "Transfer", "Graduate"];
-const STUDENT_TYPES = ["High school student", "College student", "Parent", "Counselor"];
-const FAFSA_OPTIONS = ["Yes", "Not yet", "I am not sure"];
-const AID_OPTIONS = ["Cal Grant", "Pell Grant", "Work-study", "Loans", "I am not sure"];
-const GOAL_OPTIONS = ["Protect my aid", "Catch deadlines", "Upload documents", "Understand my offer", "Find scholarships"];
 
-export default function OnboardingPage() {
-  const router = useRouter();
-  const supabase = createClient();
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [step, setStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [schools, setSchools] = useState<School[]>([]);
-  const [schoolsLoaded, setSchoolsLoaded] = useState(false);
-  const [manualSchool, setManualSchool] = useState("");
-  const [form, setForm] = useState<OnboardingFormData>({
+function emptyForm(email = ""): OnboardingFormData {
+  return {
     first_name: "",
-    email: "",
+    email,
     school: "UC Irvine",
+    school_id: null,
     year: "Sophomore",
     state: "",
     student_type: "College student",
-    fafsa_status: "Yes",
+    fafsa_status: "Not yet",
     aid_types: [],
     main_goals: [],
     interested_categories: [],
     essay_preference: "no_preference",
     effort_preference: "any",
     major_interests: "",
-    school_id: null,
     majors: [],
     interests: [],
     first_generation: false,
@@ -75,83 +55,118 @@ export default function OnboardingPage() {
     cal_grant_eligible: false,
     gpa: "",
     profile_essay_preference: "any",
-  });
+    academic_year: "2026-2027",
+    aid_stage: "waiting_for_offer",
+    housing_status: "not_sure",
+    aid_goal: "",
+    first_aid_offer_school: "",
+  };
+}
 
-  const totalSteps = 6;
-  const pct = Math.round((step / totalSteps) * 100);
+export default function OnboardingPage() {
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [schools, setSchools] = useState<School[]>([]);
+  const [manualSchool, setManualSchool] = useState("");
+  const [form, setForm] = useState<OnboardingFormData>(() => emptyForm());
 
   useEffect(() => {
+    let cancelled = false;
+
     async function init() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        setCheckingAuth(false);
-        return;
+        if (authError) {
+          console.error("Onboarding auth check failed:", authError);
+        }
+
+        if (!user) {
+          if (!cancelled) setCheckingAuth(false);
+          return;
+        }
+
+        if (!cancelled) {
+          setUserId(user.id);
+          setForm((prev) => ({
+            ...prev,
+            first_name: (user.user_metadata?.first_name as string) ?? prev.first_name,
+            email: user.email ?? prev.email,
+          }));
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("student_profiles")
+          .select("first_name, email, school, year, state, student_type, fafsa_status, aid_types, main_goals, is_onboarded, scholarship_preferences")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Onboarding profile load failed:", profileError);
+        }
+
+        if (profile?.is_onboarded) {
+          router.replace("/dashboard");
+          return;
+        }
+
+        if (profile && !cancelled) {
+          const row = profile as Partial<StudentProfile>;
+          const prefs = parseScholarshipPreferences(row.scholarship_preferences);
+          setForm((prev) => ({
+            ...prev,
+            first_name: getProfileFullName(row) || row.first_name?.trim() || prev.first_name,
+            email: row.email ?? prev.email,
+            school: getProfileSchoolName(row) || prev.school,
+            year: getProfileEducationLevel(row) ?? prev.year,
+            state: row.state ?? prev.state,
+            student_type: row.student_type ?? prev.student_type,
+            fafsa_status: row.fafsa_status ?? prev.fafsa_status,
+            aid_types: row.aid_types ?? prev.aid_types,
+            main_goals: row.main_goals ?? prev.main_goals,
+            academic_year: prefs.academic_year ?? prev.academic_year,
+            aid_stage: prefs.aid_stage ?? prev.aid_stage,
+            housing_status: prefs.housing_status ?? prev.housing_status,
+            aid_goal: prefs.aid_goal ?? prev.aid_goal,
+          }));
+        }
+      } catch (err) {
+        console.error("Onboarding init failed:", err);
+        if (!cancelled) {
+          setError("We couldn't load your account. Please refresh and try again.");
+        }
+      } finally {
+        if (!cancelled) setCheckingAuth(false);
       }
-
-      setUserId(user.id);
-      setForm((prev) => ({
-        ...prev,
-        first_name: (user.user_metadata?.first_name as string) ?? prev.first_name,
-        email: user.email ?? prev.email,
-      }));
-
-      const { data: profile } = await supabase
-        .from("student_profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profile?.is_onboarded) {
-        router.replace("/dashboard");
-        return;
-      }
-
-      if (profile) {
-        const prefs = parseScholarshipPreferences(profile.scholarship_preferences);
-        setForm((prev) => ({
-          ...prev,
-          first_name: getProfileFullName(profile) || prev.first_name,
-          email: profile.email ?? prev.email,
-          school: getProfileSchoolName(profile) || prev.school,
-          year: getProfileEducationLevel(profile) ?? prev.year,
-          state: profile.state ?? prev.state,
-          student_type: profile.student_type ?? prev.student_type,
-          fafsa_status: profile.fafsa_status ?? prev.fafsa_status,
-          aid_types: profile.aid_types ?? prev.aid_types,
-          main_goals: profile.main_goals ?? prev.main_goals,
-          interested_categories: prefs.interested_categories ?? prev.interested_categories,
-          essay_preference: prefs.essay_preference ?? prev.essay_preference,
-          effort_preference: prefs.effort_preference ?? prev.effort_preference,
-          major_interests: prefs.major_interests ?? prev.major_interests,
-          school_id: profile.school_id ?? prev.school_id,
-          majors: profile.majors ?? prev.majors,
-          interests: profile.interests ?? prev.interests,
-          first_generation: profile.first_generation ?? prev.first_generation,
-          transfer_student: profile.transfer_student ?? prev.transfer_student,
-          pell_grant_eligible: profile.pell_grant_eligible ?? prev.pell_grant_eligible,
-          cal_grant_eligible: profile.cal_grant_eligible ?? prev.cal_grant_eligible,
-          gpa: profile.gpa != null ? String(profile.gpa) : prev.gpa,
-          profile_essay_preference: profile.essay_preference ?? prev.profile_essay_preference,
-        }));
-      }
-
-      setCheckingAuth(false);
     }
-    init();
+
+    void init();
+    return () => {
+      cancelled = true;
+    };
   }, [router, supabase]);
 
   useEffect(() => {
     async function loadSchools() {
-      const { data } = await supabase.from("schools").select("*").order("name");
-      if (data?.length) {
-        setSchools(data as School[]);
+      try {
+        const { data, error: schoolsError } = await supabase.from("schools").select("*").order("name");
+        if (schoolsError) {
+          console.error("School list load failed:", schoolsError);
+          return;
+        }
+        if (data?.length) setSchools(data as School[]);
+      } catch (err) {
+        console.error("School list load failed:", err);
       }
-      setSchoolsLoaded(true);
     }
-    loadSchools();
+    void loadSchools();
   }, [supabase]);
 
   const schoolOptions =
@@ -159,34 +174,28 @@ export default function OnboardingPage() {
       ? [...schools.map((s) => ({ label: s.name, value: s.name })), { label: "Other", value: "Other" }]
       : SCHOOL_FALLBACK;
 
-  const resolvedSchool =
-    form.school === "Other" ? manualSchool.trim() : form.school;
-
-  function toggleArray(field: "aid_types" | "main_goals" | "interested_categories", value: string) {
-    setForm((prev) => {
-      const current = prev[field];
-      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-      return { ...prev, [field]: next };
-    });
-  }
+  const resolvedSchool = form.school === "Other" ? manualSchool.trim() : form.school;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
 
+    const fullName = form.first_name.trim();
+    if (!fullName) {
+      setError("Please enter your full name.");
+      return;
+    }
     if (!resolvedSchool) {
       setError("Please select or enter your school.");
       return;
     }
-
-    if (form.main_goals.length === 0) {
-      setError("Select at least one goal.");
+    if (!form.academic_year) {
+      setError("Please select your academic year.");
       return;
     }
 
     setIsSubmitting(true);
     setError("");
-
-    let redirected = false;
 
     try {
       const {
@@ -197,7 +206,6 @@ export default function OnboardingPage() {
       if (authError) {
         throw new Error("We couldn't verify your account. Please log in again.");
       }
-
       if (!user) {
         setError("Please log in again to finish onboarding.");
         router.replace("/login");
@@ -205,277 +213,206 @@ export default function OnboardingPage() {
       }
 
       const matchedSchool = schools.find((s) => s.name === resolvedSchool);
-      const { optionalFieldsSkipped } = await saveOnboardingProfile(supabase, {
+      const aidStage = (form.aid_stage || "waiting_for_offer") as AidStage;
+      const formPayload: OnboardingFormData = {
+        ...form,
+        first_name: fullName,
+        aid_stage: aidStage,
+        main_goals: form.aid_goal.trim() ? [form.aid_goal.trim()] : [],
+      };
+
+      await saveOnboardingProfile(supabase, {
         userId: user.id,
-        form,
+        form: formPayload,
         resolvedSchool,
         matchedSchool,
       });
 
-      if (optionalFieldsSkipped) {
-        sessionStorage.setItem(PROFILE_OPTIONAL_SAVE_NOTICE_KEY, PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE);
-      }
-
-      redirected = true;
       router.replace("/dashboard");
     } catch (err) {
       console.error("Onboarding submit failed:", err);
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-    } finally {
-      if (!redirected) {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   }
 
   if (checkingAuth) {
-    return <div style={{ minHeight: "100vh", background: "#F4F8FE" }} />;
+    return <div style={{ minHeight: "100vh", background: colors.background }} />;
   }
 
   if (!userId) {
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
-        <div style={{ maxWidth: 480, textAlign: "center", background: "#fff", borderRadius: 24, padding: 32, border: "1px solid #E9EDF2", boxShadow: "0 24px 48px -20px rgba(11,92,173,.18)" }}>
-          <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>Let&apos;s build your aid check-in</h1>
-          <p style={{ fontSize: 16, color: "#6B7280", lineHeight: 1.6, margin: "0 0 24px" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: `linear-gradient(180deg, ${colors.background} 0%, ${colors.softGreen} 100%)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 480,
+            textAlign: "center",
+            ...cardBase,
+            padding: layout.cardPaddingLarge,
+          }}
+        >
+          <H1 style={{ marginBottom: layout.stackGapSm }}>Let&apos;s build your aid check-in</H1>
+          <Body style={{ marginBottom: layout.sectionGap }}>
             Create a free account to save your aid plan, checklist, and scholarship matches.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/signup" style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Create account</Link>
-            <Link href="/login" style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Log in</Link>
+          </Body>
+          <div style={{ display: "flex", gap: layout.stackGapSm, justifyContent: "center", flexWrap: "wrap" }}>
+            <PrimaryButtonLink href="/signup">Create account</PrimaryButtonLink>
+            <SecondaryButtonLink href="/login">Log in</SecondaryButtonLink>
           </div>
-          <p style={{ marginTop: 20, fontSize: 13 }}>
-            <Link href="/" style={{ color: "#9AA4B2", textDecoration: "underline" }}>Back to home</Link>
-          </p>
         </div>
       </div>
     );
   }
 
-  const inputStyle = { width: "100%", borderRadius: 14, border: "1.5px solid #E5E7EB", padding: "13px 16px", fontSize: 15, outline: "none", fontFamily: "inherit", boxSizing: "border-box" as const };
-
   return (
-    <div className="min-h-screen" style={{ minHeight: "100vh", overflowY: "auto", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
-      <div style={{ padding: "18px 40px" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", overflowY: "auto", background: `linear-gradient(180deg, ${colors.background} 0%, ${colors.softGreen} 100%)` }}>
+      <div style={{ padding: `${layout.pagePaddingMobile}px ${layout.pagePaddingDesktop}px` }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: layout.stackGapSm, textDecoration: "none" }}>
+          <span style={{ display: "flex", width: 36, height: 36, borderRadius: radius.button, background: colors.primary, alignItems: "center", justifyContent: "center" }}>
             <PlaneSVG size={18} color="#fff" />
           </span>
-          <span className="font-display" style={{ fontSize: 20, fontWeight: 900 }}>
-            <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
-          </span>
+          <span style={{ ...text.h3 }}>AidPilot</span>
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="overflow-y-auto" style={{ maxWidth: 560, margin: "0 auto", padding: "24px 24px 120px", overflowY: "auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: 16, background: "#EAF3FF", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-            <PlaneSVG size={24} color="#0B5CAD" />
+      <form onSubmit={handleSubmit}>
+      <div className="app-page-container" style={{ maxWidth: 560 }}>
+        <div style={{ textAlign: "center", marginBottom: layout.sectionGap }}>
+          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: radius.card, background: colors.softBlue, alignItems: "center", justifyContent: "center", marginBottom: layout.stackGap }}>
+            <PlaneSVG size={24} color={colors.primary} />
           </div>
-          <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>
-            Let&apos;s build your aid check-in.
-          </h1>
-          <p style={{ fontSize: 16, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you. We never ask for SSNs, FAFSA logins, or tax documents.
-          </p>
+          <H1 style={{ marginBottom: layout.stackGapSm }}>Set up your aid plan</H1>
+          <Body>A few quick answers so AidPilot knows what to show first.</Body>
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>
-            <span>Step {step + 1} of {totalSteps}</span>
-            <span style={{ color: "#0B5CAD" }}>{pct}%</span>
+        <div style={{ marginBottom: layout.sectionGap }}>
+          <ProgressBar pct={100} />
+        </div>
+
+        <SectionCard style={{ marginBottom: layout.stackGap }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGap }}>
+          <label>
+            <span style={formLabelStyle}>Full name</span>
+            <input
+              required
+              style={formFieldStyle}
+              placeholder="Maya Chen"
+              value={form.first_name}
+              onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+            />
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>School</span>
+            <select required style={formFieldStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
+              {schoolOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {form.school === "Other" ? (
+            <label>
+              <span style={formLabelStyle}>School name</span>
+              <input
+                required
+                style={formFieldStyle}
+                placeholder="Enter your school"
+                value={manualSchool}
+                onChange={(e) => setManualSchool(e.target.value)}
+              />
+            </label>
+          ) : null}
+
+          <label>
+            <span style={formLabelStyle}>Class year</span>
+            <select required style={formFieldStyle} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
+              {YEAR_OPTIONS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>Academic year</span>
+            <select required style={formFieldStyle} value={form.academic_year} onChange={(e) => setForm({ ...form, academic_year: e.target.value })}>
+              {ACADEMIC_YEAR_OPTIONS.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>State</span>
+            <input style={formFieldStyle} placeholder="California" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>Housing status</span>
+            <select required style={formFieldStyle} value={form.housing_status} onChange={(e) => setForm({ ...form, housing_status: e.target.value })}>
+              {HOUSING_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>Where are you in your aid process?</span>
+            <select required style={formFieldStyle} value={form.aid_stage} onChange={(e) => setForm({ ...form, aid_stage: e.target.value })}>
+              {AID_STAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span style={formLabelStyle}>Aid goal (optional)</span>
+            <input
+              style={formFieldStyle}
+              placeholder="e.g. Compare offers and close my gap"
+              value={form.aid_goal}
+              onChange={(e) => setForm({ ...form, aid_goal: e.target.value })}
+            />
+          </label>
           </div>
-          <ProgressBar pct={pct} />
-        </div>
+        </SectionCard>
 
-        <div style={{ background: "#fff", border: "1px solid #E9EDF2", borderRadius: 24, padding: "28px 24px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          {step === 0 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                We use your name and school to personalize deadlines, documents, and scholarship matches.
-              </p>
-              <input required style={inputStyle} placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
-              <input required type="email" style={inputStyle} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              <select required style={inputStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
-                {schoolOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              {form.school === "Other" && (
-                <input
-                  required
-                  style={inputStyle}
-                  placeholder="Enter your school name"
-                  value={manualSchool}
-                  onChange={(e) => setManualSchool(e.target.value)}
-                />
-              )}
-              {!schoolsLoaded && (
-                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>Loading schools...</p>
-              )}
-              {schoolsLoaded && schools.length === 0 && (
-                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>
-                  School list unavailable. Choose Other and enter your school.
-                </p>
-              )}
-              <select required style={inputStyle} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
-                {YEAR_OPTIONS.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </>
-          )}
+        {error ? (
+          <Body style={{ color: colors.coral, marginBottom: layout.stackGapSm }}>{error}</Body>
+        ) : null}
 
-          {step === 1 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                State and student type help us surface relevant aid programs. FAFSA status helps prioritize your checklist — we never access your FAFSA account.
-              </p>
-              <input required style={inputStyle} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-              <select required style={inputStyle} value={form.student_type} onChange={(e) => setForm({ ...form, student_type: e.target.value })}>
-                {STUDENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <select required style={inputStyle} value={form.fafsa_status} onChange={(e) => setForm({ ...form, fafsa_status: e.target.value })}>
-                {FAFSA_OPTIONS.map((o) => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Knowing your current aid types helps AidPilot tailor reminders and scholarship suggestions. Select all that apply.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Do you currently receive financial aid?</p>
-              {AID_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.aid_types.includes(o)} onChange={() => toggleArray("aid_types", o)} />
-                  {o}
-                </label>
-              ))}
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Your goals shape what AidPilot highlights first on your dashboard and weekly report.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>What do you want help with most?</p>
-              {GOAL_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.main_goals.includes(o)} onChange={() => toggleArray("main_goals", o)} />
-                  {o}
-                </label>
-              ))}
-              <p style={{ fontSize: 12, color: "#9AA4B2", lineHeight: 1.6, margin: "8px 0 0" }}>
-                AidPilot is an organizational and educational tool, not official financial aid advice. We never collect FAFSA logins, SSNs, or tax documents.
-              </p>
-            </>
-          )}
-
-          {step === 4 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Scholarship categories and effort preferences improve match quality. You can change these anytime in Settings.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Scholarship interests</p>
-              {SCHOLARSHIP_CATEGORY_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.interested_categories.includes(o)} onChange={() => toggleArray("interested_categories", o)} />
-                  {o}
-                </label>
-              ))}
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
-                <select style={inputStyle} value={form.essay_preference} onChange={(e) => setForm({ ...form, essay_preference: e.target.value })}>
-                  {ESSAY_PREFERENCE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Effort preference</span>
-                <select style={inputStyle} value={form.effort_preference} onChange={(e) => setForm({ ...form, effort_preference: e.target.value })}>
-                  {EFFORT_PREFERENCE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-            </>
-          )}
-
-          {step === 5 && (
-            <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Tell us only what helps matching. Never enter SSNs, bank info, or FAFSA passwords.
-              </p>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Majors</span>
-                <input style={inputStyle} placeholder="e.g. computer science, nursing" value={joinCommaSeparated(form.majors)} onChange={(e) => setForm({ ...form, majors: parseCommaSeparated(e.target.value) })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Interests</span>
-                <input style={inputStyle} placeholder="e.g. robotics, community service" value={joinCommaSeparated(form.interests)} onChange={(e) => setForm({ ...form, interests: parseCommaSeparated(e.target.value) })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>GPA (optional)</span>
-                <input style={inputStyle} type="number" min={0} max={4} step={0.01} placeholder="3.50" value={form.gpa} onChange={(e) => setForm({ ...form, gpa: e.target.value })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
-                <select style={inputStyle} value={form.profile_essay_preference} onChange={(e) => setForm({ ...form, profile_essay_preference: e.target.value })}>
-                  {PROFILE_ESSAY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.first_generation} onChange={(e) => setForm({ ...form, first_generation: e.target.checked })} />
-                First-generation college student
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.transfer_student} onChange={(e) => setForm({ ...form, transfer_student: e.target.checked })} />
-                Transfer student
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.pell_grant_eligible} onChange={(e) => setForm({ ...form, pell_grant_eligible: e.target.checked })} />
-                Pell Grant eligible
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.cal_grant_eligible} onChange={(e) => setForm({ ...form, cal_grant_eligible: e.target.checked })} />
-                Cal Grant eligible
-              </label>
-            </>
-          )}
-        </div>
-
-        {error && (
-          <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 12, lineHeight: 1.5 }}>
-            {error}
-          </p>
-        )}
-
-        {step < totalSteps - 1 ? (
-          <button type="button" onClick={() => setStep((s) => s + 1)} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: "#0B5CAD", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-            Continue
-          </button>
-        ) : (
-          <button type="submit" disabled={isSubmitting} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: isSubmitting ? "#E5E7EB" : "#0B5CAD", color: isSubmitting ? "#9AA4B2" : "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: isSubmitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {isSubmitting ? "Setting up your plan..." : "Continue to dashboard"}
-          </button>
-        )}
-
-        {step > 0 && (
-          <button type="button" onClick={() => setStep((s) => s - 1)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", fontSize: 14, fontWeight: 600, color: "#9AA4B2", cursor: "pointer", fontFamily: "inherit" }}>
-            Back
-          </button>
-        )}
-      </form>
+        <PrimaryButton
+          type="submit"
+          disabled={isSubmitting}
+          style={{
+            width: "100%",
+            opacity: isSubmitting ? 0.7 : 1,
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+          }}
+        >
+          {isSubmitting ? "Saving your profile..." : "Continue to dashboard"}
+        </PrimaryButton>
+      </div>
+    </form>
     </div>
   );
 }

@@ -261,7 +261,7 @@ export default function Home() {
   const dp = TONE_PAL[d.tone];
 
   return (
-    <div style={{ overflowX: "hidden", fontFamily: "var(--font-hanken), system-ui, sans-serif", background: "#F9FAFB", color: "#1F2937" }}>
+    <div style={{ overflowX: "hidden", background: "#F9FAFB", color: "#1F2937" }}>
 
       {/* ── NAV ── */}
       <nav style={{ position: "sticky", top: 0, zIndex: 200, display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "space-between", gap: 24, padding: "16px 40px", background: "rgba(255,255,255,.86)", backdropFilter: "blur(14px)", borderBottom: "1px solid #EAECEF" }}>

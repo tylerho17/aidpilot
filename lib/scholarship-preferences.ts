@@ -4,6 +4,11 @@ export type ScholarshipPreferences = {
   effort_preference?: "any" | "low" | "medium" | "high";
   state_preference?: string;
   major_interests?: string;
+  aid_stage?: string;
+  academic_year?: string;
+  first_aid_offer_school?: string;
+  housing_status?: string;
+  aid_goal?: string;
 };
 
 export const SCHOLARSHIP_CATEGORY_OPTIONS = [
@@ -53,6 +58,12 @@ export function parseScholarshipPreferences(raw: unknown): ScholarshipPreference
         : undefined,
     state_preference: typeof obj.state_preference === "string" ? obj.state_preference : undefined,
     major_interests: typeof obj.major_interests === "string" ? obj.major_interests : undefined,
+    aid_stage: typeof obj.aid_stage === "string" ? obj.aid_stage : undefined,
+    academic_year: typeof obj.academic_year === "string" ? obj.academic_year : undefined,
+    first_aid_offer_school:
+      typeof obj.first_aid_offer_school === "string" ? obj.first_aid_offer_school : undefined,
+    housing_status: typeof obj.housing_status === "string" ? obj.housing_status : undefined,
+    aid_goal: typeof obj.aid_goal === "string" ? obj.aid_goal : undefined,
   };
 }
 

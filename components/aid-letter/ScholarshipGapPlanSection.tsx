@@ -1,10 +1,10 @@
 "use client";
 
 import { isAidTaskComplete } from "@/lib/data-helpers";
+import { fontFamily } from "@/lib/design-tokens";
 import type { ScholarshipGapPlan } from "@/lib/aid-letter/buildScholarshipGapPlan";
 import type { AidTask } from "@/lib/types";
 
-const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 const navy = "#0F2744";
 const muted = "#5B6B7F";
 const border = "#E3EBF3";
@@ -28,7 +28,7 @@ export default function ScholarshipGapPlanSection({
 }: ScholarshipGapPlanSectionProps) {
   if (!plan.hasGap) {
     return (
-      <section style={{ marginBottom: 28, fontFamily: pageFont }}>
+      <section style={{ marginBottom: 28, fontFamily: fontFamily }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px", color: navy }}>Scholarship Gap Plan</h2>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: muted }}>
           {plan.zeroGapMessage}
@@ -38,7 +38,7 @@ export default function ScholarshipGapPlanSection({
   }
 
   return (
-    <section style={{ marginBottom: 28, fontFamily: pageFont }}>
+    <section style={{ marginBottom: 28, fontFamily: fontFamily }}>
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 14px", color: navy }}>Scholarship Gap Plan</h2>
 
       <div style={{ border: `1px solid ${border}`, borderRadius: 8, padding: 16, marginBottom: 16, background: "#fff" }}>
@@ -117,7 +117,7 @@ export default function ScholarshipGapPlanSection({
                       fontWeight: 700,
                       cursor: onToggleTask ? "pointer" : "default",
                       flexShrink: 0,
-                      fontFamily: pageFont,
+                      fontFamily: fontFamily,
                     }}
                   >
                     {done ? "✓" : ""}

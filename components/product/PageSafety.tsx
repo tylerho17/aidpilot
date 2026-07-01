@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { PageContentSkeleton, ProductCard } from "@/components/ProductUI";
+import { PageContentSkeleton } from "@/components/ProductUI";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { PrimaryButtonLink } from "@/components/ui/PrimaryButton";
+import { H2, BodyMuted } from "@/components/ui/Typography";
 import { toFriendlyError } from "@/lib/friendly-errors";
 
 export function PageLoading({ message }: { message: string }) {
@@ -17,11 +20,9 @@ export function PageErrorBanner({ message }: { message?: string | null }) {
   if (!message) return null;
 
   return (
-    <ProductCard style={{ padding: 18, marginBottom: 22, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-      <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-        {message}
-      </p>
-    </ProductCard>
+    <SectionCard style={{ padding: 18, marginBottom: 22, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+      <BodyMuted style={{ color: "#78350F", fontSize: 14 }}>{message}</BodyMuted>
+    </SectionCard>
   );
 }
 
@@ -37,32 +38,11 @@ export function PageEmptyState({
   actionLabel?: string;
 }) {
   return (
-    <ProductCard style={{ padding: 24, textAlign: "center" }}>
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px", color: "#0F2744", fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
-        {title}
-      </h2>
-      <p style={{ fontSize: 14, color: "#5B6B7F", margin: actionHref ? "0 0 16px" : 0, lineHeight: 1.6, fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif' }}>
-        {description}
-      </p>
-      {actionHref && actionLabel ? (
-        <Link
-          href={actionHref}
-          style={{
-            display: "inline-flex",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#fff",
-            background: "#0B5CAD",
-            padding: "10px 16px",
-            borderRadius: 8,
-            textDecoration: "none",
-            fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif',
-          }}
-        >
-          {actionLabel}
-        </Link>
-      ) : null}
-    </ProductCard>
+    <SectionCard style={{ padding: 24, textAlign: "center" }}>
+      <H2 style={{ fontSize: 22, marginBottom: 8 }}>{title}</H2>
+      <BodyMuted style={{ marginBottom: actionHref ? 16 : 0 }}>{description}</BodyMuted>
+      {actionHref && actionLabel ? <PrimaryButtonLink href={actionHref}>{actionLabel}</PrimaryButtonLink> : null}
+    </SectionCard>
   );
 }
 
@@ -99,16 +79,13 @@ export function PageErrorFallback({
         justifyContent: "center",
         padding: 24,
         background: "#F4F8FE",
-        fontFamily: "var(--font-hanken), system-ui, sans-serif",
       }}
     >
-      <ProductCard style={{ padding: 28, maxWidth: 520, width: "100%" }}>
-        <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: 15, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.6 }}>
+      <SectionCard style={{ padding: 28, maxWidth: 520, width: "100%" }}>
+        <H2 style={{ marginBottom: 12 }}>{title}</H2>
+        <BodyMuted style={{ marginBottom: 20 }}>
           Something went wrong while loading this page. Your dashboard and other pages should still work.
-        </p>
+        </BodyMuted>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           <Link
             href="/dashboard"
@@ -144,7 +121,7 @@ export function PageErrorFallback({
             </button>
           ) : null}
         </div>
-      </ProductCard>
+      </SectionCard>
     </div>
   );
 }

@@ -1,27 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { PillBadge, ProductCard } from "@/components/ProductUI";
+import { PillBadge } from "@/components/ProductUI";
+import { SecondaryButton, SoftButtonLink, SectionCard } from "@/components/ui";
 import AidOfferFlags from "@/components/aid-letter/AidOfferFlags";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 import { AID_OFFER_STATUS_LABELS, calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
+import { H3, Label } from "@/components/ui/Typography";
+import { MetricValue } from "@/components/ui/Typography";
+import { buttons, colors, layout } from "@/lib/design-tokens";
 import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
 
 function money(value: number) {
   return `$${value.toLocaleString()}`;
@@ -59,78 +46,67 @@ export default function AidOfferSummaryCard({
 }: AidOfferSummaryCardProps) {
   const calc = calculateAidOfferFromRecord(offer);
   const status = offer.offer_status;
+  const metrics = [
+    { label: "Gift aid", value: calc.giftAid, tone: colors.green },
+    { label: "Work-study", value: calc.workStudy, tone: colors.primary },
+    { label: "Loans", value: calc.loanTotal, tone: colors.amber },
+    { label: "Net after gift aid", value: calc.netCostAfterGiftAid, tone: colors.text },
+    { label: "Remaining gap", value: calc.remainingGapAfterAllAid, tone: colors.coral },
+  ];
 
   return (
-    <ProductCard style={{ padding: 22, marginBottom: 16 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-        <div>
-          <h3 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
-            {offer.school_name}
-          </h3>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Offer status</span>
-            <PillBadge tone={statusTone(status)}>{AID_OFFER_STATUS_LABELS[status]}</PillBadge>
-          </div>
+    <SectionCard style={{ marginBottom: layout.sectionGap }}>
+      <div style={{ marginBottom: layout.stackGap }}>
+        <H3 style={{ marginBottom: layout.stackGapSm }}>{offer.school_name}</H3>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: layout.stackGapSm }}>
+          <PillBadge tone={statusTone(status)}>{AID_OFFER_STATUS_LABELS[status]}</PillBadge>
+          {offer.academic_year ? <Label>{offer.academic_year}</Label> : null}
         </div>
-        {offer.academic_year ? (
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>{offer.academic_year}</span>
-        ) : null}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 12 }}>
-        <Stat label="Gift aid" value={money(calc.giftAid)} color="#15885A" />
-        <Stat label="Work-study" value={money(calc.workStudy)} color="#0B5CAD" />
-        <Stat label="Loans" value={money(calc.loanTotal)} color="#B7791F" />
-        <Stat label="Net after gift aid" value={money(calc.netCostAfterGiftAid)} color="#15212E" />
-        <Stat label="Remaining gap" value={money(calc.remainingGapAfterAllAid)} color="#C04E57" />
-        {calc.surplusAid > 0 ? (
-          <Stat label="Surplus aid shown" value={money(calc.surplusAid)} color="#15885A" />
-        ) : null}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: `${layout.stackGapSm}px ${layout.stackGap}px`,
+          marginBottom: layout.stackGapSm,
+        }}
+      >
+        {metrics.map((row) => (
+          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", gap: layout.stackGapSm, alignItems: "baseline" }}>
+            <Label>{row.label}</Label>
+            <MetricValue color={row.tone} style={{ fontSize: 18, lineHeight: "26px" }}>
+              {money(row.value)}
+            </MetricValue>
+          </div>
+        ))}
       </div>
 
       <AidOfferFlags flags={calc.flags} />
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-        <Link href={getAidOfferReportHref(offer.id)} style={{ ...secondaryBtn, textDecoration: "none" }}>
-          View Aid Health Report
-        </Link>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: buttons.gap, marginTop: layout.stackGap }}>
+        <SoftButtonLink href={getAidOfferReportHref(offer.id)}>View Aid Health Report</SoftButtonLink>
         {(status === "draft" || status === "estimated") && onMarkOfficial ? (
-          <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
+          <SecondaryButton disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
             Mark official
-          </button>
+          </SecondaryButton>
         ) : null}
         {status === "official" && onMarkReviewed ? (
-          <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkReviewed(offer.id)}>
+          <SecondaryButton disabled={saving} onClick={() => onMarkReviewed(offer.id)}>
             Mark reviewed
-          </button>
+          </SecondaryButton>
         ) : null}
-        {onEdit ? (
-          <button type="button" style={secondaryBtn} onClick={() => onEdit(offer)}>
-            Edit
-          </button>
-        ) : null}
+        {onEdit ? <SecondaryButton onClick={() => onEdit(offer)}>Edit</SecondaryButton> : null}
         {onDelete ? (
-          <button
-            type="button"
-            style={{ ...secondaryBtn, background: "#FEF2F2", color: "#C04E57" }}
+          <SecondaryButton
             disabled={saving}
             onClick={() => onDelete(offer.id)}
+            style={{ background: colors.softCoral, color: colors.coral, borderColor: colors.softCoral }}
           >
             Delete
-          </button>
+          </SecondaryButton>
         ) : null}
       </div>
-    </ProductCard>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div style={{ padding: 12, borderRadius: 12, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>{label}</div>
-      <div className="font-display" style={{ fontSize: 18, fontWeight: 900, color }}>
-        {value}
-      </div>
-    </div>
+    </SectionCard>
   );
 }

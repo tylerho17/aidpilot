@@ -58,7 +58,7 @@ const WORKFLOW = [
 
 export default function SchoolsPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#F9FAFB", fontFamily: "var(--font-hanken), system-ui, sans-serif", color: "#1F2937" }}>
+    <div style={{ minHeight: "100vh", background: "#F9FAFB", color: "#1F2937" }}>
 
       {/* nav */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(255,255,255,.9)", backdropFilter: "blur(14px)", borderBottom: "1px solid #EAECEF", padding: "16px 48px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
@@ -66,7 +66,7 @@ export default function SchoolsPage() {
           <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", boxShadow: "0 4px 12px rgba(11,92,173,.22)", alignItems: "center", justifyContent: "center" }}>
             <PlaneSVG size={18} />
           </span>
-          <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: "-.4px" }}>
+          <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.4px" }}>
             <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
           </span>
         </Link>
@@ -80,7 +80,7 @@ export default function SchoolsPage() {
       <header style={{ background: "#fff", padding: "96px 48px 80px", borderBottom: "1px solid #EAECEF" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "#6B7280", background: "#F9FAFB", border: "1px solid #E5E7EB", padding: "6px 14px", borderRadius: 999, marginBottom: 24, letterSpacing: ".2px" }}>For financial aid offices</span>
-          <h1 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 54, fontWeight: 900, letterSpacing: "-1.6px", margin: "0 0 20px", color: "#15212E", lineHeight: 1.06 }}>
+          <h1 style={{ fontSize: 54, fontWeight: 900, letterSpacing: "-1.6px", margin: "0 0 20px", color: "#15212E", lineHeight: 1.06 }}>
             Fewer missing documents.<br />Calmer students.
           </h1>
           <p style={{ fontSize: 20, fontWeight: 500, color: "#5B6573", margin: "0 auto 40px", lineHeight: 1.6, maxWidth: 600 }}>
@@ -98,13 +98,13 @@ export default function SchoolsPage() {
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#15885A", textTransform: "uppercase", letterSpacing: "1.2px" }}>Why it works</span>
-            <h2 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 36, fontWeight: 900, letterSpacing: "-.8px", margin: "12px 0 0", color: "#15212E" }}>What changes for your office</h2>
+            <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-.8px", margin: "12px 0 0", color: "#15212E" }}>What changes for your office</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 20 }}>
             {VALUE_CARDS.map((c) => (
               <div key={c.title} style={{ background: c.accent, border: "1px solid " + c.border, borderRadius: 20, padding: "28px 32px" }}>
                 <span style={{ fontSize: 28, display: "block", marginBottom: 14 }}>{c.icon}</span>
-                <h3 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 19, fontWeight: 800, margin: "0 0 10px", color: "#15212E" }}>{c.title}</h3>
+                <h3 style={{ fontSize: 19, fontWeight: 800, margin: "0 0 10px", color: "#15212E" }}>{c.title}</h3>
                 <p style={{ fontSize: 15, fontWeight: 500, color: "#374151", margin: 0, lineHeight: 1.65 }}>{c.body}</p>
               </div>
             ))}
@@ -117,14 +117,14 @@ export default function SchoolsPage() {
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#0B5CAD", textTransform: "uppercase", letterSpacing: "1.2px" }}>How it works</span>
-            <h2 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 36, fontWeight: 900, letterSpacing: "-.8px", margin: "12px 0 0", color: "#15212E" }}>The student journey, improved</h2>
+            <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: "-.8px", margin: "12px 0 0", color: "#15212E" }}>The student journey, improved</h2>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {WORKFLOW.map((w, i) => (
               <div key={w.step} style={{ display: "flex", gap: 24, alignItems: "flex-start", padding: "24px 28px", background: i % 2 === 0 ? "#F9FAFB" : "#fff", border: "1px solid #E9EDF2", borderRadius: 18 }}>
-                <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 28, fontWeight: 900, color: "#0B5CAD", opacity: .35, flexShrink: 0, lineHeight: 1 }}>{w.step}</span>
+                <span style={{ fontSize: 28, fontWeight: 900, color: "#0B5CAD", opacity: .35, flexShrink: 0, lineHeight: 1 }}>{w.step}</span>
                 <div>
-                  <h3 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 18, fontWeight: 800, margin: "0 0 8px", color: "#15212E" }}>{w.title}</h3>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 8px", color: "#15212E" }}>{w.title}</h3>
                   <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.65 }}>{w.body}</p>
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function SchoolsPage() {
         <div style={{ maxWidth: 900, margin: "0 auto", background: "#1F2937", borderRadius: 28, padding: "56px 48px", textAlign: "center", boxShadow: "0 32px 64px -32px rgba(31,41,55,.5)", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -30, right: -20, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,.04)" }} />
           <div style={{ position: "relative" }}>
-            <h2 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 38, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 14px", color: "#fff", lineHeight: 1.1 }}>Let&apos;s make aid simpler<br />for your students.</h2>
+            <h2 style={{ fontSize: 38, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 14px", color: "#fff", lineHeight: 1.1 }}>Let&apos;s make aid simpler<br />for your students.</h2>
             <p style={{ fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,.65)", margin: "0 0 28px" }}>Reach out to learn how AidPilot can support your financial aid office.</p>
             <a href="mailto:hello@aidpilot.app" style={{ display: "inline-block", fontSize: 17, fontWeight: 700, color: "#1F2937", background: "#fff", padding: "15px 32px", borderRadius: 14, textDecoration: "none", boxShadow: "0 10px 24px rgba(0,0,0,.2)" }}>Partner with us</a>
           </div>
@@ -166,7 +166,7 @@ export default function SchoolsPage() {
             <span style={{ display: "flex", width: 28, height: 28, borderRadius: 8, background: "#0B5CAD", alignItems: "center", justifyContent: "center" }}>
               <PlaneSVG size={15} />
             </span>
-            <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 16, fontWeight: 900 }}>
+            <span style={{ fontSize: 16, fontWeight: 900 }}>
               <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
             </span>
           </div>

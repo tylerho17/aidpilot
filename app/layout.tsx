@@ -1,19 +1,7 @@
 import type { Metadata } from "next";
-import { Nunito, Hanken_Grotesk } from "next/font/google";
 import { ClientProviders } from "@/components/providers/ClientProviders";
+import { appFont } from "@/lib/fonts";
 import "./globals.css";
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["700", "800", "900"],
-});
-
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 export const metadata: Metadata = {
   title: "AidPilot -- Protect your aid. Find more college money every week.",
@@ -27,11 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${nunito.variable} ${hanken.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`h-full antialiased ${appFont.variable}`}>
+      <body className={`min-h-full flex flex-col ${appFont.className}`}>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

@@ -62,12 +62,12 @@ type FormState = {
   notes: string;
 };
 
-function offerToForm(offer?: UserAidOffer | null): FormState {
+function offerToForm(offer?: UserAidOffer | null, defaults?: { schoolName?: string; academicYear?: string }): FormState {
   if (!offer) {
     return {
-      school_name: "",
+      school_name: defaults?.schoolName ?? "",
       offer_status: "draft",
-      academic_year: "2026-27",
+      academic_year: defaults?.academicYear ?? "2026-27",
       cost_of_attendance: "",
       tuition_and_fees: "",
       housing_and_food: "",
@@ -130,6 +130,8 @@ function formToInput(form: FormState): AidOfferInput {
 
 type AidOfferFormProps = {
   initialOffer?: UserAidOffer | null;
+  defaultSchoolName?: string;
+  defaultAcademicYear?: string;
   saving?: boolean;
   onSubmit: (input: AidOfferInput, offerId?: string) => Promise<unknown>;
   onCancel?: () => void;
@@ -164,8 +166,20 @@ function DollarField({
   );
 }
 
-export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel }: AidOfferFormProps) {
-  const [form, setForm] = useState<FormState>(() => offerToForm(initialOffer));
+export default function AidOfferForm({
+  initialOffer,
+  defaultSchoolName,
+  defaultAcademicYear,
+  saving,
+  onSubmit,
+  onCancel,
+}: AidOfferFormProps) {
+  const [form, setForm] = useState<FormState>(() =>
+    offerToForm(initialOffer, {
+      schoolName: defaultSchoolName,
+      academicYear: defaultAcademicYear,
+    })
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

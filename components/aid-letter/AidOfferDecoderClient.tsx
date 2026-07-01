@@ -1,24 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { ProductCard } from "@/components/ProductUI";
-import AidCategoryExplainer from "@/components/aid-letter/AidCategoryExplainer";
-import AidOfferComparisonTable from "@/components/aid-letter/AidOfferComparisonTable";
 import AidOfferForm from "@/components/aid-letter/AidOfferForm";
 import AidOfferSummaryCard from "@/components/aid-letter/AidOfferSummaryCard";
 import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
-import ProductPageHeader, { ProductFlowNav, primaryBtn, secondaryBtn } from "@/components/product/ProductPageHeader";
+import ProductPageHeader, { ProductFlowNav } from "@/components/product/ProductPageHeader";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { PrimaryButton, SecondaryButton, SecondaryButtonLink } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { H2, Body, BodyMuted } from "@/components/ui/Typography";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 import { AID_OFFER_COMPARE_HREF } from "@/lib/aid-letter/buildAidOfferComparison";
-import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
+import { FIRST_OFFER_SCHOOL_STORAGE_KEY } from "@/lib/onboarding-aid-stage";
+import { SAMPLE_AID_REPORT_HREF } from "@/lib/aid-letter/sampleAidOffer";
+import { colors, layout } from "@/lib/design-tokens";
 import type { UserAidOffer } from "@/lib/types";
-
-const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
 
 function PageIntro({ hasOffers }: { hasOffers: boolean }) {
   return (
@@ -31,25 +31,14 @@ function PageIntro({ hasOffers }: { hasOffers: boolean }) {
       />
       <ProductPageHeader
         title="Aid Offers"
-        subtitle="Understand what a school is really offering and what you may still owe."
+        subtitle="Add each school's offer to see your real cost, gap, and next steps."
         primaryAction={{ href: "#add-offer", label: "Add aid offer" }}
-        secondaryAction={hasOffers ? { href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" } : undefined}
+        secondaryAction={
+          hasOffers
+            ? { href: AID_OFFER_COMPARE_HREF, label: "Compare aid offers" }
+            : { href: SAMPLE_AID_REPORT_HREF, label: "View sample report" }
+        }
       />
-      <div
-        style={{
-          padding: 14,
-          marginBottom: 18,
-          background: "#fff",
-          border: "1px solid #E3EBF3",
-          borderRadius: 8,
-          fontFamily: pageFont,
-        }}
-      >
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#5B6B7F", margin: 0, lineHeight: 1.65 }}>
-          Grants and scholarships usually do not need to be repaid. Work-study is earned through a job. Loans must be
-          repaid. Your remaining gap is what still needs a plan.
-        </p>
-      </div>
     </>
   );
 }
@@ -72,21 +61,14 @@ export default function AidOfferDecoderClient() {
     reload,
   } = useAidOffers();
 
-  const [showForm, setShowForm] = useState(false);
+  const [formBoot] = useState(() => {
+    if (typeof window === "undefined") return { school: "", open: false };
+    const school = sessionStorage.getItem(FIRST_OFFER_SCHOOL_STORAGE_KEY) ?? "";
+    if (school) sessionStorage.removeItem(FIRST_OFFER_SCHOOL_STORAGE_KEY);
+    return { school, open: Boolean(school) };
+  });
+  const [showForm, setShowForm] = useState(formBoot.open);
   const [editingOffer, setEditingOffer] = useState<UserAidOffer | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const selectedOffer = offers.find((offer) => offer.id === selectedId) ?? null;
-
-  const summaryStats = useMemo(() => {
-    if (offers.length === 0) return null;
-    const withCalc = offers.map((offer) => ({ offer, calculation: calculateAidOfferFromRecord(offer) }));
-    const lowestNet = [...withCalc].sort((a, b) => a.calculation.netCostAfterGiftAid - b.calculation.netCostAfterGiftAid)[0];
-    const highestGap = [...withCalc].sort(
-      (a, b) => b.calculation.remainingGapAfterAllAid - a.calculation.remainingGapAfterAllAid
-    )[0];
-    return { lowestNet, highestGap };
-  }, [offers]);
 
   if (!authReady || loading) {
     return <PageLoading message="Loading your aid offers..." />;
@@ -95,17 +77,13 @@ export default function AidOfferDecoderClient() {
   if (!userId) {
     return (
       <AppShell>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <PageIntro hasOffers={false} />
-          <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
-              Log in to save and compare your aid offers.
-            </p>
-            <Link href="/login" style={primaryBtn}>
-              Sign in
-            </Link>
-          </ProductCard>
-        </div>
+        <PageIntro hasOffers={false} />
+        <EmptyState
+          title="Sign in to save offers"
+          description="Log in to save and compare your aid offers."
+          actionHref="/login"
+          actionLabel="Sign in"
+        />
       </AppShell>
     );
   }
@@ -113,85 +91,60 @@ export default function AidOfferDecoderClient() {
   function openAddForm() {
     setEditingOffer(null);
     setShowForm(true);
-    setSelectedId(null);
   }
 
   function openEditForm(offer: UserAidOffer) {
     setEditingOffer(offer);
     setShowForm(true);
-    setSelectedId(offer.id);
   }
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <PageIntro hasOffers={offers.length > 0} />
+      <PageIntro hasOffers={offers.length > 0} />
 
-        <AidCategoryExplainer />
+      {loadError ? (
+        <SectionCard style={{ ...{ marginBottom: layout.sectionGap }, background: colors.softAmber }}>
+          <BodyMuted style={{ color: colors.amber, marginBottom: layout.stackGapSm }}>{loadError}</BodyMuted>
+          <SecondaryButton onClick={() => void reload()}>Try again</SecondaryButton>
+        </SectionCard>
+      ) : null}
+      {actionError ? <PageErrorBanner message={actionError} /> : null}
 
-        {loadError ? (
-          <ProductCard style={{ padding: 18, marginBottom: 18, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: "0 0 14px", lineHeight: 1.6 }}>
-              {loadError}
-            </p>
-            <button type="button" style={secondaryBtn} onClick={() => void reload()}>
-              Try again
-            </button>
-          </ProductCard>
-        ) : null}
-        {actionError ? <PageErrorBanner message={actionError} /> : null}
-
-        {offers.length > 0 && summaryStats ? (
-          <ProductCard style={{ padding: 18, marginBottom: 18 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Saved offers</div>
-                <div className="font-display" style={{ fontSize: 24, fontWeight: 900, color: "#15212E" }}>
-                  {offers.length}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Lowest net after gift aid</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#15885A" }}>
-                  {summaryStats.lowestNet.offer.school_name} · $
-                  {summaryStats.lowestNet.calculation.netCostAfterGiftAid.toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Highest remaining gap</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#C04E57" }}>
-                  {summaryStats.highestGap.offer.school_name} · $
-                  {summaryStats.highestGap.calculation.remainingGapAfterAllAid.toLocaleString()}
-                </div>
-              </div>
-            </div>
-          </ProductCard>
-        ) : null}
-
-        {!loadError && offers.length === 0 && !showForm ? (
-          <div id="add-offer">
-          <ProductCard style={{ padding: 24, marginBottom: 20, border: "1px solid #E3EBF3" }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#5B6B7F", margin: "0 0 10px", lineHeight: 1.65, fontFamily: pageFont }}>
-              No aid offers yet. Add your first aid offer to generate your Aid Health Report.
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.6, fontFamily: pageFont }}>
-              Enter the numbers manually from your school portal or aid letter.
-            </p>
-            <button type="button" style={primaryBtn} onClick={openAddForm}>
-              Add aid offer
-            </button>
-          </ProductCard>
+      {offers.length > 0 ? (
+        <SectionCard style={{ ...{ marginBottom: layout.sectionGap }, background: colors.softBlue }}>
+          <Body>
+            You have <strong>{offers.length}</strong> saved offer{offers.length === 1 ? "" : "s"}. Compare schools to see
+            which leaves you with the lowest remaining gap.
+          </Body>
+          <div style={{ marginTop: layout.stackGapSm }}>
+            <SecondaryButtonLink href={AID_OFFER_COMPARE_HREF}>Open compare view</SecondaryButtonLink>
           </div>
-        ) : null}
+        </SectionCard>
+      ) : null}
 
-        {!loadError && (showForm || offers.length > 0) ? (
-          <ProductCard style={{ padding: 22, marginBottom: 20 }}>
-            <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+      {!loadError && offers.length === 0 && !showForm ? (
+        <div id="add-offer">
+          <SectionCard style={{ marginBottom: layout.sectionGap }}>
+            <H2 style={{ marginBottom: layout.stackGapXs }}>No aid offers yet</H2>
+            <Body style={{ marginBottom: layout.stackGap }}>
+              Add your first aid offer to generate your Aid Health Report. Enter numbers from your school portal or aid
+              letter.
+            </Body>
+            <PrimaryButton onClick={openAddForm}>Add aid offer</PrimaryButton>
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {!loadError && (showForm || offers.length > 0) ? (
+        <div id={showForm ? "add-offer" : undefined}>
+          <SectionCard style={{ marginBottom: layout.sectionGap }}>
+            <H2 style={{ marginBottom: layout.stackGapSm }}>
               {editingOffer ? `Edit ${editingOffer.school_name}` : showForm ? "Add aid offer" : "Add another school"}
-            </h2>
+            </H2>
             {showForm ? (
               <AidOfferForm
                 initialOffer={editingOffer}
+                defaultSchoolName={formBoot.school || undefined}
                 saving={Boolean(savingId)}
                 onSubmit={async (input, offerId) => {
                   const saved = await saveOffer(input, offerId);
@@ -199,7 +152,6 @@ export default function AidOfferDecoderClient() {
                     void loadData();
                     setShowForm(false);
                     setEditingOffer(null);
-                    setSelectedId(saved.id);
                     router.push(getAidOfferReportHref(saved.id));
                   }
                   return saved;
@@ -210,52 +162,32 @@ export default function AidOfferDecoderClient() {
                 }}
               />
             ) : (
-              <button type="button" style={primaryBtn} onClick={openAddForm}>
-                Add aid offer
-              </button>
+              <PrimaryButton onClick={openAddForm}>Add aid offer</PrimaryButton>
             )}
-          </ProductCard>
-        ) : null}
+          </SectionCard>
+        </div>
+      ) : null}
 
-        {!loadError && offers.length > 0 ? (
-          <>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-              <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: 0, color: "#15212E" }}>
-                Compare schools
-              </h2>
-              <Link href={AID_OFFER_COMPARE_HREF} style={secondaryBtn}>
-                Compare aid offers
-              </Link>
-            </div>
-            <AidOfferComparisonTable
-              offers={offers}
-              onSelect={(offer) => router.push(getAidOfferReportHref(offer.id))}
+      {!loadError && offers.length > 0 ? (
+        <div>
+          <H2 style={{ marginBottom: layout.stackGap }}>Your schools</H2>
+          {offers.map((offer) => (
+            <AidOfferSummaryCard
+              key={offer.id}
+              offer={offer}
+              saving={savingId === offer.id}
+              onMarkOfficial={(id) => {
+                void updateOfferStatus(id, "official").then(() => loadData());
+              }}
+              onMarkReviewed={(id) => {
+                void markReviewed(id).then(() => loadData());
+              }}
+              onEdit={openEditForm}
+              onDelete={(id) => void deleteOffer(id)}
             />
-
-            <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
-              School breakdowns
-            </h2>
-            {(selectedOffer ? [selectedOffer] : offers).map((offer) => (
-              <AidOfferSummaryCard
-                key={offer.id}
-                offer={offer}
-                saving={savingId === offer.id}
-                onMarkOfficial={(id) => {
-                  void updateOfferStatus(id, "official").then(() => loadData());
-                }}
-                onMarkReviewed={(id) => {
-                  void markReviewed(id).then(() => loadData());
-                }}
-                onEdit={openEditForm}
-                onDelete={(id) => {
-                  void deleteOffer(id);
-                  if (selectedId === id) setSelectedId(null);
-                }}
-              />
-            ))}
-          </>
-        ) : null}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </AppShell>
   );
 }

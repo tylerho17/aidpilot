@@ -18,7 +18,6 @@ export function AuthShell({
       style={{
         minHeight: "100vh",
         background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)",
-        fontFamily: "var(--font-hanken), system-ui, sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
@@ -39,7 +38,7 @@ export function AuthShell({
           >
             <PlaneSVG size={18} color="#fff" />
           </span>
-          <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: "-.3px" }}>
+          <span className="font-display" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.3px" }}>
             <span style={{ color: "#1F2937" }}>Aid</span>
             <span style={{ color: "#0B5CAD" }}>Pilot</span>
           </span>

@@ -22,7 +22,7 @@ interface LegalShellProps {
 
 export function LegalShell({ badge, heading, lastUpdated, children }: LegalShellProps) {
   return (
-    <div style={{ minHeight: "100vh", background: "#F9FAFB", fontFamily: "var(--font-hanken), system-ui, sans-serif", color: "#1F2937" }}>
+    <div style={{ minHeight: "100vh", background: "#F9FAFB", color: "#1F2937" }}>
 
       {/* top bar */}
       <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "14px 40px" }}>
@@ -31,7 +31,7 @@ export function LegalShell({ badge, heading, lastUpdated, children }: LegalShell
             <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "#0B5CAD", boxShadow: "0 4px 12px rgba(11,92,173,.22)", flexShrink: 0 }}>
               <PlaneSVG />
             </span>
-            <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: "-.4px" }}>
+            <span className="font-display" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.4px" }}>
               <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
             </span>
           </Link>
@@ -52,7 +52,7 @@ export function LegalShell({ badge, heading, lastUpdated, children }: LegalShell
               {badge}
             </span>
           )}
-          <h1 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 44, fontWeight: 900, letterSpacing: "-1.2px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.08 }}>{heading}</h1>
+          <h1 className="text-h1" style={{ marginBottom: 10 }}>{heading}</h1>
           <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>Last updated: {lastUpdated}</p>
         </div>
 
@@ -69,7 +69,7 @@ export function LegalShell({ badge, heading, lastUpdated, children }: LegalShell
             <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, background: "#0B5CAD" }}>
               <PlaneSVG />
             </span>
-            <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 16, fontWeight: 900 }}>
+            <span style={{ fontSize: 16, fontWeight: 900 }}>
               <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
             </span>
           </div>
@@ -111,7 +111,7 @@ export function SectionCard({ title, children, accent = "white" }: SectionCardPr
   return (
     <div style={{ background: s.bg, border: "1px solid " + s.border, borderRadius: 18, padding: "28px 32px" }}>
       {title && (
-        <h2 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 800, margin: "0 0 14px", color: s.titleColor, lineHeight: 1.2 }}>{title}</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px", color: s.titleColor, lineHeight: 1.2 }}>{title}</h2>
       )}
       <div style={{ fontSize: 15.5, lineHeight: 1.75, color: "#374151" }}>
         {children}

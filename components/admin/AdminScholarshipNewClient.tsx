@@ -21,7 +21,7 @@ export default function AdminScholarshipNewClient() {
 
   return (
     <AdminGate>
-      <div style={{ minHeight: "100vh", background: "#F4F8FE", padding: "32px 24px", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#F4F8FE", padding: "32px 24px",  }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <Link href="/admin/scholarships" style={{ fontSize: 13, fontWeight: 600, color: "#0B5CAD", textDecoration: "none" }}>← All scholarships</Link>
           <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "10px 0 20px", color: "#15212E" }}>New scholarship</h1>

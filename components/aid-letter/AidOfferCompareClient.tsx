@@ -12,61 +12,25 @@ import {
   type AidOfferComparisonRow,
 } from "@/lib/aid-letter/buildAidOfferComparison";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
-import { ProductFlowNav, linkBtn, secondaryBtn } from "@/components/product/ProductPageHeader";
-
-const pageFont = 'Arial, Helvetica, "Segoe UI", sans-serif';
-const navy = "#0F2744";
-const muted = "#5B6B7F";
-const border = "#E3EBF3";
+import { PageHeader, ProductFlowNav } from "@/components/ui/PageHeader";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { MetricCard } from "@/components/ui/MetricCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { CopyQuestionRow } from "@/components/ui/CopyButton";
+import { PrimaryButtonLink } from "@/components/ui/PrimaryButton";
+import { SecondaryButton, SecondaryButtonLink } from "@/components/ui/SecondaryButton";
+import { TableWrapper, tableHeaderCell, tableBodyCell } from "@/components/ui/TableWrapper";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { buttons, colors, layout, radius, text, type BadgeTone } from "@/lib/design-tokens";
+import { H3, Body } from "@/components/ui/Typography";
 
 function money(value: number) {
   return `$${value.toLocaleString()}`;
 }
 
-const headerCell = {
-  textAlign: "left" as const,
-  fontSize: 12,
-  fontWeight: 700,
-  color: muted,
-  padding: "10px 12px",
-  borderBottom: `2px solid ${border}`,
-  whiteSpace: "nowrap" as const,
-  fontFamily: pageFont,
-};
-
-const bodyCell = {
-  padding: "11px 12px",
-  fontSize: 14,
-  color: navy,
-  borderBottom: `1px solid ${border}`,
-  whiteSpace: "nowrap" as const,
-  fontFamily: pageFont,
-};
-
 function RiskBadge({ level }: { level: AidOfferComparisonRow["riskLevel"] }) {
-  const tone = riskLevelTone(level);
-  const colors = {
-    green: { bg: "#ECFDF5", fg: "#15885A", border: "#BBF7D0" },
-    amber: { bg: "#FFFBEB", fg: "#B7791F", border: "#FDE68A" },
-    red: { bg: "#FEF2F2", fg: "#C04E57", border: "#FECACA" },
-  }[tone];
-
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        fontSize: 12,
-        fontWeight: 700,
-        padding: "3px 8px",
-        borderRadius: 4,
-        background: colors.bg,
-        color: colors.fg,
-        border: `1px solid ${colors.border}`,
-      }}
-    >
-      {level}
-    </span>
-  );
+  const toneMap: Record<string, BadgeTone> = { green: "green", amber: "amber", red: "coral" };
+  return <StatusBadge tone={toneMap[riskLevelTone(level)] ?? "gray"}>{level}</StatusBadge>;
 }
 
 function HighlightTag({ label }: { label: string }) {
@@ -75,66 +39,15 @@ function HighlightTag({ label }: { label: string }) {
       style={{
         display: "inline-block",
         marginLeft: 8,
-        fontSize: 11,
-        fontWeight: 700,
-        color: "#0B5CAD",
-        background: "#EFF6FF",
-        border: "1px solid #BFDBFE",
-        padding: "2px 6px",
-        borderRadius: 4,
+        ...text.label,
+        color: colors.primary,
+        background: colors.softBlue,
+        padding: "2px 8px",
+        borderRadius: radius.pill,
       }}
     >
       {label}
     </span>
-  );
-}
-
-function CopyQuestion({ question }: { question: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(question);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "12px 14px",
-        border: `1px solid ${border}`,
-        borderRadius: 6,
-        background: "#fff",
-      }}
-    >
-      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: navy, fontWeight: 500 }}>{question}</p>
-      <button
-        type="button"
-        onClick={() => void copy()}
-        style={{
-          flexShrink: 0,
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#0B5CAD",
-          background: "#F7FAFD",
-          border: `1px solid ${border}`,
-          borderRadius: 4,
-          padding: "6px 10px",
-          cursor: "pointer",
-          fontFamily: pageFont,
-        }}
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-    </div>
   );
 }
 
@@ -154,22 +67,17 @@ export default function AidOfferCompareClient() {
   if (!userId) {
     return (
       <AppShell>
-        <div style={{ maxWidth: 960, margin: "0 auto", fontFamily: pageFont }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: navy, margin: "0 0 8px" }}>Compare aid offers</h1>
-          <p style={{ fontSize: 15, color: muted, margin: "0 0 18px", lineHeight: 1.6 }}>
-            Log in to compare saved aid offers across schools.
-          </p>
-          <Link href="/login" style={linkBtn}>
-            Sign in
-          </Link>
-        </div>
+        <PageHeader
+          title="Compare aid offers"
+          subtitle="Log in to compare saved aid offers across schools."
+          primaryAction={{ href: "/login", label: "Sign in" }}
+        />
       </AppShell>
     );
   }
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1100, margin: "0 auto", fontFamily: pageFont, color: navy }}>
         <ProductFlowNav
           links={[
             { href: "/dashboard", label: "Dashboard" },
@@ -177,42 +85,31 @@ export default function AidOfferCompareClient() {
           ]}
         />
 
-        <header style={{ margin: "0 0 24px" }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 8px", color: navy }}>Compare aid offers</h1>
-          <p style={{ fontSize: 15, color: muted, margin: 0, lineHeight: 1.6, maxWidth: 640 }}>
-            See which school leaves you with the lowest real gap.
-          </p>
-        </header>
+        <PageHeader title="Compare aid offers" subtitle="See which school leaves you with the lowest real gap." />
 
         {loadError ? (
-          <div style={{ padding: 16, marginBottom: 20, border: "1px solid #FDE68A", borderRadius: 6, background: "#FFFBEB" }}>
-            <p style={{ margin: "0 0 12px", fontSize: 14, color: "#78350F", lineHeight: 1.6 }}>{loadError}</p>
-            <button type="button" style={secondaryBtn} onClick={() => void reload()}>
-              Try again
-            </button>
-          </div>
+          <SectionCard style={{ marginBottom: layout.sectionGap, background: colors.softAmber }}>
+            <Body style={{ color: colors.amber, marginBottom: layout.stackGapSm }}>{loadError}</Body>
+            <SecondaryButton onClick={() => void reload()}>Try again</SecondaryButton>
+          </SectionCard>
         ) : null}
 
         {!loadError && offers.length === 0 ? (
-          <div style={{ padding: 20, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-            <p style={{ margin: "0 0 16px", fontSize: 15, color: muted, lineHeight: 1.6 }}>
-              Add your first aid offer to compare schools.
-            </p>
-            <Link href="/aid-letter" style={linkBtn}>
-              Add aid offer
-            </Link>
-          </div>
+          <EmptyState
+            title="No offers to compare"
+            description="Add your first aid offer to compare schools."
+            actionHref="/aid-letter"
+            actionLabel="Add aid offer"
+          />
         ) : null}
 
         {!loadError && offers.length === 1 ? (
-          <div style={{ padding: 20, marginBottom: 20, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-            <p style={{ margin: "0 0 16px", fontSize: 15, color: muted, lineHeight: 1.6 }}>
+          <SectionCard style={{ marginBottom: layout.sectionGap }}>
+            <Body style={{ marginBottom: layout.stackGap }}>
               Add another aid offer to compare schools side by side.
-            </p>
-            <Link href="/aid-letter" style={linkBtn}>
-              Add another offer
-            </Link>
-          </div>
+            </Body>
+            <PrimaryButtonLink href="/aid-letter">Add another offer</PrimaryButtonLink>
+          </SectionCard>
         ) : null}
 
         {comparison && comparison.rows.length > 0 ? (
@@ -222,55 +119,49 @@ export default function AidOfferCompareClient() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  gap: 12,
-                  marginBottom: 20,
+                  gap: layout.stackGapSm,
+                  marginBottom: layout.sectionGap,
                 }}
               >
                 {comparison.lowestGap ? (
-                  <div style={{ padding: 14, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: muted, marginBottom: 4 }}>Lowest remaining gap</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15885A" }}>
-                      {comparison.lowestGap.offer.school_name} · {money(comparison.lowestGap.calculation.remainingGapAfterAllAid)}
-                    </div>
-                  </div>
+                  <MetricCard
+                    label="Lowest remaining gap"
+                    value={`${comparison.lowestGap.offer.school_name} · ${money(comparison.lowestGap.calculation.remainingGapAfterAllAid)}`}
+                    tone="success"
+                  />
                 ) : null}
                 {comparison.highestGiftAid ? (
-                  <div style={{ padding: 14, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: muted, marginBottom: 4 }}>Highest gift aid</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#15885A" }}>
-                      {comparison.highestGiftAid.offer.school_name} · {money(comparison.highestGiftAid.calculation.giftAid)}
-                    </div>
-                  </div>
+                  <MetricCard
+                    label="Highest gift aid"
+                    value={`${comparison.highestGiftAid.offer.school_name} · ${money(comparison.highestGiftAid.calculation.giftAid)}`}
+                    tone="success"
+                  />
                 ) : null}
                 {comparison.highestLoanReliance && comparison.highestLoanReliance.isHighLoanReliance ? (
-                  <div style={{ padding: 14, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: muted, marginBottom: 4 }}>High loan reliance</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#B7791F" }}>
-                      {comparison.highestLoanReliance.offer.school_name} · {comparison.highestLoanReliance.loanReliancePct}% of COA
-                    </div>
-                  </div>
+                  <MetricCard
+                    label="High loan reliance"
+                    value={`${comparison.highestLoanReliance.offer.school_name} · ${comparison.highestLoanReliance.loanReliancePct}% of COA`}
+                    tone="warning"
+                  />
                 ) : null}
                 {comparison.missingYearOffers.length > 0 ? (
-                  <div style={{ padding: 14, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: muted, marginBottom: 4 }}>Missing academic year</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#B7791F" }}>
-                      {comparison.missingYearOffers.map((row) => row.offer.school_name).join(", ")}
-                    </div>
-                  </div>
+                  <MetricCard
+                    label="Missing academic year"
+                    value={comparison.missingYearOffers.map((row) => row.offer.school_name).join(", ")}
+                    tone="warning"
+                  />
                 ) : null}
                 {comparison.draftOffers.length > 0 ? (
-                  <div style={{ padding: 14, border: `1px solid ${border}`, borderRadius: 6, background: "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: muted, marginBottom: 4 }}>Draft status</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: muted }}>
-                      {comparison.draftOffers.map((row) => row.offer.school_name).join(", ")}
-                    </div>
-                  </div>
+                  <MetricCard
+                    label="Draft status"
+                    value={comparison.draftOffers.map((row) => row.offer.school_name).join(", ")}
+                  />
                 ) : null}
               </div>
             ) : null}
 
-            <div className="overflow-x-auto" style={{ marginBottom: 24, WebkitOverflowScrolling: "touch" }}>
-              <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "collapse", background: "#fff" }}>
+            <TableWrapper>
+              <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     {[
@@ -286,7 +177,7 @@ export default function AidOfferCompareClient() {
                       "Risk",
                       "Report",
                     ].map((header) => (
-                      <th key={header} style={headerCell}>
+                      <th key={header} style={tableHeaderCell}>
                         {header}
                       </th>
                     ))}
@@ -301,10 +192,10 @@ export default function AidOfferCompareClient() {
                         onClick={() => setSelectedId(row.offer.id)}
                         style={{
                           cursor: "pointer",
-                          background: selected ? "#F7FAFD" : "#fff",
+                          background: selected ? colors.softBlue : colors.card,
                         }}
                       >
-                        <td style={{ ...bodyCell, fontWeight: 700, minWidth: 160 }}>
+                        <td style={{ ...tableBodyCell, fontWeight: 600, minWidth: 160 }}>
                           {row.offer.school_name}
                           {row.isLowestGap && comparison.rows.length > 1 ? <HighlightTag label="Lowest gap" /> : null}
                           {row.isHighestGiftAid && comparison.rows.length > 1 ? <HighlightTag label="Most gift aid" /> : null}
@@ -313,27 +204,27 @@ export default function AidOfferCompareClient() {
                           {row.missingAcademicYear ? <HighlightTag label="Missing year" /> : null}
                           {row.isDraft ? <HighlightTag label="Draft" /> : null}
                         </td>
-                        <td style={{ ...bodyCell, color: row.missingAcademicYear ? "#B7791F" : muted }}>
+                        <td style={{ ...tableBodyCell, color: row.missingAcademicYear ? colors.amber : colors.textMuted }}>
                           {row.offer.academic_year?.trim() || "Not set"}
                         </td>
-                        <td style={bodyCell}>{money(row.offer.cost_of_attendance)}</td>
-                        <td style={{ ...bodyCell, color: "#15885A", fontWeight: 600 }}>{money(row.calculation.giftAid)}</td>
-                        <td style={{ ...bodyCell, color: "#B7791F", fontWeight: 600 }}>
+                        <td style={tableBodyCell}>{money(row.offer.cost_of_attendance)}</td>
+                        <td style={{ ...tableBodyCell, color: colors.green, fontWeight: 600 }}>{money(row.calculation.giftAid)}</td>
+                        <td style={{ ...tableBodyCell, color: colors.amber, fontWeight: 600 }}>
                           {money(row.offer.federal_student_loans)}
                         </td>
-                        <td style={bodyCell}>{money(row.calculation.workStudy)}</td>
-                        <td style={{ ...bodyCell, fontWeight: 700 }}>{money(row.calculation.netCostAfterGiftAid)}</td>
-                        <td style={{ ...bodyCell, color: "#C04E57", fontWeight: 700 }}>
+                        <td style={tableBodyCell}>{money(row.calculation.workStudy)}</td>
+                        <td style={{ ...tableBodyCell, fontWeight: 600 }}>{money(row.calculation.netCostAfterGiftAid)}</td>
+                        <td style={{ ...tableBodyCell, color: colors.coral, fontWeight: 700 }}>
                           {money(row.calculation.remainingGapAfterAllAid)}
                         </td>
-                        <td style={bodyCell}>{formatOfferStatus(row.offer)}</td>
-                        <td style={bodyCell}>
+                        <td style={tableBodyCell}>{formatOfferStatus(row.offer)}</td>
+                        <td style={tableBodyCell}>
                           <RiskBadge level={row.riskLevel} />
                         </td>
-                        <td style={bodyCell} onClick={(e) => e.stopPropagation()}>
+                        <td style={tableBodyCell} onClick={(e) => e.stopPropagation()}>
                           <Link
                             href={getAidOfferReportHref(row.offer.id)}
-                            style={{ fontSize: 13, fontWeight: 700, color: "#0B5CAD", textDecoration: "none" }}
+                            style={{ fontSize: 13, fontWeight: 600, color: colors.primary, textDecoration: "none" }}
                           >
                             Health Report
                           </Link>
@@ -343,49 +234,40 @@ export default function AidOfferCompareClient() {
                   })}
                 </tbody>
               </table>
-            </div>
+            </TableWrapper>
 
             {comparison.rows.length >= 2 ? (
               <>
-                <section style={{ marginBottom: 24, padding: 18, border: `1px solid ${border}`, borderRadius: 6, background: "#F7FAFD" }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px", color: navy }}>Recommendation</h2>
-                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: muted, fontWeight: 500 }}>
-                    {comparison.recommendation}
-                  </p>
-                </section>
+                <SectionCard style={{ marginBottom: layout.sectionGap, background: colors.softBlue }}>
+                  <H3 style={{ marginBottom: layout.stackGapSm }}>Recommendation</H3>
+                  <Body>{comparison.recommendation}</Body>
+                </SectionCard>
 
-                <section style={{ marginBottom: 24 }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 6px", color: navy }}>Questions to ask the aid office</h2>
-                  <p style={{ margin: "0 0 14px", fontSize: 14, color: muted, lineHeight: 1.55 }}>
+                <section style={{ marginBottom: layout.sectionGap }}>
+                  <H3 style={{ marginBottom: layout.stackGapXs }}>Questions to ask the aid office</H3>
+                  <Body style={{ marginBottom: layout.stackGapSm }}>
                     {comparison.focusOffer
                       ? `Use these when speaking with ${comparison.focusOffer.school_name}'s aid office. Click a school row above to change focus.`
                       : "Use these when speaking with your school's aid office."}
-                  </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  </Body>
+                  <div style={{ display: "flex", flexDirection: "column", gap: layout.stackGapSm }}>
                     {comparison.officeQuestions.map((question) => (
-                      <CopyQuestion key={question} question={question} />
+                      <CopyQuestionRow key={question} question={question} />
                     ))}
                   </div>
                 </section>
               </>
             ) : null}
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <Link href="/dashboard" style={secondaryBtn}>
-                Dashboard
-              </Link>
-              <Link href="/aid-letter" style={secondaryBtn}>
-                Manage offers
-              </Link>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: buttons.gap }}>
+              <SecondaryButtonLink href="/dashboard">Dashboard</SecondaryButtonLink>
+              <SecondaryButtonLink href="/aid-letter">Manage offers</SecondaryButtonLink>
               {comparison.focusOffer ? (
-                <Link href={getAidOfferReportHref(comparison.focusOffer.id)} style={linkBtn}>
-                  View Aid Health Report
-                </Link>
+                <PrimaryButtonLink href={getAidOfferReportHref(comparison.focusOffer.id)}>View Aid Health Report</PrimaryButtonLink>
               ) : null}
             </div>
           </>
         ) : null}
-      </div>
     </AppShell>
   );
 }
