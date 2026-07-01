@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { Component, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/AppShell";
-import { ProductCard, PageContentSkeleton } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { PageContentSkeleton } from "@/components/ProductUI";
+import { Card, Avatar, TextField, Button, IconTile, SegmentedControl } from "@/components/ui";
+import { getInitials } from "@/lib/data-helpers";
+import { useLanguage, type Language } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import {
   isAuthSessionError,
@@ -18,6 +21,69 @@ type ProfileSummary = {
   school: string;
   educationLevel: string;
   state: string;
+};
+
+/** Settings copy - English + Spanish. Data values stay canonical; only labels localize. */
+const SETTINGS_STRINGS: Record<Language, {
+  title: string;
+  subtitle: string;
+  profileHeading: string;
+  profileSub: string;
+  name: string;
+  school: string;
+  year: string;
+  state: string;
+  notSet: string;
+  languageHeading: string;
+  languageSub: string;
+  accountHeading: string;
+  signedInAs: string;
+  yourAccount: string;
+  logOut: string;
+  backToDashboard: string;
+  privacy: string;
+  disclaimer: string;
+}> = {
+  en: {
+    title: "Settings",
+    subtitle: "Manage your AidPilot account and profile.",
+    profileHeading: "Profile",
+    profileSub: "Your basic profile info from onboarding.",
+    name: "Name",
+    school: "School",
+    year: "Year",
+    state: "State",
+    notSet: "Not set yet",
+    languageHeading: "Language",
+    languageSub: "Choose the language AidPilot uses.",
+    accountHeading: "Account",
+    signedInAs: "Signed in as",
+    yourAccount: "your account",
+    logOut: "Log out",
+    backToDashboard: "Back to dashboard",
+    privacy: "Privacy",
+    disclaimer: "Disclaimer",
+  },
+  es: {
+    title: "Configuración",
+    subtitle: "Administra tu cuenta y perfil de AidPilot.",
+    profileHeading: "Perfil",
+    profileSub: "La información básica de tu perfil de la configuración inicial.",
+    name: "Nombre",
+    school: "Escuela",
+    year: "Año",
+    state: "Estado",
+    notSet: "Aún sin configurar",
+    languageHeading: "Idioma",
+    languageSub: "Elige el idioma que usa AidPilot.",
+    accountHeading: "Cuenta",
+    signedInAs: "Sesión iniciada como",
+    yourAccount: "tu cuenta",
+    logOut: "Cerrar sesión",
+    backToDashboard: "Volver al panel",
+    privacy: "Privacidad",
+    disclaimer: "Aviso legal",
+  },
 };
 
 type SettingsProfileRow = {
@@ -69,109 +135,131 @@ function SettingsContent({
   pageError: string | null;
   onLogout: () => Promise<void>;
 }) {
+  const { lang, setLang, t } = useLanguage();
+  const S = t(SETTINGS_STRINGS);
+  // "Not set yet" is the canonical sentinel from buildSummaryFromRow - localize at render.
+  const show = (value: string) => (value === "Not set yet" ? S.notSet : value);
+
   return (
-    <>
+    <div className="stagger-children">
       <div style={{ marginBottom: 28 }}>
         <h1
           className="font-display"
-          style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}
+          style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "var(--ink-900)" }}
         >
-          Settings
+          {S.title}
         </h1>
-        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Manage your AidPilot account and profile.
+        <p style={{ fontSize: 16, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.6 }}>
+          {S.subtitle}
         </p>
       </div>
 
       {pageError ? (
-        <ProductCard style={{ padding: 20, marginBottom: 22, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
+        <Card
+          variant="clay"
+          padding={20}
+          style={{ marginBottom: 22, background: "var(--amber-100)", display: "flex", gap: 12, alignItems: "flex-start" }}
+        >
+          <IconTile icon="shield" tone="amber" size={40} />
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--amber-700)", margin: 0, lineHeight: 1.6 }}>
             {pageError}
           </p>
-        </ProductCard>
+        </Card>
       ) : null}
 
-      <ProductCard style={{ padding: 28, marginBottom: 22 }}>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
-          Account
-        </h2>
-        <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 14px" }}>
-          Signed in as <span style={{ fontWeight: 700, color: "#15212E" }}>{summary.email || "your account"}</span>
-        </p>
-        <button
-          type="button"
-          onClick={() => void onLogout()}
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: "#0B5CAD",
-            background: "#fff",
-            border: "1.5px solid #DCE7F5",
-            padding: "12px 22px",
-            borderRadius: 13,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          Log out
-        </button>
-      </ProductCard>
+      {/* Profile summary */}
+      <Card
+        variant="clay"
+        padding={28}
+        style={{ marginBottom: 22, display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}
+      >
+        <Avatar initials={getInitials(summary.name)} size={64} />
+        <div style={{ minWidth: 0 }}>
+          <h2
+            className="font-display"
+            style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-.4px", margin: 0, color: "var(--ink-900)" }}
+          >
+            {summary.name}
+          </h2>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--gray-500)", margin: "6px 0 0" }}>
+            {summary.school}
+            {summary.educationLevel && summary.educationLevel !== "Not set yet"
+              ? ` · ${summary.educationLevel}`
+              : ""}
+          </p>
+        </div>
+      </Card>
 
-      <ProductCard style={{ padding: 28, marginBottom: 22 }}>
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
-          Profile
+      {/* Profile fields */}
+      <Card variant="clay" padding={28} style={{ marginBottom: 22 }}>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "var(--ink-900)" }}>
+          {S.profileHeading}
         </h2>
-        <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 18px", lineHeight: 1.6 }}>
-          Your basic profile info from onboarding.
+        <p style={{ fontSize: 13, color: "var(--gray-400)", margin: "0 0 20px", lineHeight: 1.6 }}>
+          {S.profileSub}
         </p>
-        <dl style={{ display: "grid", gap: 12, margin: 0 }}>
-          <div>
-            <dt style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Name</dt>
-            <dd style={{ fontSize: 15, fontWeight: 600, color: "#15212E", margin: 0 }}>{summary.name}</dd>
-          </div>
-          <div>
-            <dt style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>School</dt>
-            <dd style={{ fontSize: 15, fontWeight: 600, color: "#15212E", margin: 0 }}>{summary.school}</dd>
-          </div>
-          <div>
-            <dt style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>Year</dt>
-            <dd style={{ fontSize: 15, fontWeight: 600, color: "#15212E", margin: 0 }}>{summary.educationLevel}</dd>
-          </div>
-          <div>
-            <dt style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>State</dt>
-            <dd style={{ fontSize: 15, fontWeight: 600, color: "#15212E", margin: 0 }}>{summary.state}</dd>
-          </div>
-        </dl>
-      </ProductCard>
+        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <TextField label={S.name} value={show(summary.name)} readOnly icon="gear" />
+          <TextField label={S.school} value={show(summary.school)} readOnly icon="clipboard" />
+          <TextField label={S.year} value={show(summary.educationLevel)} readOnly icon="calendar" />
+          <TextField label={S.state} value={show(summary.state)} readOnly icon="shield" />
+        </div>
+      </Card>
+
+      {/* Language */}
+      <Card variant="clay" padding={28} style={{ marginBottom: 22 }}>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "var(--ink-900)" }}>
+          {S.languageHeading}
+        </h2>
+        <p style={{ fontSize: 13, color: "var(--gray-400)", margin: "0 0 18px", lineHeight: 1.6 }}>
+          {S.languageSub}
+        </p>
+        <SegmentedControl
+          options={[
+            { value: "en", label: "English" },
+            { value: "es", label: "Español" },
+          ]}
+          value={lang}
+          onChange={(v) => setLang(v === "es" ? "es" : "en")}
+        />
+      </Card>
+
+      {/* Account */}
+      <Card variant="clay" padding={28} style={{ marginBottom: 22 }}>
+        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "var(--ink-900)" }}>
+          {S.accountHeading}
+        </h2>
+        <p style={{ fontSize: 13, color: "var(--gray-400)", margin: "0 0 18px", lineHeight: 1.6 }}>
+          {S.signedInAs}{" "}
+          <span style={{ fontWeight: 700, color: "var(--ink-800)" }}>{summary.email || S.yourAccount}</span>
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <Button variant="secondary" iconLeft="arrow-right" onClick={() => void onLogout()}>
+            {S.logOut}
+          </Button>
+        </div>
+
+      </Card>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
-        <Link
-          href="/dashboard"
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: "#fff",
-            background: "#0B5CAD",
-            padding: "12px 22px",
-            borderRadius: 13,
-            textDecoration: "none",
-          }}
-        >
-          Back to dashboard
+        <Link href="/dashboard" style={{ textDecoration: "none" }}>
+          <Button variant="clay" iconLeft="grid">
+            {S.backToDashboard}
+          </Button>
         </Link>
-        <p style={{ fontSize: 14, color: "#9AA4B2", margin: 0 }}>More settings coming soon.</p>
       </div>
 
-      <p style={{ fontSize: 12, color: "#9AA4B2", lineHeight: 1.6, marginTop: 24 }}>
-        <Link href="/privacy" style={{ color: "#0B5CAD" }}>
-          Privacy
+      <p style={{ fontSize: 12, color: "var(--gray-400)", lineHeight: 1.6, marginTop: 24 }}>
+        <Link href="/privacy" style={{ color: "var(--blue-700)" }}>
+          {S.privacy}
         </Link>{" "}
         ·{" "}
-        <Link href="/disclaimer" style={{ color: "#0B5CAD" }}>
-          Disclaimer
+        <Link href="/disclaimer" style={{ color: "var(--blue-700)" }}>
+          {S.disclaimer}
         </Link>
       </p>
-    </>
+    </div>
   );
 }
 
@@ -189,13 +277,15 @@ class SettingsErrorBoundary extends Component<{ children: ReactNode }, { hasErro
   render() {
     if (this.state.hasError) {
       return (
-        <SettingsContent
-          summary={defaultSummary()}
-          pageError="We couldn't load all settings details. You can still use AidPilot."
-          onLogout={async () => {
-            window.location.href = "/login";
-          }}
-        />
+        <AppChrome>
+          <SettingsContent
+            summary={defaultSummary()}
+            pageError="We couldn't load all settings details. You can still use AidPilot."
+            onLogout={async () => {
+              window.location.href = "/login";
+            }}
+          />
+        </AppChrome>
       );
     }
 
@@ -296,13 +386,13 @@ function SettingsClientInner() {
   }
 
   return (
-    <AppShell>
+    <AppChrome>
       {loading ? (
         <PageContentSkeleton message="Loading settings..." />
       ) : (
         <SettingsContent summary={summary} pageError={pageError} onLogout={handleLogout} />
       )}
-    </AppShell>
+    </AppChrome>
   );
 }
 

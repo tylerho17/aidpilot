@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import DashboardClient from "@/components/product/DashboardClient";
+import { AppChrome } from "@/components/app/AppChrome";
+import { HomeScreen } from "@/components/app/screens/HomeScreen";
 
 export const metadata: Metadata = {
   title: "Dashboard | AidPilot",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return (
+    <AppChrome>
+      <HomeScreen />
+    </AppChrome>
+  );
 }

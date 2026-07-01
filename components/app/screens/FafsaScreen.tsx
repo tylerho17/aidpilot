@@ -1,0 +1,195 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Card, StatusPanel, ProgressBar, ChecklistItem, Button } from "@/components/ui";
+import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
+import { useUserData } from "@/hooks/useUserData";
+import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
+import type { UserFafsaStep } from "@/lib/types";
+
+/** A FAFSA step counts as done when its status reads complete/completed/done. */
+function isStepDone(step: UserFafsaStep): boolean {
+  const status = (step.status ?? "").trim().toLowerCase();
+  return status === "complete" || status === "completed" || status === "done";
+}
+
+/** Order steps by their workflow step_order, falling back to load order. */
+function orderSteps(steps: UserFafsaStep[]): UserFafsaStep[] {
+  return steps
+    .map((step, index) => ({ step, index }))
+    .sort((a, b) => {
+      const orderA = a.step.workflow_step?.step_order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.step.workflow_step?.step_order ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.index - b.index;
+    })
+    .map(({ step }) => step);
+}
+
+function FafsaSkeleton() {
+  const shimmer: React.CSSProperties = {
+    background: "var(--track)",
+    borderRadius: 10,
+  };
+  return (
+    <div>
+      <div style={{ ...shimmer, height: 40, width: 220, marginBottom: 12 }} />
+      <div style={{ ...shimmer, height: 18, width: 340, marginBottom: 24 }} />
+      <Card variant="clay" padding={24} style={{ marginBottom: 20 }}>
+        <div style={{ ...shimmer, height: 26, width: 180, marginBottom: 10 }} />
+        <div style={{ ...shimmer, height: 16, width: 240, marginBottom: 16 }} />
+        <div style={{ ...shimmer, height: 12, width: "100%" }} />
+      </Card>
+      <Card variant="clay" padding={8} style={{ marginBottom: 20 }}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px" }}>
+            <div style={{ ...shimmer, height: 20, width: 20, borderRadius: "50%" }} />
+            <div style={{ ...shimmer, height: 16, width: `${60 - i * 6}%` }} />
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+export default function FafsaScreen() {
+  const { authReady, loading, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
+    useUserData();
+  const demo = useDemoMutations();
+  const [poppingId, setPoppingId] = useState<string | null>(null);
+  const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const ready = authReady && !loading;
+  const hasSteps = userFafsaSteps.length > 0;
+
+  // If we're signed in with data loaded but no real steps yet, seed them.
+  useEffect(() => {
+    if (ready && !hasSteps) {
+      void ensureUserFafsaSteps();
+    }
+  }, [ready, hasSteps, ensureUserFafsaSteps]);
+
+  // Real rows win; fixtures fill in only when demo mode is on and Supabase is empty.
+  const effectiveSteps = useMemo(() => demoFallback(userFafsaSteps, makeDemoFafsaSteps), [userFafsaSteps]);
+
+  // user_fafsa_steps rows are loaded WITHOUT a join - hydrate each row's
+  // workflow_step (title/description/order) from the global catalog so real
+  // accounts see the actual step names, never a generic fallback.
+  const hydratedSteps = useMemo(() => {
+    const catalog = new Map(workflowSteps.map((ws) => [ws.id, ws]));
+    return effectiveSteps.map((step) =>
+      step.workflow_step ? step : { ...step, workflow_step: catalog.get(step.workflow_step_id) ?? null }
+    );
+  }, [effectiveSteps, workflowSteps]);
+
+  useEffect(() => {
+    return () => {
+      if (popTimer.current) clearTimeout(popTimer.current);
+    };
+  }, []);
+
+  if (!ready || hydratedSteps.length === 0) {
+    return <FafsaSkeleton />;
+  }
+
+  // Effective done-state: fixture/row status XOR a local demo toggle.
+  const isEffectivelyDone = (step: UserFafsaStep) => (demo.has(step.id) ? !isStepDone(step) : isStepDone(step));
+
+  const steps = orderSteps(hydratedSteps);
+  const total = steps.length;
+  const done = steps.filter(isEffectivelyDone).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const remaining = total - done;
+  const minutesLeft = remaining * 5;
+
+  const nextStep = steps.find((step) => !isEffectivelyDone(step));
+  const allDone = !nextStep;
+
+  const toggleStep = (step: UserFafsaStep) => {
+    if (demo.isDemo(step.id)) {
+      demo.toggle(step.id);
+    } else {
+      void updateFafsaStepStatus(step.id, isEffectivelyDone(step) ? "incomplete" : "complete");
+    }
+    setPoppingId(step.id);
+    if (popTimer.current) clearTimeout(popTimer.current);
+    popTimer.current = setTimeout(() => setPoppingId(null), 460);
+  };
+
+  return (
+    <div>
+      <Greeting
+        title="FAFSA Plan"
+        subtitle="Your step-by-step path to a submitted FAFSA - no jargon."
+        action={
+          <Button variant="secondary" size="sm">
+            Follow-up questions
+          </Button>
+        }
+      />
+
+      <Card variant="clay" padding={24} style={{ marginBottom: 20, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--blue-50) 150%)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div>
+            <div className="font-display" style={{ fontSize: 21, fontWeight: 900, color: "var(--ink-900)" }}>You&apos;re {pct}% ready</div>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", marginTop: 3 }}>
+              {done} of {total} steps done
+              {remaining > 0 ? ` · about ${minutesLeft} minutes left` : " · you're all set"}
+            </div>
+          </div>
+          <span style={{ ...money, fontSize: 46, color: "var(--blue-700)" }}>{pct}%</span>
+        </div>
+        <ProgressBar pct={pct} height={12} />
+      </Card>
+
+      <SectionTitle>Your steps</SectionTitle>
+      <Card variant="clay" padding={8} className="stagger-children" style={{ marginBottom: 20 }}>
+        {steps.map((step, index) => {
+          const stepDone = isEffectivelyDone(step);
+          const isNext = !allDone && step.id === nextStep?.id;
+          return (
+            <ChecklistItem
+              key={step.id}
+              divider={index < steps.length - 1}
+              title={step.workflow_step?.title ?? `Step ${index + 1}`}
+              sub={step.workflow_step?.description ?? undefined}
+              badge={isNext ? "Next" : undefined}
+              badgeTone="amber"
+              done={stepDone}
+              popping={step.id === poppingId}
+              onToggle={() => toggleStep(step)}
+            />
+          );
+        })}
+      </Card>
+
+      {allDone ? (
+        <StatusPanel
+          tone="green"
+          icon="shield-check"
+          eyebrow="All done"
+          title="Every step done - your FAFSA is ready."
+          style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
+        >
+          Nice work. We&apos;ll let you know if anything new needs your attention.
+        </StatusPanel>
+      ) : (
+        <StatusPanel
+          tone="amber"
+          icon="clipboard"
+          eyebrow="Do this next"
+          title={nextStep?.workflow_step?.title ?? "Your next step"}
+          trailing={
+            <Button variant="clay" size="sm" iconRight="arrow-right">
+              Start
+            </Button>
+          }
+          style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
+        >
+          {nextStep?.workflow_step?.description ??
+            "Take it one step at a time. We never ask for your login or documents."}
+        </StatusPanel>
+      )}
+    </div>
+  );
+}

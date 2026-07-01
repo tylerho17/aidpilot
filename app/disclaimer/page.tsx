@@ -6,6 +6,20 @@ export const metadata: Metadata = {
   description: "Important information about AidPilot and financial aid guidance.",
 };
 
+const blueLink = {
+  color: "var(--blue-700)",
+  fontWeight: 600,
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+} as const;
+
+const amberLink = {
+  color: "var(--amber-600)",
+  fontWeight: 600,
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+} as const;
+
 export default function DisclaimerPage() {
   return (
     <LegalShell
@@ -14,14 +28,14 @@ export default function DisclaimerPage() {
       lastUpdated="June 24, 2026"
     >
       <SectionCard title="AidPilot is not FAFSA" accent="amber">
-        <p>AidPilot is an independent educational and organizational tool. We are <strong style={{ color: "#92600A" }}>not FAFSA</strong>, not Federal Student Aid, not the U.S. Department of Education, and <strong style={{ color: "#92600A" }}>not affiliated with, endorsed by, or connected to</strong> any college, university, or scholarship provider.</p>
+        <p>AidPilot is an independent educational and organizational tool. We are <strong style={{ color: "var(--amber-600)" }}>not FAFSA</strong>, not Federal Student Aid, not the U.S. Department of Education, and <strong style={{ color: "var(--amber-600)" }}>not affiliated with, endorsed by, or connected to</strong> any college, university, or scholarship provider.</p>
         <p style={{ marginTop: 12 }}>AidPilot does not submit FAFSA or scholarship applications for users. For federal aid, always use the official website at{" "}
-          <a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" style={{ color: "#92600A", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>studentaid.gov</a>.
+          <a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" style={amberLink}>studentaid.gov</a>.
         </p>
       </SectionCard>
 
       <SectionCard title="Not official financial aid advice">
-        <p>AidPilot provides organizational tools, reminders, and educational guidance to help students navigate financial aid. Our content is for informational purposes only. It is <strong style={{ color: "#15212E" }}>not legal, tax, or official financial aid advice</strong>.</p>
+        <p>AidPilot provides organizational tools, reminders, and educational guidance to help students navigate financial aid. Our content is for informational purposes only. It is <strong style={{ color: "var(--text-heading)" }}>not legal, tax, or official financial aid advice</strong>.</p>
         <p style={{ marginTop: 12 }}>Always verify deadlines, requirements, and aid details directly with your school&apos;s financial aid office, state aid agency, and official government sources before making decisions.</p>
       </SectionCard>
 
@@ -48,7 +62,7 @@ export default function DisclaimerPage() {
 
       <SectionCard title="Contact" accent="blue">
         <p>Questions about this disclaimer? Email us at{" "}
-          <a href="mailto:hello@aidpilot.app" style={{ color: "#0B5CAD", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>hello@aidpilot.app</a>.
+          <a href="mailto:hello@aidpilot.app" style={blueLink}>hello@aidpilot.app</a>.
         </p>
       </SectionCard>
     </LegalShell>

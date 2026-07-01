@@ -1,0 +1,61 @@
+<!-- @dsCard group="Surfaces" viewport="700x270" name="Claymorphism × Material" subtitle="A molded clay slab — pressed and raised, with real depth" -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-body); }
+  /* the slab: a molded surface with a light source top-left, a subtle grain,
+     physical top-highlight + bottom body-shadow, and a carved brand watermark. */
+  .slab {
+    position: relative; padding: 30px 32px; min-height: 270px; box-sizing: border-box;
+    background:
+      radial-gradient(rgba(11,92,173,.05) 1px, transparent 1.4px) 0 0 / 8px 8px,
+      radial-gradient(130% 115% at 26% 6%, #FBFDFF 0%, #EBF1FA 52%, #DCE6F3 100%);
+    box-shadow: inset 0 3px 4px rgba(255,255,255,.9), inset 0 -26px 46px -24px rgba(11,92,173,.16), inset 0 0 0 1px rgba(11,92,173,.04);
+    display: flex; align-items: center; gap: 26px;
+  }
+  /* faint logo carved into the clay */
+  .watermark { position: absolute; right: 22px; bottom: -10px; width: 150px; opacity: .05; filter: grayscale(1); pointer-events: none; }
+
+  /* creative: a pressed well cradling a raised chip (push × pull) */
+  .well { width: 108px; height: 108px; border-radius: 50%; flex-shrink: 0;
+    background: #E4EBF6; display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 5px 12px rgba(11,92,173,.24), inset 0 -4px 8px rgba(255,255,255,.85); }
+  .chip { width: 66px; height: 66px; border-radius: 22px; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-clay); }
+  .cap { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--gray-400); text-transform: uppercase; }
+
+  /* raised metric card */
+  .metric { background: linear-gradient(150deg, #fff 52%, #F1FBF6 150%); border-radius: var(--radius-clay); padding: 18px 20px; box-shadow: var(--shadow-clay); }
+  .metric .lab { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .metric .lab span { font-size: 12.5px; font-weight: 700; color: var(--gray-500); }
+  .metric .glyph { display: inline-flex; width: 34px; height: 34px; border-radius: 11px; background: var(--green-100); align-items: center; justify-content: center; box-shadow: inset 0 2px 2px rgba(255,255,255,.7), inset 0 -2px 4px rgba(11,92,173,.07); }
+  .metric .val { font-family: var(--font-metric); font-weight: 700; font-size: 30px; letter-spacing: -.5px; color: var(--green-600); margin-top: 8px; }
+
+  /* pressed tab track with a raised active pill */
+  .track { display: inline-flex; gap: 4px; padding: 6px; border-radius: 999px; background: #E4EBF6; box-shadow: inset 0 3px 6px rgba(11,92,173,.16), inset 0 -2px 3px rgba(255,255,255,.85); }
+  .pill { padding: 9px 15px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #fff; background-image: linear-gradient(180deg,#3E86D6,#0B5CAD); box-shadow: var(--shadow-clay-brand); }
+  .pill.off { background-image: none; color: var(--gray-500); box-shadow: none; font-weight: 600; }
+  .btn { margin-top: 14px; border: none; cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 15px; color: #fff; background-image: linear-gradient(180deg,#3E86D6,#0B5CAD); border-radius: 16px; padding: 12px 22px; box-shadow: var(--shadow-clay-brand); white-space: nowrap; }
+  .col { display: flex; flex-direction: column; align-items: flex-start; }
+</style></head>
+<body>
+  <div class="slab">
+    <img class="watermark" src="../../assets/aidpilot-mark.png" alt="" />
+    <div style="position:relative">
+      <div class="well"><div class="chip"><img src="../../assets/aidpilot-mark.png" width="34" alt="" /></div></div>
+      <div class="cap">pressed × raised</div>
+    </div>
+    <div class="metric">
+      <div class="lab"><span>Aid secured this year</span>
+        <span class="glyph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 6.8-7 8-4-1.2-7-3.6-7-8V6l7-3Z"/><polyline points="9 12 11 14 15 9.5"/></svg></span>
+      </div>
+      <div class="val">$18,400</div>
+    </div>
+    <div class="col">
+      <div class="track"><span class="pill">Home</span><span class="pill off">FAFSA</span><span class="pill off">Aid</span></div>
+      <button class="btn">Get started</button>
+    </div>
+  </div>
+</body></html>

@@ -32,7 +32,7 @@ alter table public.fafsa_intake_responses add column if not exists has_school_po
 alter table public.fafsa_intake_responses add column if not exists has_aid_offer text;
 alter table public.fafsa_intake_responses add column if not exists has_verification_request text;
 
--- Legacy 012 column names (dev environments) — kept for backfill only
+-- Legacy 012 column names (dev environments) - kept for backfill only
 alter table public.fafsa_intake_responses add column if not exists has_studentaid_account text;
 alter table public.fafsa_intake_responses add column if not exists needs_parent_info text;
 alter table public.fafsa_intake_responses add column if not exists parent_has_account text;

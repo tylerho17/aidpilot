@@ -1,97 +1,293 @@
 @import "tailwindcss";
 
+/* ══════════════════════════════════════════════════════════════════════
+   AidPilot design tokens - transcribed verbatim from the Claude Design
+   handoff (docs/design-system/project/tokens/*). Font families resolve to
+   the next/font variables wired in app/layout.tsx (--font-nunito /
+   --font-hanken / --font-rubik).
+   ══════════════════════════════════════════════════════════════════════ */
+
 :root {
+  /* Legacy aliases kept for any residual references */
   --background: #ffffff;
-  --foreground: #1F2937;
+  --foreground: #1f2937;
+
+  /* ── Primary blue - the trust color ── */
+  --blue-900: #094b8e;
+  --blue-700: #0b5cad;
+  --blue-500: #3e86d6;
+  --blue-300: #a9c7ee;
+  --blue-200: #d7e7fb;
+  --blue-100: #eaf3ff;
+  --blue-50: #f4f8fe;
+
+  /* ── Soft Green - safe / complete / protected ── */
+  --green-600: #15885a;
+  --green-700: #15803d;
+  --green-200: #d5f0e2;
+  --green-100: #eafbf1;
+
+  /* ── Soft Amber - gentle urgency / due soon ── */
+  --amber-700: #b45309;
+  --amber-600: #b7791f;
+  --amber-200: #f2e6c8;
+  --amber-100: #fff7e6;
+
+  /* ── Soft Coral - friendly risk / missing ── */
+  --coral-700: #b91c1c;
+  --coral-600: #c04e57;
+  --coral-200: #f4d2d6;
+  --coral-100: #ffe4e6;
+
+  /* ── Ink & neutrals - navy-gray, never pure black ── */
+  --ink-900: #15212e;
+  --ink-800: #1f2937;
+  --ink-700: #374151;
+  --ink-600: #5b6573;
+  --gray-500: #6b7280;
+  --gray-400: #9aa4b2;
+  --gray-300: #cbd2da;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+
+  /* ── Surfaces ── */
+  --white: #ffffff;
+  --surface-page: #f9fafb;
+  --surface-app: #f4f8fe;
+  --surface-card: #ffffff;
+
+  /* ── Borders ── */
+  --border-default: #e5e7eb;
+  --border-card: #e6edf6;
+  --border-soft: #e9edf2;
+  --border-nav: #eaecef;
+  --border-strong: #e2e8f0;
+  --track: #e9eef3;
+
+  /* ══ Semantic aliases ══ */
+  --color-primary: var(--blue-700);
+  --color-primary-hover: var(--blue-900);
+  --color-primary-soft: var(--blue-100);
+  --color-link: var(--blue-700);
+  --color-focus-ring: rgba(11, 92, 173, 0.35);
+
+  --text-heading: var(--ink-900);
+  --text-body: var(--ink-800);
+  --text-muted: var(--gray-500);
+  --text-subtle: var(--gray-400);
+  --text-on-brand: var(--white);
+
+  --status-safe-fill: var(--green-100);
+  --status-safe-fg: var(--green-600);
+  --status-safe-border: var(--green-200);
+  --status-warn-fill: var(--amber-100);
+  --status-warn-fg: var(--amber-600);
+  --status-warn-border: var(--amber-200);
+  --status-risk-fill: var(--coral-100);
+  --status-risk-fg: var(--coral-600);
+  --status-risk-border: var(--coral-200);
+  --status-info-fill: var(--blue-100);
+  --status-info-fg: var(--blue-700);
+  --status-info-border: var(--blue-200);
+  --status-neutral-fill: var(--gray-100);
+  --status-neutral-fg: var(--gray-500);
+
+  /* Signature gradients */
+  --gradient-progress: linear-gradient(90deg, #0b5cad, #3e86d6);
+  --gradient-hero: linear-gradient(180deg, #ffffff 0%, #f4f8fe 100%);
+  --gradient-auth: linear-gradient(180deg, #f4f8fe 0%, #eafbf1 100%);
+  --gradient-safe: linear-gradient(135deg, #eafbf1, #f4fbf7);
+  --gradient-warn: linear-gradient(135deg, #fff7e6, #fffbf0);
+  --gradient-risk: linear-gradient(135deg, #ffe4e6, #fff1f2);
+  --gradient-info: linear-gradient(135deg, #eaf3ff, #f4f8fe);
+
+  /* ══ Typography - families resolve to next/font vars (layout.tsx) ══ */
+  --font-display: var(--font-nunito), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-hanken), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-metric: var(--font-rubik), "Hanken Grotesk", system-ui, sans-serif;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --weight-black: 900;
+
+  --text-hero: 60px;
+  --text-display: 44px;
+  --text-h1: 30px;
+  --text-h2: 26px;
+  --text-h3: 24px;
+  --text-h4: 20px;
+  --text-lg: 19px;
+  --text-md: 17px;
+  --text-base: 15px;
+  --text-sm: 14px;
+  --text-xs: 13px;
+  --text-2xs: 12px;
+  --text-3xs: 11px;
+
+  --leading-tight: 1.03;
+  --leading-snug: 1.2;
+  --leading-normal: 1.35;
+  --leading-relaxed: 1.6;
+
+  --tracking-hero: -1.8px;
+  --tracking-tight: -0.8px;
+  --tracking-snug: -0.5px;
+  --tracking-wordmark: -0.3px;
+  --tracking-normal: 0;
+  --tracking-eyebrow: 0.8px;
+
+  /* ══ Spacing (loose 2px rhythm) ══ */
+  --space-0: 0;
+  --space-1: 3px;
+  --space-2: 6px;
+  --space-3: 9px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 18px;
+  --space-9: 20px;
+  --space-10: 24px;
+  --space-11: 26px;
+  --space-12: 28px;
+  --space-14: 34px;
+  --space-16: 40px;
+  --space-18: 44px;
+  --space-20: 48px;
+  --space-24: 60px;
+
+  --pad-card: 18px 20px;
+  --pad-input: 13px 16px;
+  --pad-btn: 11px 20px;
+  --pad-btn-lg: 16px 30px;
+  --pad-page: 36px 44px 72px;
+
+  --sidebar-width: 232px;
+  --content-max: 1100px;
+  --marketing-max: 1280px;
+  --auth-max: 440px;
+
+  /* ══ Effects - radii ══ */
+  --radius-xs: 8px;
+  --radius-nav: 11px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-clay: 24px;
+  --radius-clay-lg: 30px;
+  --radius-pill: 999px;
+
+  /* Blue-tinted elevation */
+  --shadow-xs: 0 4px 12px rgba(11, 92, 173, 0.05);
+  --shadow-card: 0 16px 34px -24px rgba(11, 92, 173, 0.18);
+  --shadow-card-hover: 0 22px 44px -20px rgba(11, 92, 173, 0.22);
+  --shadow-modal: 0 24px 48px -20px rgba(11, 92, 173, 0.18);
+  --shadow-lift: 0 8px 20px rgba(11, 92, 173, 0.14);
+  --shadow-btn: 0 8px 18px rgba(11, 92, 173, 0.24);
+  --shadow-btn-lg: 0 14px 28px rgba(11, 92, 173, 0.28);
+  --shadow-brand: 0 6px 16px rgba(11, 92, 173, 0.26);
+
+  /* Claymorphism × Material */
+  --shadow-clay: 0 16px 30px -12px rgba(11, 92, 173, 0.22), 0 5px 12px -6px rgba(11, 92, 173, 0.12), inset 0 3px 3px rgba(255, 255, 255, 0.9), inset 0 -5px 10px rgba(11, 92, 173, 0.06);
+  --shadow-clay-sm: 0 8px 18px -8px rgba(11, 92, 173, 0.18), inset 0 2px 2px rgba(255, 255, 255, 0.85), inset 0 -3px 6px rgba(11, 92, 173, 0.05);
+  --shadow-clay-hover: 0 22px 40px -14px rgba(11, 92, 173, 0.28), 0 6px 14px -6px rgba(11, 92, 173, 0.14), inset 0 3px 3px rgba(255, 255, 255, 0.95), inset 0 -5px 10px rgba(11, 92, 173, 0.07);
+  --shadow-clay-pressed: inset 0 5px 12px rgba(11, 92, 173, 0.16), inset 0 -2px 4px rgba(255, 255, 255, 0.7);
+  --shadow-clay-brand: 0 12px 22px -6px rgba(11, 92, 173, 0.44), inset 0 3px 4px rgba(255, 255, 255, 0.4), inset 0 -6px 12px rgba(9, 75, 142, 0.55);
+  --shadow-clay-brand-pressed: 0 4px 10px -4px rgba(11, 92, 173, 0.4), inset 0 4px 10px rgba(9, 75, 142, 0.6), inset 0 2px 3px rgba(9, 75, 142, 0.5);
+
+  /* Borders */
+  --border-hairline: 1px solid var(--border-default);
+  --border-input: 1.5px solid var(--border-default);
+  --border-btn-secondary: 1.5px solid var(--border-strong);
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-standard: ease;
+  --duration-fast: 0.2s;
+  --duration-base: 0.45s;
+  --duration-slow: 0.8s;
+  --blur-nav: blur(14px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  background: var(--surface-page);
+  color: var(--text-body);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* Nunito display helper - used as className="font-display" across the app */
 .font-display {
-  font-family: var(--font-nunito), system-ui, sans-serif;
+  font-family: var(--font-display);
 }
 
-@keyframes floaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-11px); }
-}
+/* ── Keyframes ── */
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-11px); } }
+@keyframes floaty2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(9px); } }
+@keyframes dash { to { stroke-dashoffset: -28; } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pop { 0% { transform: scale(0.55); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastIn { 0% { opacity: 0; transform: translateY(14px) scale(0.96); } 70% { opacity: 1; transform: translateY(-2px) scale(1.02); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes driftY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes driftY2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@keyframes sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes floaty2 {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(9px); }
-}
+/* ── Animation utilities ── */
+.animate-floaty { animation: floaty 7s ease-in-out infinite; }
+.animate-floaty2 { animation: floaty2 9s ease-in-out infinite; }
+.animate-floaty-slow { animation: floaty 13s ease-in-out infinite; }
+.animate-floaty2-slow { animation: floaty2 15s ease-in-out infinite; }
+.animate-marquee { animation: marquee 56s linear infinite; }
+.animate-pop { animation: pop 0.42s var(--ease-spring); }
+.animate-slide-in { animation: slideIn 0.45s var(--ease-spring) both; }
+.animate-toast-in { animation: toastIn 0.55s var(--ease-spring) both; }
+.animate-drift { animation: driftY 6.5s ease-in-out infinite; }
+.animate-drift2 { animation: driftY2 8s ease-in-out infinite; }
+.animate-sway { animation: sway 3.6s ease-in-out infinite; transform-origin: top center; }
 
-@keyframes dash {
-  to { stroke-dashoffset: -28; }
-}
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@keyframes pop {
-  0% { transform: scale(.55); }
-  55% { transform: scale(1.14); }
-  100% { transform: scale(1); }
-}
-
-.animate-floaty {
-  animation: floaty 7s ease-in-out infinite;
-}
-.animate-floaty2 {
-  animation: floaty2 9s ease-in-out infinite;
-}
-.animate-floaty-slow {
-  animation: floaty 13s ease-in-out infinite;
-}
-.animate-floaty2-slow {
-  animation: floaty2 15s ease-in-out infinite;
-}
-.animate-marquee {
-  animation: marquee 56s linear infinite;
-}
-.animate-pop {
-  animation: pop 0.42s cubic-bezier(.2,.7,.2,1);
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
+/* ── Page transitions - quick, subtle fade + rise on every route change.
+   Fast enough to feel instant (240ms), soft enough to remove the "hard cut"
+   between tabs. The app chrome stays put; only page content animates. ── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.page-enter { animation: pageIn 0.24s var(--ease-spring) both; }
 
-@keyframes toastIn {
-  0% { opacity: 0; transform: translateY(14px) scale(0.96); }
-  70% { opacity: 1; transform: translateY(-2px) scale(1.02); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+/* Staggered entrance for card lists/grids - each child arrives a beat after
+   the previous one. Apply to the container; caps at 8 children. */
+.stagger-children > * { animation: slideIn 0.4s var(--ease-spring) both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.08s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.13s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.18s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.23s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.28s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.33s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.38s; }
+
+/* Keyboard focus - a soft brand-blue ring on interactive elements. */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  border-radius: var(--radius-xs);
 }
 
-.animate-slide-in {
-  animation: slideIn 0.45s cubic-bezier(.2,.7,.2,1) both;
-}
+/* Signature hover - cards rise on a blue-tinted shadow */
+.card-lift { transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.card-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
 
-.animate-toast-in {
-  animation: toastIn 0.55s cubic-bezier(.2,.7,.2,1) both;
-}
-
-.card-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 44px -20px rgba(11, 92, 173, 0.22);
-}
-
-.progress-fill {
-  transition: width 0.8s cubic-bezier(.2,.7,.2,1);
-}
+/* Progress bars ease their width */
+.progress-fill { transition: width var(--duration-slow) var(--ease-spring); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

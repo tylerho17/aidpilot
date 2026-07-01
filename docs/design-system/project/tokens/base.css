@@ -1,0 +1,63 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AidPilot — Base layer & motion utilities
+   ----------------------------------------------------------------------
+   Body defaults, the `.font-display` helper, and the exact keyframes /
+   animation utilities transcribed from app/globals.css. These power the
+   floating hero blobs, the marquee, the "pop" check-off, toasts, and the
+   card-lift hover used on every product card.
+   ══════════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--surface-page);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Nunito display helper — the app uses className="font-display" everywhere */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Keyframes ── */
+@keyframes floaty      { 0%,100% { transform: translateY(0); }  50% { transform: translateY(-11px); } }
+@keyframes floaty2     { 0%,100% { transform: translateY(0); }  50% { transform: translateY(9px); } }
+@keyframes dash        { to { stroke-dashoffset: -28; } }
+@keyframes marquee     { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pop         { 0% { transform: scale(.55); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@keyframes slideIn     { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastIn     { 0% { opacity: 0; transform: translateY(14px) scale(.96); } 70% { opacity: 1; transform: translateY(-2px) scale(1.02); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ── Animation utilities ── */
+.animate-floaty       { animation: floaty 7s ease-in-out infinite; }
+.animate-floaty2      { animation: floaty2 9s ease-in-out infinite; }
+.animate-floaty-slow  { animation: floaty 13s ease-in-out infinite; }
+.animate-floaty2-slow { animation: floaty2 15s ease-in-out infinite; }
+.animate-marquee      { animation: marquee 56s linear infinite; }
+.animate-pop          { animation: pop 0.42s var(--ease-spring); }
+.animate-slide-in     { animation: slideIn 0.45s var(--ease-spring) both; }
+.animate-toast-in     { animation: toastIn 0.55s var(--ease-spring) both; }
+
+/* Signature hover — cards rise on a blue-tinted shadow */
+.card-lift { transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Progress bars ease their width */
+.progress-fill { transition: width var(--duration-slow) var(--ease-spring); }
+
+/* ── Subtle drift for skeuomorphic desk objects (very gentle) ── */
+@keyframes driftY  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes driftY2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@keyframes sway    { 0%,100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+.animate-drift  { animation: driftY 6.5s ease-in-out infinite; }
+.animate-drift2 { animation: driftY2 8s ease-in-out infinite; }
+.animate-sway   { animation: sway 3.6s ease-in-out infinite; transform-origin: top center; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .card-lift:hover { transform: none; }
+}

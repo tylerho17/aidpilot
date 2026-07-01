@@ -1,0 +1,39 @@
+<!-- @dsCard group="Colors" viewport="700x220" name="Status tints" subtitle="Green safe · amber attention · coral risk · blue info" -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; background: var(--surface-card); font-family: var(--font-body); }
+  .wrap { padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .fill { width: 130px; height: 46px; border-radius: 12px; display: flex; align-items: center; padding: 0 14px; font-size: 12px; font-weight: 800; }
+  .dot { width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(0,0,0,.04); }
+  .meta { font-size: 12px; color: var(--gray-500); font-weight: 600; }
+  .meta b { color: var(--ink-800); font-weight: 700; }
+</style></head>
+<body><div class="wrap">
+  <div class="row">
+    <div class="fill" style="background:var(--green-100);color:var(--green-600)">Protected</div>
+    <div class="dot" style="background:var(--green-600)"></div>
+    <div class="dot" style="background:var(--green-200)"></div>
+    <div class="meta"><b>Green</b> — safe, complete, on track · #EAFBF1 / #15885A / #D5F0E2</div>
+  </div>
+  <div class="row">
+    <div class="fill" style="background:var(--amber-100);color:var(--amber-600)">Due soon</div>
+    <div class="dot" style="background:var(--amber-600)"></div>
+    <div class="dot" style="background:var(--amber-200)"></div>
+    <div class="meta"><b>Amber</b> — gentle urgency, reminders · #FFF7E6 / #B7791F / #F2E6C8</div>
+  </div>
+  <div class="row">
+    <div class="fill" style="background:var(--coral-100);color:var(--coral-600)">Needs upload</div>
+    <div class="dot" style="background:var(--coral-600)"></div>
+    <div class="dot" style="background:var(--coral-200)"></div>
+    <div class="meta"><b>Coral</b> — friendly risk, missing docs · #FFE4E6 / #C04E57 / #F4D2D6</div>
+  </div>
+  <div class="row">
+    <div class="fill" style="background:var(--blue-100);color:var(--blue-700)">12 new</div>
+    <div class="dot" style="background:var(--blue-700)"></div>
+    <div class="dot" style="background:var(--blue-200)"></div>
+    <div class="meta"><b>Blue</b> — informational, highlights · #EAF3FF / #0B5CAD / #D7E7FB</div>
+  </div>
+</div></body></html>

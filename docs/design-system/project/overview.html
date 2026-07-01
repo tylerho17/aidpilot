@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AidPilot Design System</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--surface-page); font-family: var(--font-body); color: var(--ink-800); }
+  .hero { background: var(--gradient-hero); padding: 64px 56px 56px; border-bottom: 1px solid var(--border-nav); }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  .eyebrow { font-size: 13px; font-weight: 800; color: var(--blue-700); text-transform: uppercase; letter-spacing: 1.2px; margin: 26px 0 12px; }
+  h1 { font-family: var(--font-display); font-size: 52px; font-weight: 900; letter-spacing: -1.6px; color: var(--ink-900); line-height: 1.04; margin: 0 0 16px; }
+  h1 .b { color: var(--blue-700); }
+  .lead { font-size: 19px; font-weight: 500; color: var(--ink-600); line-height: 1.6; max-width: 560px; margin: 0; }
+  section { padding: 48px 56px; }
+  h2 { font-family: var(--font-display); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--gray-400); margin: 0 0 20px; }
+  .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+  .sw { width: 92px; }
+  .sw .chip { height: 60px; border-radius: 14px; border: 1px solid rgba(11,92,173,.08); }
+  .sw .n { font-size: 11px; font-weight: 700; color: var(--ink-800); margin-top: 8px; }
+  .sw .h { font-size: 10px; color: var(--gray-400); margin-top: 1px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--border-card); border-radius: 20px; box-shadow: var(--shadow-card); padding: 24px; text-decoration: none; display: block; transition: transform .2s ease, box-shadow .2s ease; }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
+  .card .t { font-family: var(--font-display); font-size: 19px; font-weight: 800; color: var(--ink-900); margin: 14px 0 6px; }
+  .card .d { font-size: 14px; font-weight: 500; color: var(--gray-500); line-height: 1.55; margin: 0; }
+  .tile { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; }
+  .note { font-size: 13.5px; color: var(--gray-500); background: var(--blue-100); border: 1px solid var(--blue-200); border-radius: 14px; padding: 14px 18px; line-height: 1.6; }
+  .note b { color: var(--blue-700); }
+  .foot { padding: 32px 56px 48px; color: var(--gray-400); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="wrap">
+      <img src="assets/aidpilot-logo.png" height="46" alt="AidPilot" />
+      <div class="eyebrow">Design system</div>
+      <h1>Financial aid,<br />finally <span class="b">on your side.</span></h1>
+      <p class="lead">The complete, on-brand toolkit behind AidPilot — one trust-blue system; Nunito, Hanken &amp; Rubik type; a soft status palette; and a full component + screen set. Two surface treatments: a tactile <b style="color:var(--blue-700)">Claymorphism × Material</b> app and a <b style="color:var(--blue-700)">skeuomorphic</b> marketing site.</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2>Core palette</h2>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--blue-700)"></div><div class="n">Primary</div><div class="h">#0B5CAD</div></div>
+        <div class="sw"><div class="chip" style="background:var(--blue-100)"></div><div class="n">Soft blue</div><div class="h">#EAF3FF</div></div>
+        <div class="sw"><div class="chip" style="background:var(--green-100)"></div><div class="n">Safe</div><div class="h">#EAFBF1</div></div>
+        <div class="sw"><div class="chip" style="background:var(--amber-100)"></div><div class="n">Attention</div><div class="h">#FFF7E6</div></div>
+        <div class="sw"><div class="chip" style="background:var(--coral-100)"></div><div class="n">Risk</div><div class="h">#FFE4E6</div></div>
+        <div class="sw"><div class="chip" style="background:var(--ink-900)"></div><div class="n">Ink</div><div class="h">#15212E</div></div>
+        <div class="sw"><div class="chip" style="background:var(--surface-page);border-color:var(--border-default)"></div><div class="n">Canvas</div><div class="h">#F9FAFB</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 8px;">
+    <div class="wrap">
+      <h2>Two surface treatments</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:var(--surface-app);border-radius:20px;padding:24px;display:flex;align-items:center;gap:18px">
+          <div style="background:#fff;border-radius:var(--radius-clay);box-shadow:var(--shadow-clay);padding:16px 18px;flex-shrink:0">
+            <div style="font-size:12px;font-weight:700;color:var(--gray-500)">Aid secured</div>
+            <div style="font-family:var(--font-metric);font-weight:700;font-size:26px;color:var(--green-600);letter-spacing:-.5px">$18,400</div>
+          </div>
+          <div>
+            <div class="t" style="margin:0 0 4px">Claymorphism × Material</div>
+            <p class="d">The signed-in app: puffy, tactile cards and Rubik metrics — easy for students and parents.</p>
+          </div>
+        </div>
+        <div style="background:radial-gradient(120% 100% at 20% 0%,#FBFAF6,#EFECE3);border-radius:20px;padding:24px;display:flex;align-items:center;gap:18px">
+          <div style="position:relative;background:repeating-linear-gradient(#fff 0,#fff 20px,#E4ECF7 21px,#fff 22px);border-radius:6px;box-shadow:0 12px 22px -12px rgba(31,41,55,.3);padding:14px 16px;transform:rotate(-2deg);flex-shrink:0">
+            <div style="font-family:var(--font-display);font-weight:900;font-size:13px;color:var(--ink-900);margin-bottom:8px">Checklist</div>
+            <div style="display:flex;gap:7px;align-items:center;font-size:12.5px;font-weight:600;color:var(--ink-800)"><span style="width:15px;height:15px;border-radius:4px;background:var(--green-600)"></span>Submit FAFSA</div>
+          </div>
+          <div>
+            <div class="t" style="margin:0 0 4px">Skeuomorphism</div>
+            <p class="d">The marketing site: paper, sticky notes, and stamps that make college aid feel simple.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 8px;">
+    <div class="wrap">
+      <h2>Explore</h2>
+      <div class="cards">
+        <a class="card" href="ui_kits/marketing/index.html">
+          <span class="tile" style="background:var(--blue-100)"><img src="assets/aidpilot-mark.png" height="30" alt="" /></span>
+          <div class="t">Marketing site</div>
+          <p class="d">Skeuomorphic landing — a paper checklist, sticky notes, a pencil, and stamps clear the aid mess.</p>
+        </a>
+        <a class="card" href="ui_kits/app/index.html">
+          <span class="tile" style="background:var(--green-100)"><img src="assets/aidpilot-mark.png" height="30" alt="" /></span>
+          <div class="t">App UI kit</div>
+          <p class="d">Claymorphism × Material product — top-bar nav, Home, FAFSA, Aid &amp; Money, Docs &amp; Dates.</p>
+        </a>
+        <a class="card" href="readme.md">
+          <span class="tile" style="background:var(--amber-100)"><img src="assets/aidpilot-mark.png" height="30" alt="" /></span>
+          <div class="t">Design guide</div>
+          <p class="d">Voice, visual foundations, iconography, and the full component + token manifest.</p>
+        </a>
+      </div>
+      <div style="margin-top: 22px;">
+        <p class="note"><b>Tip:</b> open the <b>Design System</b> tab to browse every foundation specimen, component, and screen as live cards — including the new <b>Surfaces</b> group.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">AidPilot — the financial-aid copilot for students. Not affiliated with FAFSA, Federal Student Aid, or the U.S. Department of Education.</div>
+</body>
+</html>

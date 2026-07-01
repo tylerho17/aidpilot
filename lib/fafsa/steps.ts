@@ -39,7 +39,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     ],
     exactInstructions: [
       "Go to StudentAid.gov and choose Create Account.",
-      "Enter your name, date of birth, and Social Security number on the official site only — never in AidPilot.",
+      "Enter your name, date of birth, and Social Security number on the official site only - never in AidPilot.",
       "Create a username and strong password you will remember.",
       "Verify your email and phone when prompted.",
       "Save your recovery options somewhere safe (not in AidPilot).",
@@ -52,7 +52,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     troubleshooting: [
       "Account already exists? Use Forgot Username or Password on StudentAid.gov.",
       "Verification code not arriving? Check spam and try again in a few minutes.",
-      "Name mismatch errors? Match your SSA record — contact SSA if needed before retrying.",
+      "Name mismatch errors? Match your SSA record - contact SSA if needed before retrying.",
     ],
     privacyReminder:
       "Never enter your StudentAid.gov password or Social Security number into AidPilot. Complete account setup only on StudentAid.gov.",
@@ -88,7 +88,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Waiting until the night before the deadline to involve contributors.",
     ],
     troubleshooting: [
-      "Unsure who counts? Use the Federal Student Aid help articles — not social media guesses.",
+      "Unsure who counts? Use the Federal Student Aid help articles - not social media guesses.",
       "Contributor refuses to help? Talk to your school financial aid office about options.",
       "Independent student? Confirm you meet federal independence criteria before proceeding alone.",
     ],
@@ -118,7 +118,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Write down schools you are applying to or attending.",
       "Ask contributors to log in to StudentAid.gov and consent to IRS data transfer when prompted.",
       "List other income sources (child support, untaxed income) without entering amounts in AidPilot.",
-      "Do not upload tax returns or IDs to AidPilot — only use the official FAFSA site.",
+      "Do not upload tax returns or IDs to AidPilot - only use the official FAFSA site.",
       "Keep paper records at home in case your school requests verification later.",
     ],
     commonMistakes: [
@@ -127,12 +127,12 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Uploading sensitive documents to non-official apps or email.",
     ],
     troubleshooting: [
-      "IRS transfer fails? StudentAid.gov will show next steps — often retry or enter data manually on their site.",
+      "IRS transfer fails? StudentAid.gov will show next steps - often retry or enter data manually on their site.",
       "Contributor tax data unavailable? They may need to file taxes or request a tax transcript from IRS.gov.",
       "School not found? Search by city or use the federal school code list on StudentAid.gov.",
     ],
     privacyReminder:
-      "Do not upload tax returns, W-2s, or IDs to AidPilot. AidPilot is a checklist only — official data entry happens on StudentAid.gov.",
+      "Do not upload tax returns, W-2s, or IDs to AidPilot. AidPilot is a checklist only - official data entry happens on StudentAid.gov.",
     primaryCtaLabel: "Continue to FAFSA prep",
     nextPlanKey: "start-fafsa",
     previousPlanKey: "identify-contributors",
@@ -155,9 +155,9 @@ export const FAFSA_STEPS: FafsaStep[] = [
     exactInstructions: [
       "Log in at StudentAid.gov and select Start FAFSA for the correct aid year.",
       "Answer student demographic and dependency questions carefully.",
-      "Add every school you are considering — you can remove schools later.",
+      "Add every school you are considering - you can remove schools later.",
       "Save as you go; you can return without losing progress on StudentAid.gov.",
-      "Stop before submitting if contributors are not ready — you will invite them next.",
+      "Stop before submitting if contributors are not ready - you will invite them next.",
     ],
     commonMistakes: [
       "Choosing the wrong aid year.",
@@ -165,9 +165,9 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Submitting before contributors complete their sections.",
     ],
     troubleshooting: [
-      "Form won't load? Try another browser or clear cache — stay on StudentAid.gov only.",
+      "Form won't load? Try another browser or clear cache - stay on StudentAid.gov only.",
       "Dependency questions confusing? Use the in-app help text on StudentAid.gov.",
-      "Need a break? Save and exit — your progress stays on the federal site.",
+      "Need a break? Save and exit - your progress stays on the federal site.",
     ],
     privacyReminder:
       "Complete the FAFSA only on StudentAid.gov. Never paste SSNs or passwords into AidPilot.",
@@ -197,7 +197,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Follow up with anyone who has not responded within a few days.",
     ],
     commonMistakes: [
-      "Typo in contributor email — invitation never arrives.",
+      "Typo in contributor email - invitation never arrives.",
       "Contributor tries to use the student's login instead of their own account.",
       "Assuming submission is done when only the student section is finished.",
     ],
@@ -236,11 +236,11 @@ export const FAFSA_STEPS: FafsaStep[] = [
     commonMistakes: [
       "Submitting with missing contributor signatures.",
       "Ignoring error messages on the review screen.",
-      "Losing confirmation — screenshot or print from StudentAid.gov.",
+      "Losing confirmation - screenshot or print from StudentAid.gov.",
     ],
     troubleshooting: [
       "Submit button disabled? Check for incomplete contributor or student sections.",
-      "Made a mistake after submit? You can make corrections on StudentAid.gov — see their correction guide.",
+      "Made a mistake after submit? You can make corrections on StudentAid.gov - see their correction guide.",
       "No confirmation email? Log in and verify status shows Submitted.",
     ],
     privacyReminder:
@@ -268,7 +268,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Log in to each college's financial aid or student portal.",
       "Confirm the school received your FAFSA (may take a few days).",
       "Complete any supplemental forms (state aid, institutional aid, CSS Profile if required).",
-      "Note each school's priority deadline — it may be earlier than June 30 federal cutoff.",
+      "Note each school's priority deadline - it may be earlier than June 30 federal cutoff.",
       "Set calendar reminders to recheck portals every two weeks.",
     ],
     commonMistakes: [
@@ -278,7 +278,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     ],
     troubleshooting: [
       "School does not show FAFSA? Wait 5–7 days, then call the aid office with your confirmation.",
-      "Portal login issues? Use the school's IT help — not third-party apps.",
+      "Portal login issues? Use the school's IT help - not third-party apps.",
       "Conflicting deadlines? Follow the earliest date among federal, state, and school.",
     ],
     privacyReminder:
@@ -303,7 +303,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Documents requested (usually via school portal)",
     ],
     exactInstructions: [
-      "Read the verification letter carefully — requirements differ by school.",
+      "Read the verification letter carefully - requirements differ by school.",
       "Gather only the documents listed (often IRS transcript or signed statement).",
       "Upload or submit through the school portal or method they specify.",
       "Do not send tax returns to AidPilot or random email addresses.",
@@ -312,7 +312,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     commonMistakes: [
       "Submitting wrong document types.",
       "Sending documents to the wrong school when you listed multiple.",
-      "Missing deadlines on verification — aid may be cancelled.",
+      "Missing deadlines on verification - aid may be cancelled.",
     ],
     troubleshooting: [
       "Unclear request? Call the financial aid office and ask for a checklist.",
@@ -320,7 +320,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Data mismatch? Work with the aid office to file a FAFSA correction if needed.",
     ],
     privacyReminder:
-      "Verification documents go to your school or federal systems — never upload them to AidPilot.",
+      "Verification documents go to your school or federal systems - never upload them to AidPilot.",
     primaryCtaLabel: "Check verification status",
     followUpCtaLabel: "Track verification requests",
     nextPlanKey: "understand-aid-offers",
@@ -343,7 +343,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
     exactInstructions: [
       "Collect official aid offers from each school's portal or mail.",
       "Separate grants and scholarships (free money) from loans.",
-      "Use AidPilot's Aid Offer Decoder to compare packages — enter amounts only, no SSNs.",
+      "Use AidPilot's Aid Offer Decoder to compare packages - enter amounts only, no SSNs.",
       "Note acceptance deadlines and required deposits for each school.",
       "Contact aid offices to appeal if your family's situation changed.",
     ],
@@ -358,7 +358,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Comparing multiple schools? Use the same cost categories in AidPilot's decoder.",
     ],
     privacyReminder:
-      "Enter dollar amounts from aid letters in AidPilot's decoder only — never SSNs, account numbers, or passwords.",
+      "Enter dollar amounts from aid letters in AidPilot's decoder only - never SSNs, account numbers, or passwords.",
     primaryCtaLabel: "Decode your aid offer",
     followUpCtaLabel: "Track aid offers",
     aidDecoderCtaLabel: "Decode aid offer",

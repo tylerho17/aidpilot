@@ -1,0 +1,19 @@
+<!-- @dsCard group="Spacing" viewport="700x210" name="Elevation" subtitle="Every shadow is tinted blue — never neutral gray" -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; background: var(--surface-app); font-family: var(--font-body); }
+  .wrap { padding: 30px 28px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .sw { text-align: center; }
+  .box { width: 120px; height: 74px; background: var(--white); border: 1px solid var(--border-card); border-radius: 18px; }
+  .name { font-size: 11px; font-weight: 700; color: var(--ink-800); margin-top: 12px; }
+  .val { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+</style></head>
+<body><div class="wrap">
+  <div class="sw"><div class="box" style="box-shadow:var(--shadow-xs)"></div><div class="name">xs</div><div class="val">card resting</div></div>
+  <div class="sw"><div class="box" style="box-shadow:var(--shadow-card)"></div><div class="name">card</div><div class="val">product card</div></div>
+  <div class="sw"><div class="box" style="box-shadow:var(--shadow-card-hover)"></div><div class="name">card-hover</div><div class="val">lift on hover</div></div>
+  <div class="sw"><div class="box" style="box-shadow:var(--shadow-modal)"></div><div class="name">modal</div><div class="val">auth / dialog</div></div>
+  <div class="sw"><div class="box" style="background:var(--blue-700);box-shadow:var(--shadow-btn-lg);border:none"></div><div class="name">btn-lg</div><div class="val">CTA glow</div></div>
+</div></body></html>

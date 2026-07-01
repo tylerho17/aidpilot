@@ -1,5 +1,10 @@
-import FafsaHomeClient from "@/components/fafsa/FafsaHomeClient";
+import { AppChrome } from "@/components/app/AppChrome";
+import FafsaScreen from "@/components/app/screens/FafsaScreen";
 
 export default function FafsaPage() {
-  return <FafsaHomeClient />;
+  return (
+    <AppChrome>
+      <FafsaScreen />
+    </AppChrome>
+  );
 }

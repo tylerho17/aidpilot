@@ -18,7 +18,7 @@ export const FAFSA_INTAKE_SAVE_COLUMNS = [
   "updated_at",
 ] as const;
 
-/** DB row — schools may be text[] in production */
+/** DB row - schools may be text[] in production */
 export type FafsaIntakeDbPayload = {
   user_id: string;
   aid_year: string;

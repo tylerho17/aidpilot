@@ -46,7 +46,7 @@ export default function SignupPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link href="/login" style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none" }}>
+          <Link href="/login" style={{ color: "var(--color-link)", fontWeight: 700, textDecoration: "none" }}>
             Log in
           </Link>
         </>
@@ -75,7 +75,11 @@ export default function SignupPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p style={{ fontSize: 14, color: "#C04E57", margin: 0 }}>{error}</p>}
+        {error && (
+          <p style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--coral-600)", margin: 0 }}>
+            {error}
+          </p>
+        )}
         <AuthButton loading={loading}>Create account</AuthButton>
       </form>
     </AuthShell>

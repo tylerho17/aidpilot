@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
-import { AppShell } from "@/components/AppShell";
-import { PillBadge, ProductCard, StatCard } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { Badge, Button, Card, IconTile, StatusPanel, TextField } from "@/components/ui";
+import { Greeting, money as moneyStyle } from "@/components/app/screens/shared";
 import { AidLetterLocalBanner } from "@/components/product/AidLetterLocalBanner";
-import { PageErrorBanner, PageLoading, friendlyActionError } from "@/components/product/PageSafety";
+import { friendlyActionError } from "@/components/product/PageSafety";
+import { toFriendlyError } from "@/lib/friendly-errors";
 import { useUserData } from "@/hooks/useUserData";
 import {
   decodeAidOffer,
@@ -81,12 +83,17 @@ function DecoderCard({
   color: string;
 }) {
   return (
-    <div style={{ padding: 18, borderRadius: 14, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: "#9AA4B2", marginBottom: 10, lineHeight: 1.45 }}>{sub}</div>
-      <div className="font-display" style={{ fontSize: 28, fontWeight: 900, color }}>
-        ${amount.toLocaleString()}
-      </div>
+    <div
+      style={{
+        padding: 18,
+        borderRadius: "var(--radius-lg)",
+        background: "var(--blue-50)",
+        border: "1px solid var(--border-card)",
+      }}
+    >
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-700)", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 500, color: "var(--gray-400)", marginBottom: 10, lineHeight: 1.45 }}>{sub}</div>
+      <div style={{ ...moneyStyle, fontSize: 28, color }}>${amount.toLocaleString()}</div>
     </div>
   );
 }
@@ -100,17 +107,11 @@ function WarningCard({
   message: string;
   tone: "amber" | "red" | "blue";
 }) {
-  const styles = {
-    amber: { bg: "#FFFBEB", border: "#FDE68A", title: "#92400E", text: "#78350F" },
-    red: { bg: "#FEF2F2", border: "#FECACA", title: "#991B1B", text: "#7F1D1D" },
-    blue: { bg: "#EFF6FF", border: "#BFDBFE", title: "#1E40AF", text: "#1E3A8A" },
-  }[tone];
-
+  const panelTone = tone === "red" ? "coral" : tone;
   return (
-    <ProductCard style={{ padding: 20, marginBottom: 16, background: styles.bg, border: `1px solid ${styles.border}` }}>
-      <div style={{ fontSize: 14, fontWeight: 800, color: styles.title, marginBottom: 8 }}>{title}</div>
-      <p style={{ fontSize: 14, fontWeight: 500, color: styles.text, margin: 0, lineHeight: 1.65 }}>{message}</p>
-    </ProductCard>
+    <StatusPanel tone={panelTone} icon="star" title={title} style={{ marginBottom: 16 }}>
+      {message}
+    </StatusPanel>
   );
 }
 
@@ -126,12 +127,17 @@ function LoanTypeCard({
   color: string;
 }) {
   return (
-    <div style={{ padding: 14, borderRadius: 12, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginBottom: 4 }}>{label}</div>
-      <div className="font-display" style={{ fontSize: 22, fontWeight: 900, color, marginBottom: 8 }}>
-        ${amount.toLocaleString()}
-      </div>
-      <p style={{ fontSize: 11, fontWeight: 500, color: "#9AA4B2", margin: 0, lineHeight: 1.5 }}>{hint}</p>
+    <div
+      style={{
+        padding: 14,
+        borderRadius: "var(--radius-md)",
+        background: "var(--blue-50)",
+        border: "1px solid var(--border-card)",
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)", marginBottom: 4 }}>{label}</div>
+      <div style={{ ...moneyStyle, fontSize: 22, color, marginBottom: 8 }}>${amount.toLocaleString()}</div>
+      <p style={{ fontSize: 11, fontWeight: 500, color: "var(--gray-400)", margin: 0, lineHeight: 1.5 }}>{hint}</p>
     </div>
   );
 }
@@ -151,17 +157,17 @@ function MoneyRow({
     <div
       style={{
         padding: "12px 14px",
-        borderRadius: 12,
-        background: "#fff",
-        border: "1px solid #EAEEF3",
+        borderRadius: "var(--radius-md)",
+        background: "var(--surface-card)",
+        border: "1px solid var(--border-card)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>{label}</span>
-        <span style={{ fontSize: 16, fontWeight: 800, color }}>${amount.toLocaleString()}</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-700)" }}>{label}</span>
+        <span style={{ ...moneyStyle, fontSize: 16, color }}>${amount.toLocaleString()}</span>
       </div>
       {hint && (
-        <p style={{ fontSize: 12, fontWeight: 500, color: "#9AA4B2", margin: "8px 0 0", lineHeight: 1.55 }}>
+        <p style={{ fontSize: 12, fontWeight: 500, color: "var(--gray-400)", margin: "8px 0 0", lineHeight: 1.55 }}>
           {hint}
         </p>
       )}
@@ -169,43 +175,32 @@ function MoneyRow({
   );
 }
 
-const inputStyle = {
-  width: "100%",
-  borderRadius: 12,
-  border: "1.5px solid #E5E7EB",
-  padding: "12px 14px",
-  fontSize: 15,
-  outline: "none",
-  fontFamily: "inherit",
-  boxSizing: "border-box" as const,
-};
-
-const labelStyle = {
-  display: "flex",
-  flexDirection: "column" as const,
-  gap: 6,
-};
-
-const labelTextStyle = { fontSize: 13, fontWeight: 700, color: "#374151" };
-const hintTextStyle = { fontSize: 12, fontWeight: 500, color: "#9AA4B2", lineHeight: 1.5 };
-
-function LoanField({
+function AidLetterAmountField({
   label,
-  hint,
   value,
   onChange,
+  required,
+  placeholder,
+  hint,
 }: {
   label: string;
-  hint: string;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
+  placeholder?: string;
+  hint?: string;
 }) {
   return (
-    <label style={labelStyle}>
-      <span style={labelTextStyle}>{label}</span>
-      <span style={hintTextStyle}>{hint}</span>
-      <input type="number" min={0} style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)} placeholder="0" />
-    </label>
+    <TextField
+      label={label}
+      hint={hint}
+      type="number"
+      min={0}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      required={required}
+    />
   );
 }
 
@@ -224,12 +219,12 @@ function AidOfferDecoder({
   if (coa <= 0) return null;
 
   return (
-    <ProductCard style={{ padding: 26, marginBottom: 22 }}>
-      <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
+    <Card variant="clay" padding={28} style={{ marginBottom: 22 }}>
+      <h2 className="font-display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-.4px", margin: "0 0 8px", color: "var(--ink-900)" }}>
         Your aid decoder
       </h2>
-      <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.6 }}>
-        Free money is yours to keep. Loans must be repaid. Work-study is a job on campus — not cash upfront.
+      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 20px", lineHeight: 1.6 }}>
+        Free money is yours to keep. Loans must be repaid. Work-study is a job on campus - not cash upfront.
       </p>
 
       <div
@@ -240,79 +235,77 @@ function AidOfferDecoder({
           marginBottom: 22,
         }}
       >
-        <DecoderCard label="Free money" sub="Grants + scholarships" amount={decoded.totalFreeMoney} color="#15885A" />
+        <DecoderCard label="Free money" sub="Grants + scholarships" amount={decoded.totalFreeMoney} color="var(--green-600)" />
         <DecoderCard
           label="Borrowed money"
-          sub="All loans combined — must be repaid"
+          sub="All loans combined - must be repaid"
           amount={decoded.totalLoans}
-          color="#B7791F"
+          color="var(--amber-600)"
         />
-        <DecoderCard label="Work-study" sub="Earn through a campus job" amount={workStudy} color="#0B5CAD" />
+        <DecoderCard label="Work-study" sub="Earn through a campus job" amount={workStudy} color="var(--blue-700)" />
         <DecoderCard
           label="Estimated gap"
           sub="Still uncovered after all aid listed"
           amount={decoded.estimatedGapAfterAllAid}
-          color="#C04E57"
+          color="var(--coral-600)"
         />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14, marginBottom: 22 }}>
-        <div style={{ padding: 18, borderRadius: 14, background: "linear-gradient(135deg,#ECFDF5,#F0FDF4)", border: "1px solid #BBF7D0" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#15885A", marginBottom: 6 }}>Net cost after free money</div>
-          <div className="font-display" style={{ fontSize: 30, fontWeight: 900, color: "#15212E" }}>
+        <div style={{ padding: 18, borderRadius: "var(--radius-lg)", background: "var(--gradient-safe)", border: "1px solid var(--green-200)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green-600)", marginBottom: 6 }}>Net cost after free money</div>
+          <div style={{ ...moneyStyle, fontSize: 30, color: "var(--ink-900)" }}>
             ${decoded.netCostAfterFreeMoney.toLocaleString()}
           </div>
-          <p style={{ fontSize: 13, color: "#6B7280", margin: "8px 0 0", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-500)", margin: "8px 0 0", lineHeight: 1.5 }}>
             Cost of attendance minus grants and scholarships.
           </p>
         </div>
-        <div style={{ padding: 18, borderRadius: 14, background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)", border: "1px solid #D7E7FB" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", marginBottom: 6 }}>Cost of attendance</div>
-          <div className="font-display" style={{ fontSize: 30, fontWeight: 900, color: "#15212E" }}>
-            ${coa.toLocaleString()}
-          </div>
-          <p style={{ fontSize: 13, color: "#6B7280", margin: "8px 0 0", lineHeight: 1.5 }}>
-            Sticker price before aid — confirm with your school.
+        <div style={{ padding: 18, borderRadius: "var(--radius-lg)", background: "var(--gradient-info)", border: "1px solid var(--blue-200)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--blue-700)", marginBottom: 6 }}>Cost of attendance</div>
+          <div style={{ ...moneyStyle, fontSize: 30, color: "var(--ink-900)" }}>${coa.toLocaleString()}</div>
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-500)", margin: "8px 0 0", lineHeight: 1.5 }}>
+            Sticker price before aid - confirm with your school.
           </p>
         </div>
       </div>
 
-      <h3 className="font-display" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 12px", color: "#15212E" }}>
+      <h3 className="font-display" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 12px", color: "var(--ink-900)" }}>
         Line items
       </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
-        <MoneyRow label="Cost of attendance" amount={coa} color="#15212E" />
-        <MoneyRow label="Grants" amount={grants} color="#15885A" />
-        <MoneyRow label="Scholarships" amount={scholarships} color="#15885A" />
-        <MoneyRow label="Work-study" amount={workStudy} color="#0B5CAD" />
+        <MoneyRow label="Cost of attendance" amount={coa} color="var(--ink-900)" />
+        <MoneyRow label="Grants" amount={grants} color="var(--green-600)" />
+        <MoneyRow label="Scholarships" amount={scholarships} color="var(--green-600)" />
+        <MoneyRow label="Work-study" amount={workStudy} color="var(--blue-700)" />
         <MoneyRow
           label="Subsidized loans"
           amount={decoded.loanBreakdown.subsidized}
-          color="#B7791F"
+          color="var(--amber-600)"
           hint={LOAN_TYPE_EXPLANATIONS.subsidized}
         />
         <MoneyRow
           label="Unsubsidized loans"
           amount={decoded.loanBreakdown.unsubsidized}
-          color="#B7791F"
+          color="var(--amber-600)"
           hint={LOAN_TYPE_EXPLANATIONS.unsubsidized}
         />
         <MoneyRow
           label="Parent PLUS loans"
           amount={decoded.loanBreakdown.parentPlus}
-          color="#C04E57"
+          color="var(--coral-600)"
           hint={LOAN_TYPE_EXPLANATIONS.parentPlus}
         />
         <MoneyRow
           label="Private loans"
           amount={decoded.loanBreakdown.private}
-          color="#C04E57"
+          color="var(--coral-600)"
           hint={LOAN_TYPE_EXPLANATIONS.private}
         />
-        <MoneyRow label="Total borrowed" amount={decoded.totalLoans} color="#B7791F" />
+        <MoneyRow label="Total borrowed" amount={decoded.totalLoans} color="var(--amber-600)" />
       </div>
 
-      <h3 className="font-display" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 12px", color: "#15212E" }}>
+      <h3 className="font-display" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 12px", color: "var(--ink-900)" }}>
         Loan breakdown
       </h3>
       <div
@@ -327,25 +320,25 @@ function AidOfferDecoder({
           label="Subsidized"
           amount={decoded.loanBreakdown.subsidized}
           hint={LOAN_TYPE_EXPLANATIONS.subsidized}
-          color="#B7791F"
+          color="var(--amber-600)"
         />
         <LoanTypeCard
           label="Unsubsidized"
           amount={decoded.loanBreakdown.unsubsidized}
           hint={LOAN_TYPE_EXPLANATIONS.unsubsidized}
-          color="#B7791F"
+          color="var(--amber-600)"
         />
         <LoanTypeCard
           label="Parent PLUS"
           amount={decoded.loanBreakdown.parentPlus}
           hint={LOAN_TYPE_EXPLANATIONS.parentPlus}
-          color="#C04E57"
+          color="var(--coral-600)"
         />
         <LoanTypeCard
           label="Private"
           amount={decoded.loanBreakdown.private}
           hint={LOAN_TYPE_EXPLANATIONS.private}
-          color="#C04E57"
+          color="var(--coral-600)"
         />
       </div>
 
@@ -356,7 +349,7 @@ function AidOfferDecoder({
           ))}
         </div>
       )}
-    </ProductCard>
+    </Card>
   );
 }
 
@@ -377,6 +370,9 @@ function AidLetterForm({
 
   const offerInput = useMemo(() => formToOfferInput(form), [form]);
   const decoded = useMemo(() => decodeAidOffer(offerInput), [offerInput]);
+
+  const noticeIsPending = saveNotice.includes("device") || saveNotice.includes("sync");
+  const noticeIsError = Boolean(saveNotice) && !noticeIsPending && saveNotice !== "Aid offer saved.";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -403,7 +399,7 @@ function AidLetterForm({
         estimated_net_cost: decoded.estimatedGapAfterAllAid,
       });
       if (result.savedLocally) {
-        setSaveNotice("Saved on this device. Your decoder is up to date — cloud sync will retry later.");
+        setSaveNotice("Saved on this device. Your decoder is up to date - cloud sync will retry later.");
       } else {
         setSaveNotice("Aid offer saved.");
       }
@@ -415,98 +411,81 @@ function AidLetterForm({
     }
   }
 
+  const noticeColor = noticeIsError
+    ? "var(--coral-600)"
+    : noticeIsPending
+      ? "var(--amber-600)"
+      : "var(--green-600)";
+
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <ProductCard style={{ padding: 26, marginBottom: 22 }}>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
+        <Card variant="clay" padding={28} style={{ marginBottom: 22 }}>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.3px", margin: "0 0 8px", color: "var(--ink-900)" }}>
             Enter your aid offer
           </h2>
-          <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 18px", lineHeight: 1.6 }}>
             Copy numbers from your school&apos;s official aid letter or portal. Do not enter SSNs, passwords, or bank account numbers.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>School name</span>
-              <input
-                required
-                style={inputStyle}
-                value={form.school_name}
-                onChange={(e) => setForm({ ...form, school_name: e.target.value })}
-                placeholder="e.g. UC Irvine"
-              />
-            </label>
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>Cost of attendance ($)</span>
-              <input
-                required
-                type="number"
-                min={0}
-                style={inputStyle}
-                value={form.cost_of_attendance}
-                onChange={(e) => setForm({ ...form, cost_of_attendance: e.target.value })}
-                placeholder="33100"
-              />
-            </label>
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>Grants ($)</span>
-              <input
-                type="number"
-                min={0}
-                style={inputStyle}
-                value={form.grants}
-                onChange={(e) => setForm({ ...form, grants: e.target.value })}
-                placeholder="0"
-              />
-            </label>
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>Scholarships ($)</span>
-              <input
-                type="number"
-                min={0}
-                style={inputStyle}
-                value={form.scholarships}
-                onChange={(e) => setForm({ ...form, scholarships: e.target.value })}
-                placeholder="0"
-              />
-            </label>
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>Work-study ($)</span>
-              <input
-                type="number"
-                min={0}
-                style={inputStyle}
-                value={form.work_study}
-                onChange={(e) => setForm({ ...form, work_study: e.target.value })}
-                placeholder="0"
-              />
-            </label>
+            <TextField
+              label="School name"
+              required
+              value={form.school_name}
+              onChange={(e) => setForm({ ...form, school_name: e.target.value })}
+              placeholder="e.g. UC Irvine"
+            />
+            <AidLetterAmountField
+              label="Cost of attendance ($)"
+              required
+              value={form.cost_of_attendance}
+              onChange={(value) => setForm({ ...form, cost_of_attendance: value })}
+              placeholder="33100"
+            />
+            <AidLetterAmountField
+              label="Grants ($)"
+              value={form.grants}
+              onChange={(value) => setForm({ ...form, grants: value })}
+              placeholder="0"
+            />
+            <AidLetterAmountField
+              label="Scholarships ($)"
+              value={form.scholarships}
+              onChange={(value) => setForm({ ...form, scholarships: value })}
+              placeholder="0"
+            />
+            <AidLetterAmountField
+              label="Work-study ($)"
+              value={form.work_study}
+              onChange={(value) => setForm({ ...form, work_study: value })}
+              placeholder="0"
+            />
           </div>
 
-          <h3 className="font-display" style={{ fontSize: 16, fontWeight: 800, margin: "22px 0 12px", color: "#15212E" }}>
+          <h3 className="font-display" style={{ fontSize: 16, fontWeight: 800, margin: "22px 0 12px", color: "var(--ink-900)" }}>
             Loans (enter each type separately)
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-            <LoanField
+            <AidLetterAmountField
               label="Subsidized loans ($)"
               hint={LOAN_TYPE_EXPLANATIONS.subsidized}
               value={form.subsidized_loans}
               onChange={(value) => setForm({ ...form, subsidized_loans: value })}
             />
-            <LoanField
+            <AidLetterAmountField
               label="Unsubsidized loans ($)"
               hint={LOAN_TYPE_EXPLANATIONS.unsubsidized}
               value={form.unsubsidized_loans}
               onChange={(value) => setForm({ ...form, unsubsidized_loans: value })}
             />
-            <LoanField
+            <AidLetterAmountField
               label="Parent PLUS loans ($)"
               hint={LOAN_TYPE_EXPLANATIONS.parentPlus}
               value={form.parent_plus_loans}
               onChange={(value) => setForm({ ...form, parent_plus_loans: value })}
             />
-            <LoanField
+            <AidLetterAmountField
               label="Private loans ($)"
               hint={LOAN_TYPE_EXPLANATIONS.private}
               value={form.private_loans}
@@ -517,8 +496,9 @@ function AidLetterForm({
           {saveNotice && (
             <p
               style={{
-                color: saveNotice.includes("device") || saveNotice.includes("sync") ? "#B7791F" : "#15885A",
+                color: noticeColor,
                 fontSize: 14,
+                fontWeight: 600,
                 margin: "14px 0 0",
                 lineHeight: 1.5,
               }}
@@ -527,26 +507,10 @@ function AidLetterForm({
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={saving}
-            style={{
-              marginTop: 18,
-              width: "100%",
-              padding: "14px 24px",
-              borderRadius: 13,
-              background: saving ? "#E5E7EB" : "#0B5CAD",
-              color: saving ? "#9AA4B2" : "#fff",
-              fontSize: 16,
-              fontWeight: 700,
-              border: "none",
-              cursor: saving ? "not-allowed" : "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            {saving ? "Saving..." : aidLetter ? "Save aid offer" : "Save aid offer"}
-          </button>
-        </ProductCard>
+          <Button type="submit" variant="clay" fullWidth disabled={saving} style={{ marginTop: 18 }}>
+            {saving ? "Saving..." : "Save aid offer"}
+          </Button>
+        </Card>
       </form>
 
       <AidOfferDecoder form={form} decoded={decoded} />
@@ -556,56 +520,78 @@ function AidLetterForm({
   );
 }
 
+function LoadingState() {
+  return (
+    <AppChrome>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <Greeting title="Aid Offer Decoder" subtitle="Loading aid offer decoder..." />
+        <Card variant="clay" padding={28} style={{ minHeight: 220 }} />
+      </div>
+    </AppChrome>
+  );
+}
+
 export default function AidLetterClient() {
   const { loading, authReady, loadError, aidLetter, aidLetterLocalMode, profile, saveAidLetter } = useUserData();
 
   if (!authReady && loading) {
-    return <PageLoading message="Loading aid offer decoder..." />;
+    return <LoadingState />;
   }
 
   if (loading) {
-    return <PageLoading message="Loading aid offer decoder..." />;
+    return <LoadingState />;
   }
 
   return (
-    <AppShell>
-      <PageErrorBanner message={loadError} />
-      <div style={{ marginBottom: 28 }}>
-        <h1 className="font-display" style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E" }}>
-          Aid Offer Decoder
-        </h1>
-        <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Type in your aid letter numbers and see what is free money, what is borrowed, and what you may still need to cover.
-        </p>
-      </div>
+    <AppChrome>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        {loadError ? (
+          <StatusPanel tone="amber" icon="star" title="Some information could not be loaded" style={{ marginBottom: 22 }}>
+            {toFriendlyError(loadError, "Other parts of this page should still work.")}
+          </StatusPanel>
+        ) : null}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 20, alignItems: "center" }}>
-        {aidLetter?.school_name && (
-          <StatCard label="School" value={aidLetter.school_name} color="#0B5CAD" style={{ flex: "1 1 180px" }} />
+        <Greeting
+          title="Aid Offer Decoder"
+          subtitle="Type in your aid letter numbers and see what is free money, what is borrowed, and what you may still need to cover."
+        />
+
+        {(aidLetter?.school_name || aidLetter?.status) && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20, alignItems: "center" }}>
+            {aidLetter?.school_name && (
+              <Card variant="clay" padding={16} style={{ flex: "1 1 180px", display: "flex", alignItems: "center", gap: 12 }}>
+                <IconTile icon="letter" tone="blue" size={40} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-400)" }}>School</div>
+                  <div className="font-display" style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-900)" }}>
+                    {aidLetter.school_name}
+                  </div>
+                </div>
+              </Card>
+            )}
+            {aidLetter?.status && <Badge tone="green">{aidLetter.status}</Badge>}
+          </div>
         )}
-        {aidLetter?.status && <PillBadge tone="green">{aidLetter.status}</PillBadge>}
-      </div>
 
-      <ProductCard style={{ padding: 22, marginBottom: 20, background: "#FFF7E6", border: "1px solid #F2E6C8" }}>
-        <p style={{ fontSize: 14, fontWeight: 500, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-          AidPilot helps you understand your offer — it does not replace your financial aid office. Never enter SSNs, passwords, bank account numbers, or tax return values here.
+        <StatusPanel tone="amber" icon="shield" title="AidPilot helps you understand your offer" style={{ marginBottom: 20 }}>
+          It does not replace your financial aid office. Never enter SSNs, passwords, bank account numbers, or tax return values here.
+        </StatusPanel>
+
+        <AidLetterForm
+          key={`${aidLetter?.id ?? "new"}-${aidLetter?.updated_at ?? ""}`}
+          aidLetter={aidLetter}
+          profile={profile}
+          aidLetterLocalMode={aidLetterLocalMode}
+          saveAidLetter={saveAidLetter}
+        />
+
+        <p style={{ marginTop: 28, fontSize: 12, fontWeight: 500, color: "var(--gray-400)", lineHeight: 1.6 }}>
+          AidPilot is an educational and organizational tool, not official financial aid advice.{" "}
+          <Link href="/disclaimer" style={{ color: "var(--blue-700)", textDecoration: "underline" }}>
+            Read disclaimer
+          </Link>
         </p>
-      </ProductCard>
-
-      <AidLetterForm
-        key={`${aidLetter?.id ?? "new"}-${aidLetter?.updated_at ?? ""}`}
-        aidLetter={aidLetter}
-        profile={profile}
-        aidLetterLocalMode={aidLetterLocalMode}
-        saveAidLetter={saveAidLetter}
-      />
-
-      <p style={{ marginTop: 28, fontSize: 12, color: "#9AA4B2", lineHeight: 1.6 }}>
-        AidPilot is an educational and organizational tool, not official financial aid advice.{" "}
-        <Link href="/disclaimer" style={{ color: "#0B5CAD", textDecoration: "underline" }}>
-          Read disclaimer
-        </Link>
-      </p>
-    </AppShell>
+      </div>
+    </AppChrome>
   );
 }

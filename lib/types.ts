@@ -93,7 +93,7 @@ export type FafsaStage = (typeof FAFSA_STAGES)[number];
 
 export type FafsaWizardAnswer = "yes" | "no" | "not_sure" | "not_applicable" | string;
 
-/** Canonical FAFSA intake fields — matches fafsa_intake_responses columns exactly */
+/** Canonical FAFSA intake fields - matches fafsa_intake_responses columns exactly */
 export type FafsaIntakeFields = {
   aid_year: string;
   student_situation: string;

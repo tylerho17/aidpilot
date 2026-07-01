@@ -2,46 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
-import { ProductCard } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { Button, Card, StatusPanel } from "@/components/ui";
+import { Greeting, SectionTitle } from "@/components/app/screens/shared";
 import AddSchoolAidStatusForm from "@/components/fafsa/AddSchoolAidStatusForm";
 import SchoolAidStatusCard from "@/components/fafsa/SchoolAidStatusCard";
-import { PageErrorBanner, PageLoading } from "@/components/product/PageSafety";
 import { useSchoolAidTracker } from "@/hooks/useSchoolAidTracker";
 import { useAidActions } from "@/hooks/useAidActions";
 import AidActionCard from "@/components/aid-actions/AidActionCard";
 import { getFollowUpRelatedActions } from "@/lib/aid-actions/getAidActions";
-
-const primaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 44,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "10px 18px",
-  borderRadius: 12,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "10px 16px",
-  borderRadius: 999,
-  textDecoration: "none",
-} as const;
 
 export default function FafsaFollowUpClient() {
   const {
@@ -64,84 +33,82 @@ export default function FafsaFollowUpClient() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   if (!authReady || loading) {
-    return <PageLoading message="Loading your school follow-up tracker..." />;
+    return (
+      <AppChrome>
+        <p style={{ color: "var(--gray-400)", fontSize: 15, fontWeight: 500 }}>Loading your school follow-up tracker...</p>
+      </AppChrome>
+    );
   }
 
   if (!userId) {
     return (
-      <AppShell>
+      <AppChrome>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <Link href="/fafsa" style={{ ...secondaryBtn, marginBottom: 18, display: "inline-flex" }}>
-            ← Back to FAFSA guide
+          <Link href="/fafsa" style={{ textDecoration: "none", display: "inline-block", marginBottom: 18 }}>
+            <Button variant="ghost" size="sm" iconLeft="chevron-left" style={{ paddingLeft: 4 }}>
+              Back to FAFSA guide
+            </Button>
           </Link>
-          <h1
-            className="font-display"
-            style={{ fontSize: 32, fontWeight: 900, letterSpacing: "-.8px", margin: "0 0 8px", color: "#15212E" }}
-          >
-            Aid Follow-Up Tracker
-          </h1>
-          <PageErrorBanner message="Sign in to track school portals, verification, and aid offers after FAFSA." />
-          <Link href="/login" style={primaryBtn}>
-            Sign in
+          <Greeting
+            title="Aid Follow-Up Tracker"
+            subtitle="Sign in to track school portals, verification, and aid offers after FAFSA."
+          />
+          <Link href="/login" style={{ textDecoration: "none" }}>
+            <Button variant="clay">Sign in</Button>
           </Link>
         </div>
-      </AppShell>
+      </AppChrome>
     );
   }
 
   return (
-    <AppShell>
+    <AppChrome>
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <Link href="/fafsa" style={{ ...secondaryBtn, marginBottom: 18, display: "inline-flex" }}>
-          ← Back to FAFSA guide
+        <Link href="/fafsa" style={{ textDecoration: "none", display: "inline-block", marginBottom: 18 }}>
+          <Button variant="ghost" size="sm" iconLeft="chevron-left" style={{ paddingLeft: 4 }}>
+            Back to FAFSA guide
+          </Button>
         </Link>
 
-        <div style={{ marginBottom: 20 }}>
-          <h1
-            className="font-display"
-            style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E", lineHeight: 1.1 }}
-          >
-            Aid Follow-Up Tracker
-          </h1>
-          <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            Track what each school still needs after FAFSA.
-          </p>
-        </div>
+        <Greeting
+          title="Aid Follow-Up Tracker"
+          subtitle="Track what each school still needs after FAFSA."
+        />
 
-        <ProductCard
-          style={{
-            padding: 18,
-            marginBottom: 16,
-            background: "#EAF3FF",
-            border: "1px solid #D7E7FB",
-          }}
+        <StatusPanel
+          tone="blue"
+          icon="clipboard"
+          title="Submitting FAFSA is not always the final step"
+          style={{ marginBottom: 16 }}
         >
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#1E3A5F", margin: 0, lineHeight: 1.6 }}>
-            Submitting FAFSA is not always the final step. Schools may post document requests, verification tasks, or aid
-            offers in their own portals.
-          </p>
-        </ProductCard>
+          Schools may post document requests, verification tasks, or aid offers in their own portals.
+        </StatusPanel>
 
-        <ProductCard
-          style={{
-            padding: 18,
-            marginBottom: 18,
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
-          }}
+        <StatusPanel
+          tone="amber"
+          icon="shield-check"
+          eyebrow="Stay safe"
+          title="Never enter portal passwords or sensitive numbers"
+          style={{ marginBottom: 18 }}
         >
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-            AidPilot can remind you what to check, but never enter school portal passwords, SSNs, tax returns, or bank
-            account numbers here.
-          </p>
-        </ProductCard>
+          AidPilot can remind you what to check, but never enter school portal passwords, SSNs, tax returns, or bank
+          account numbers here.
+        </StatusPanel>
 
-        {loadError && <PageErrorBanner message={loadError} />}
-        {actionError && <PageErrorBanner message={actionError} />}
+        {loadError && (
+          <StatusPanel tone="coral" icon="shield" title="Something needs your attention" style={{ marginBottom: 18 }}>
+            {loadError}
+          </StatusPanel>
+        )}
+        {actionError && (
+          <StatusPanel tone="coral" icon="shield" title="Something needs your attention" style={{ marginBottom: 18 }}>
+            {actionError}
+          </StatusPanel>
+        )}
 
         {relatedActions.length > 0 ? (
-          <ProductCard style={{ padding: 20, marginBottom: 18 }}>
-            <h2 className="font-display" style={{ fontSize: 17, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>
+          <Card variant="clay" padding={20} style={{ marginBottom: 18 }}>
+            <h2 className="font-display" style={{ fontSize: 17, fontWeight: 900, margin: "0 0 12px", color: "var(--ink-900)", letterSpacing: "-.2px" }}>
               Related aid actions
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -149,26 +116,24 @@ export default function FafsaFollowUpClient() {
                 <AidActionCard key={action.id} action={action} compact />
               ))}
             </div>
-          </ProductCard>
+          </Card>
         ) : null}
 
         {statuses.length === 0 && !showAddForm ? (
-          <ProductCard style={{ padding: 24, marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 18px", lineHeight: 1.65 }}>
+          <Card variant="clay" padding={24} style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 18px", lineHeight: 1.65 }}>
               Add the schools you applied to or are considering. AidPilot will help you track whether each school has
               received your FAFSA, requested documents, selected you for verification, or posted an aid offer.
             </p>
-            <button type="button" style={primaryBtn} onClick={() => setShowAddForm(true)}>
+            <Button variant="clay" iconLeft="plus" onClick={() => setShowAddForm(true)}>
               Add a school
-            </button>
-          </ProductCard>
+            </Button>
+          </Card>
         ) : null}
 
         {(showAddForm || statuses.length > 0) && (
-          <ProductCard style={{ padding: 22, marginBottom: 20 }}>
-            <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
-              {statuses.length === 0 ? "Add your first school" : "Add another school"}
-            </h2>
+          <Card variant="clay" padding={22} style={{ marginBottom: 20 }}>
+            <SectionTitle>{statuses.length === 0 ? "Add your first school" : "Add another school"}</SectionTitle>
             <AddSchoolAidStatusForm
               saving={savingId === "new"}
               onSubmit={async (input) => {
@@ -177,7 +142,7 @@ export default function FafsaFollowUpClient() {
                 return created;
               }}
             />
-          </ProductCard>
+          </Card>
         )}
 
         {statuses.map((status) => (
@@ -193,6 +158,6 @@ export default function FafsaFollowUpClient() {
           />
         ))}
       </div>
-    </AppShell>
+    </AppChrome>
   );
 }

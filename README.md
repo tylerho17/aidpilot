@@ -48,8 +48,8 @@ Run migrations in the Supabase SQL Editor **in this order** on a fresh project:
 | 15 | `supabase/015_onboarding_profile_columns.sql` | One-shot parity for deployed DBs: all onboarding/matching columns + legacy renames |
 | 16 | `supabase/016_student_profile_canonical.sql` | **Canonical profile columns** (full_name, school_name, education_level, etc.) + full backfill |
 | 17 | `supabase/017_scholarship_schema_parity.sql` | **Scholarship engine columns** on scholarship_matches and scholarship_sources + admin RPC + schema reload |
-| 18 | `supabase/018_fafsa_intake_parity.sql` | **FAFSA intake column parity** — text wizard answers, missing columns, RLS + aid_tasks plan metadata |
-| 19 | `supabase/019_fafsa_save_parity.sql` | **FAFSA save fix** — `schools` text[], `required_info` text[], unique indexes |
+| 18 | `supabase/018_fafsa_intake_parity.sql` | **FAFSA intake column parity** - text wizard answers, missing columns, RLS + aid_tasks plan metadata |
+| 19 | `supabase/019_fafsa_save_parity.sql` | **FAFSA save fix** - `schools` text[], `required_info` text[], unique indexes |
 
 **Deployed production fix (scholarships):** Run `017_scholarship_schema_parity.sql` in the Supabase SQL Editor (idempotent, safe to rerun). Equivalent to running migrations 007 and 009 scholarship sections if those were skipped.
 
@@ -88,4 +88,4 @@ npm run dev     # Development server
 1. Sign up with a test email
 2. Complete onboarding → land on dashboard
 3. FAFSA workflow, Documents, Deadlines, Scholarships, Aid Letter
-4. Log out and log back in — data persists in Supabase
+4. Log out and log back in - data persists in Supabase

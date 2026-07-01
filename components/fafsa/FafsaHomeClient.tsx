@@ -1,27 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
-import { CheckSVG, PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { Badge, Button, Card, Icon, ProgressBar, StatusPanel } from "@/components/ui";
+import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { useFafsaProgress } from "@/hooks/useFafsaProgress";
 import { useAidActions } from "@/hooks/useAidActions";
 import { FAFSA_STEPS, getFafsaStepHref, getGuidedProgressPercent } from "@/lib/fafsa/steps";
 import { FafsaSyncBanner } from "@/components/fafsa/FafsaSyncBanner";
-
-const primaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 48,
-  fontSize: 15,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "12px 22px",
-  borderRadius: 13,
-  textDecoration: "none",
-  boxShadow: "0 10px 20px rgba(11,92,173,.22)",
-} as const;
 
 export default function FafsaHomeClient() {
   const { completionCount, nextIncompleteStep, isCompleted, completedPlanKeys, syncMessage } = useFafsaProgress();
@@ -31,100 +17,94 @@ export default function FafsaHomeClient() {
   const recommendedAction = topAction;
 
   return (
-    <AppShell>
+    <AppChrome>
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
         {syncMessage && <FafsaSyncBanner message={syncMessage} />}
 
-        <ProductCard
-          style={{
-            padding: 18,
-            marginBottom: 22,
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
-          }}
+        <StatusPanel
+          tone="amber"
+          icon="shield-check"
+          eyebrow="Stay safe"
+          title="Never share passwords or sensitive numbers with AidPilot"
+          style={{ marginBottom: 22 }}
         >
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#78350F", margin: 0, lineHeight: 1.6 }}>
-            Never enter your StudentAid.gov password, Social Security number, or bank account number into AidPilot.
-          </p>
-        </ProductCard>
+          Never enter your StudentAid.gov password, Social Security number, or bank account number into AidPilot.
+        </StatusPanel>
 
-        <div style={{ marginBottom: 24 }}>
-          <h1
-            className="font-display"
-            style={{ fontSize: 34, fontWeight: 900, letterSpacing: "-1px", margin: "0 0 8px", color: "#15212E", lineHeight: 1.1 }}
-          >
-            Protect your aid
-          </h1>
-          <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            FAFSA is free. AidPilot explains the steps — you complete the official form at StudentAid.gov.
-          </p>
-        </div>
+        <Greeting
+          title="Protect your aid"
+          subtitle="FAFSA is free. AidPilot explains the steps - you complete the official form at StudentAid.gov."
+        />
 
-        <ProductCard style={{ padding: 22, marginBottom: 22, background: "#F4FBF7", border: "1px solid #D5F0E2" }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: "#15885A", margin: "0 0 8px" }}>Next recommended action</p>
+        <Card variant="clay" padding={22} style={{ marginBottom: 22, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--green-50, #F4FBF7) 160%)" }}>
+          <p style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".8px", color: "var(--green-600)", margin: "0 0 8px" }}>
+            Next recommended action
+          </p>
           {recommendedAction ? (
             <>
-              <p style={{ fontSize: 16, fontWeight: 800, color: "#15212E", margin: "0 0 8px", lineHeight: 1.4 }}>
+              <p className="font-display" style={{ fontSize: 18, fontWeight: 900, color: "var(--ink-900)", margin: "0 0 8px", lineHeight: 1.35 }}>
                 {recommendedAction.title}
               </p>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 14px", lineHeight: 1.6 }}>
                 {recommendedAction.description}
               </p>
-              <Link href={recommendedAction.href} style={primaryBtn}>
-                {recommendedAction.ctaLabel}
+              <Link href={recommendedAction.href} style={{ textDecoration: "none" }}>
+                <Button variant="clay" iconRight="arrow-right">{recommendedAction.ctaLabel}</Button>
               </Link>
             </>
           ) : !allComplete && nextIncompleteStep ? (
             <>
-              <p style={{ fontSize: 16, fontWeight: 800, color: "#15212E", margin: "0 0 8px", lineHeight: 1.4 }}>
+              <p className="font-display" style={{ fontSize: 18, fontWeight: 900, color: "var(--ink-900)", margin: "0 0 8px", lineHeight: 1.35 }}>
                 Step {nextIncompleteStep.stepNumber}: {nextIncompleteStep.title}
               </p>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 14px", lineHeight: 1.6 }}>
                 Stay on track by completing the next FAFSA step.
               </p>
-              <Link href={getFafsaStepHref(nextIncompleteStep.planKey)} style={primaryBtn}>
-                Continue the guide
+              <Link href={getFafsaStepHref(nextIncompleteStep.planKey)} style={{ textDecoration: "none" }}>
+                <Button variant="clay" iconRight="arrow-right">Continue the guide</Button>
               </Link>
             </>
           ) : (
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.6 }}>
               No urgent FAFSA actions right now. Keep checking StudentAid.gov and your school portals.
             </p>
           )}
-        </ProductCard>
+        </Card>
 
-        <ProductCard style={{ padding: 24, marginBottom: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}>Your progress</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: "#0B5CAD" }}>
-              {completionCount} of {FAFSA_STEPS.length} steps
-            </span>
+        <Card variant="clay" padding={24} style={{ marginBottom: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <div className="font-display" style={{ fontSize: 18, fontWeight: 900, color: "var(--ink-900)", letterSpacing: "-.3px" }}>
+                Your progress
+              </div>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", marginTop: 3 }}>
+                {completionCount} of {FAFSA_STEPS.length} steps
+              </div>
+            </div>
+            <span style={{ ...money, fontSize: 34, color: "var(--blue-700)" }}>{progressPercent}%</span>
           </div>
-          <ProgressBar pct={progressPercent} />
-          <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "12px 0 0", lineHeight: 1.5 }}>
-            {progressPercent}% complete
-          </p>
+          <ProgressBar pct={progressPercent} height={12} />
 
           {!allComplete && nextIncompleteStep ? (
-            <div style={{ marginTop: 20, padding: 16, borderRadius: 14, background: "#EAF3FF", border: "1px solid #D7E7FB" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#0B5CAD", margin: "0 0 6px" }}>Your next step</p>
-              <p style={{ fontSize: 16, fontWeight: 800, color: "#15212E", margin: "0 0 14px", lineHeight: 1.4 }}>
-                Step {nextIncompleteStep.stepNumber}: {nextIncompleteStep.title}
-              </p>
-              <Link href={getFafsaStepHref(nextIncompleteStep.planKey)} style={primaryBtn}>
-                Continue the guide
-              </Link>
-            </div>
+            <StatusPanel
+              tone="blue"
+              eyebrow="Your next step"
+              title={`Step ${nextIncompleteStep.stepNumber}: ${nextIncompleteStep.title}`}
+              trailing={
+                <Link href={getFafsaStepHref(nextIncompleteStep.planKey)} style={{ textDecoration: "none" }}>
+                  <Button variant="clay" size="sm" iconRight="arrow-right">Continue</Button>
+                </Link>
+              }
+              style={{ marginTop: 20, borderRadius: "var(--radius-2xl)" }}
+            />
           ) : (
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#15885A", margin: "16px 0 0", lineHeight: 1.6 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--green-600)", margin: "16px 0 0", lineHeight: 1.6 }}>
               You have completed all nine steps. Keep checking StudentAid.gov and your school portals.
             </p>
           )}
-        </ProductCard>
+        </Card>
 
-        <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
-          All 9 FAFSA steps
-        </h2>
+        <SectionTitle>All 9 FAFSA steps</SectionTitle>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {FAFSA_STEPS.map((step) => {
@@ -133,68 +113,56 @@ export default function FafsaHomeClient() {
               <Link
                 key={step.planKey}
                 href={getFafsaStepHref(step.planKey)}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 14,
-                  padding: "16px 18px",
-                  borderRadius: 14,
-                  textDecoration: "none",
-                  border: done ? "1px solid #BBF7D0" : "1px solid #EAEEF3",
-                  background: done ? "#F5FBF7" : "#fff",
-                  minHeight: 56,
-                }}
+                style={{ textDecoration: "none" }}
               >
-                <span
-                  aria-hidden
-                  style={{
-                    display: "flex",
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: done ? "#15885A" : "#EAF3FF",
-                    color: done ? "#fff" : "#0B5CAD",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
+                <Card
+                  variant="clay"
+                  lift
+                  padding="16px 18px"
+                  style={{ display: "flex", alignItems: "flex-start", gap: 14, minHeight: 56 }}
                 >
-                  {done ? <CheckSVG color="#fff" size={14} /> : step.stepNumber}
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
                   <span
+                    aria-hidden
                     style={{
-                      display: "block",
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: "#15212E",
-                      marginBottom: 4,
-                      lineHeight: 1.4,
+                      display: "flex",
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: done ? "var(--green-600)" : "var(--blue-100)",
+                      color: done ? "#fff" : "var(--blue-700)",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    {step.title}
+                    {done ? <Icon name="check" size={14} color="#fff" strokeWidth={3} /> : step.stepNumber}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", lineHeight: 1.5 }}>
-                    {step.estimatedTime} · {step.subtitle}
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: "var(--ink-900)", marginBottom: 4, lineHeight: 1.4 }}>
+                      {step.title}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.5 }}>
+                      {step.estimatedTime} · {step.subtitle}
+                    </span>
                   </span>
-                </span>
-                {done ? <PillBadge tone="green">Done</PillBadge> : <PillBadge tone="gray">Open</PillBadge>}
+                  {done ? <Badge tone="green">Done</Badge> : <Badge tone="gray">Open</Badge>}
+                </Card>
               </Link>
             );
           })}
         </div>
 
-        <p style={{ marginTop: 24, fontSize: 12, color: "#9AA4B2", lineHeight: 1.6 }}>
+        <p style={{ marginTop: 24, fontSize: 12, fontWeight: 500, color: "var(--gray-400)", lineHeight: 1.6 }}>
           Federal FAFSA is only one deadline. Your state or college may require earlier action. Official FAFSA work
           happens on{" "}
-          <a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" style={{ color: "#0B5CAD" }}>
+          <a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" style={{ color: "var(--blue-700)" }}>
             StudentAid.gov
           </a>
           .
         </p>
       </div>
-    </AppShell>
+    </AppChrome>
   );
 }

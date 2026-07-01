@@ -1,17 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-const PlaneSVG = () => (
-  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 11.5 21 3l-7 18-3.2-7.3L3 11.5Z" />
-  </svg>
-);
-
-const ChevronSVG = () => (
-  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 18l-6-6 6-6" />
-  </svg>
-);
+import { Logo, Badge } from "@/components/ui";
+import { Footer } from "@/components/Footer";
 
 interface LegalShellProps {
   badge?: string;
@@ -22,70 +12,90 @@ interface LegalShellProps {
 
 export function LegalShell({ badge, heading, lastUpdated, children }: LegalShellProps) {
   return (
-    <div style={{ minHeight: "100vh", background: "#F9FAFB", fontFamily: "var(--font-hanken), system-ui, sans-serif", color: "#1F2937" }}>
-
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--surface-page)",
+        fontFamily: "var(--font-body)",
+        color: "var(--text-body)",
+      }}
+    >
       {/* top bar */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "14px 40px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, background: "#0B5CAD", boxShadow: "0 4px 12px rgba(11,92,173,.22)", flexShrink: 0 }}>
-              <PlaneSVG />
-            </span>
-            <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: "-.4px" }}>
-              <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
-            </span>
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          background: "rgba(255,255,255,.9)",
+          backdropFilter: "var(--blur-nav)",
+          WebkitBackdropFilter: "var(--blur-nav)",
+          borderBottom: "1px solid var(--border-nav)",
+          padding: "14px 40px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 760,
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <Link href="/" aria-label="AidPilot home" style={{ display: "inline-flex" }}>
+            <Logo size={28} />
           </Link>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 14, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>
-            <ChevronSVG />Back to AidPilot
+          <Link
+            href="/login"
+            style={{
+              fontSize: "var(--text-sm)",
+              fontWeight: 700,
+              color: "var(--ink-800)",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Sign in
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* page body */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "56px 24px 96px" }}>
-
+      {/* page body - centered reading column */}
+      <main className="page-enter" style={{ flex: 1, maxWidth: 760, width: "100%", margin: "0 auto", padding: "56px 24px 88px" }}>
         {/* page header */}
-        <div style={{ marginBottom: 48 }}>
+        <div style={{ marginBottom: 44 }}>
           {badge && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", padding: "5px 12px", borderRadius: 999, letterSpacing: ".3px", marginBottom: 18 }}>
-              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7 3v5c0 4.4-3 6.8-7 8-4-1.2-7-3.6-7-8V6l7-3Z"/></svg>
-              {badge}
-            </span>
+            <div style={{ marginBottom: 18 }}>
+              <Badge tone="blue" icon="shield">{badge}</Badge>
+            </div>
           )}
-          <h1 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 44, fontWeight: 900, letterSpacing: "-1.2px", margin: "0 0 10px", color: "#15212E", lineHeight: 1.08 }}>{heading}</h1>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#9AA4B2", margin: 0 }}>Last updated: {lastUpdated}</p>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--text-display)",
+              fontWeight: 900,
+              letterSpacing: "var(--tracking-tight)",
+              lineHeight: 1.08,
+              margin: "0 0 10px",
+              color: "var(--text-heading)",
+            }}
+          >
+            {heading}
+          </h1>
+          <p style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-subtle)", margin: 0 }}>
+            Last updated: {lastUpdated}
+          </p>
         </div>
 
         {/* content */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {children}
-        </div>
-      </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>{children}</div>
+      </main>
 
-      {/* footer */}
-      <footer style={{ borderTop: "1px solid #E5E7EB", background: "#fff", padding: "32px 40px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 8, background: "#0B5CAD" }}>
-              <PlaneSVG />
-            </span>
-            <span style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 16, fontWeight: 900 }}>
-              <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            {[
-              { href: "/privacy",    label: "Privacy" },
-              { href: "/disclaimer", label: "Disclaimer" },
-              { href: "/dashboard",  label: "Demo" },
-              { href: "/",           label: "Home" },
-            ].map(({ href, label }) => (
-              <Link key={href} href={href} style={{ fontSize: 14, fontWeight: 600, color: "#6B7280", textDecoration: "none" }}>{label}</Link>
-            ))}
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2" }}>2026 AidPilot</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
@@ -98,24 +108,43 @@ interface SectionCardProps {
   accent?: "white" | "blue" | "green" | "amber" | "coral";
 }
 
-const ACCENT_STYLES: Record<NonNullable<SectionCardProps["accent"]>, { bg: string; border: string; titleColor: string }> = {
-  white:  { bg: "#FFFFFF",  border: "#E5E7EB", titleColor: "#15212E" },
-  blue:   { bg: "#EAF3FF",  border: "#CBD9EC", titleColor: "#0B5CAD" },
-  green:  { bg: "#EAFBF1",  border: "#B8E8CC", titleColor: "#15885A" },
-  amber:  { bg: "#FFF7E6",  border: "#F0DFA0", titleColor: "#92600A" },
-  coral:  { bg: "#FFE4E6",  border: "#F4C0C4", titleColor: "#C04E57" },
+const ACCENT_STYLES: Record<
+  NonNullable<SectionCardProps["accent"]>,
+  { bg: string; border: string; titleColor: string }
+> = {
+  white: { bg: "var(--surface-card)", border: "var(--border-card)", titleColor: "var(--text-heading)" },
+  blue: { bg: "var(--blue-100)", border: "var(--blue-200)", titleColor: "var(--blue-700)" },
+  green: { bg: "var(--green-100)", border: "var(--green-200)", titleColor: "var(--green-600)" },
+  amber: { bg: "var(--amber-100)", border: "var(--amber-200)", titleColor: "var(--amber-600)" },
+  coral: { bg: "var(--coral-100)", border: "var(--coral-200)", titleColor: "var(--coral-600)" },
 };
 
 export function SectionCard({ title, children, accent = "white" }: SectionCardProps) {
   const s = ACCENT_STYLES[accent];
   return (
-    <div style={{ background: s.bg, border: "1px solid " + s.border, borderRadius: 18, padding: "28px 32px" }}>
+    <div
+      style={{
+        background: s.bg,
+        border: `1px solid ${s.border}`,
+        borderRadius: "var(--radius-2xl)",
+        padding: "28px 32px",
+      }}
+    >
       {title && (
-        <h2 style={{ fontFamily: "var(--font-nunito), system-ui, sans-serif", fontSize: 20, fontWeight: 800, margin: "0 0 14px", color: s.titleColor, lineHeight: 1.2 }}>{title}</h2>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-h4)",
+            fontWeight: 800,
+            lineHeight: 1.2,
+            margin: "0 0 14px",
+            color: s.titleColor,
+          }}
+        >
+          {title}
+        </h2>
       )}
-      <div style={{ fontSize: 15.5, lineHeight: 1.75, color: "#374151" }}>
-        {children}
-      </div>
+      <div style={{ fontSize: "var(--text-base)", lineHeight: 1.75, color: "var(--ink-700)" }}>{children}</div>
     </div>
   );
 }

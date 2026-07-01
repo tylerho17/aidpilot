@@ -2,7 +2,12 @@
 
 import type { ReactNode } from "react";
 import { UserDataProvider } from "@/hooks/useUserData";
+import { LanguageProvider } from "@/lib/i18n";
 
 export function ClientProviders({ children }: { children: ReactNode }) {
-  return <UserDataProvider>{children}</UserDataProvider>;
+  return (
+    <LanguageProvider>
+      <UserDataProvider>{children}</UserDataProvider>
+    </LanguageProvider>
+  );
 }

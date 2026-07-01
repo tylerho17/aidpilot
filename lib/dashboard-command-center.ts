@@ -206,7 +206,7 @@ export function buildWeeklyFocus({
   } else if (nextFafsa) {
     items.push(`FAFSA: ${nextFafsa.title}`);
   } else {
-    items.push("FAFSA plan steps look complete — keep checking StudentAid.gov and your school portal.");
+    items.push("FAFSA plan steps look complete - keep checking StudentAid.gov and your school portal.");
   }
 
   if (fafsaBlockers.length > 0) {

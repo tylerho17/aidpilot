@@ -175,7 +175,7 @@ export default function ChecklistClient() {
           <ProductCard style={{ padding: 26 }}>
             <h2 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 6px", color: "#15212E" }}>Document tracker</h2>
             <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: "0 0 16px", lineHeight: 1.5 }}>
-              Status only — no file uploads yet. Document upload is coming later.
+              Status only - no file uploads yet. Document upload is coming later.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {safeDocuments.length === 0 ? (

@@ -1,0 +1,64 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AidPilot — Effects: radii, shadows, borders, motion
+   ----------------------------------------------------------------------
+   The AidPilot shadow system is monochrome-blue: every elevation is a
+   soft shadow tinted rgba(11,92,173,…) — never neutral gray. This ties
+   floating cards back to the trust-blue brand. Corners are generously
+   rounded (12–24px on cards, full pills on badges/buttons). Motion is
+   calm: gentle floats, one springy "pop", and a card-lift on hover.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Corner radii ── */
+  --radius-xs: 8px;    /* small chips, inline icon squares */
+  --radius-nav: 11px;  /* sidebar logo tile */
+  --radius-sm: 12px;   /* nav items, small buttons, logo tile */
+  --radius-md: 14px;   /* inputs, primary buttons */
+  --radius-lg: 16px;   /* medium cards, icon tiles */
+  --radius-xl: 18px;   /* stat cards */
+  --radius-2xl: 20px;  /* product cards */
+  --radius-3xl: 24px;  /* auth / modal cards */
+  --radius-clay: 24px; /* claymorphism cards — chunky, tactile (slightly tightened) */
+  --radius-clay-lg: 30px; /* big clay surfaces (metric boxes, hero cards) */
+  --radius-pill: 999px;/* badges, pills, avatars */
+
+  /* ── Blue-tinted elevation. Cards use soft, far-throw shadows ── */
+  --shadow-xs:        0 4px 12px rgba(11, 92, 173, 0.05);
+  --shadow-card:      0 16px 34px -24px rgba(11, 92, 173, 0.18);
+  --shadow-card-hover:0 22px 44px -20px rgba(11, 92, 173, 0.22);
+  --shadow-modal:     0 24px 48px -20px rgba(11, 92, 173, 0.18);
+  --shadow-lift:      0 8px 20px rgba(11, 92, 173, 0.14);
+
+  /* Button / brand-mark shadows — tighter, more saturated */
+  --shadow-btn:       0 8px 18px rgba(11, 92, 173, 0.24);
+  --shadow-btn-lg:    0 14px 28px rgba(11, 92, 173, 0.28);
+  --shadow-brand:     0 6px 16px rgba(11, 92, 173, 0.26);
+
+  /* ── Claymorphism × Material (the AidPilot app surface) ──────────────
+     Puffy, tactile cards for an easy student + parent experience: a soft
+     Material drop shadow for elevation + a top inset highlight and bottom
+     inset shade that give the "molded clay" roundness. Meant for white /
+     pastel cards on the soft-blue app canvas. */
+  --shadow-clay:        0 16px 30px -12px rgba(11,92,173,.22), 0 5px 12px -6px rgba(11,92,173,.12), inset 0 3px 3px rgba(255,255,255,.9), inset 0 -5px 10px rgba(11,92,173,.06);
+  --shadow-clay-sm:     0 8px 18px -8px rgba(11,92,173,.18), inset 0 2px 2px rgba(255,255,255,.85), inset 0 -3px 6px rgba(11,92,173,.05);
+  --shadow-clay-hover:  0 22px 40px -14px rgba(11,92,173,.28), 0 6px 14px -6px rgba(11,92,173,.14), inset 0 3px 3px rgba(255,255,255,.95), inset 0 -5px 10px rgba(11,92,173,.07);
+  --shadow-clay-pressed:inset 0 5px 12px rgba(11,92,173,.16), inset 0 -2px 4px rgba(255,255,255,.7);
+  /* Puffy brand-blue clay button — top light, bottom-inner deep-blue shade */
+  --shadow-clay-brand:  0 12px 22px -6px rgba(11,92,173,.44), inset 0 3px 4px rgba(255,255,255,.4), inset 0 -6px 12px rgba(9,75,142,.55);
+  --shadow-clay-brand-pressed: 0 4px 10px -4px rgba(11,92,173,.4), inset 0 4px 10px rgba(9,75,142,.6), inset 0 2px 3px rgba(9,75,142,.5);
+
+  /* ── Borders ── */
+  --border-hairline: 1px solid var(--border-default);
+  --border-input: 1.5px solid var(--border-default);
+  --border-btn-secondary: 1.5px solid var(--border-strong);
+
+  /* ── Motion — calm, springy on interaction ── */
+  --ease-spring: cubic-bezier(.2, .7, .2, 1);  /* @kind other */
+  --ease-standard: ease;   /* @kind other */
+  --duration-fast: 0.2s;   /* @kind other */
+  --duration-base: 0.45s;  /* @kind other */
+  --duration-slow: 0.8s;   /* @kind other */
+
+  /* Backdrop blur for sticky glass nav */
+  --blur-nav: blur(14px);  /* @kind other */
+}

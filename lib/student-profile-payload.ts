@@ -2,7 +2,7 @@ import type { OnboardingFormData, School, StudentProfile } from "@/lib/types";
 import { parseCommaSeparated } from "@/lib/data-helpers";
 import type { ScholarshipPreferences } from "@/lib/scholarship-preferences";
 
-/** Columns guaranteed by supabase/schema.sql — safe for required onboarding save. */
+/** Columns guaranteed by supabase/schema.sql - safe for required onboarding save. */
 export const STUDENT_PROFILE_REQUIRED_SAVE_COLUMNS = [
   "id",
   "first_name",

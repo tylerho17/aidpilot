@@ -67,7 +67,7 @@ export default function DocumentsClient() {
           Documents
         </h1>
         <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-          Track requested documents without uploading sensitive files. Document upload and aid letter scanning are coming later — AidPilot currently tracks status only.
+          Track requested documents without uploading sensitive files. Document upload and aid letter scanning are coming later - AidPilot currently tracks status only.
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export default function DocumentsClient() {
         {safeDocuments.length === 0 ? (
           <PageEmptyState
             title="No documents tracked yet"
-            description="Your school may request verification documents — add them from your checklist or track status here."
+            description="Your school may request verification documents - add them from your checklist or track status here."
             actionHref="/checklist"
             actionLabel="Open checklist"
           />

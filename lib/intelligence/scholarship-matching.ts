@@ -91,7 +91,7 @@ function buildEssayAngle(source: ScholarshipSource, profile: StudentProfile) {
     }
     return "Share a specific moment that shows your motivation and fit for this award.";
   }
-  return "No essay required — focus on eligibility checklist and deadline.";
+  return "No essay required - focus on eligibility checklist and deadline.";
 }
 
 function buildRecommendedAction(source: ScholarshipSource, matchPercent: number) {
@@ -101,10 +101,10 @@ function buildRecommendedAction(source: ScholarshipSource, matchPercent: number)
     return applyUrl ? `Apply this week: ${applyUrl}` : "Apply this week before the deadline passes.";
   }
   if (matchPercent >= 85) {
-    return applyUrl ? `Strong match — start application: ${applyUrl}` : "Strong match — start your application this week.";
+    return applyUrl ? `Strong match - start application: ${applyUrl}` : "Strong match - start your application this week.";
   }
   if (source.effort_level === "low") {
-    return applyUrl ? `Quick win — review and apply: ${applyUrl}` : "Quick win — review requirements and apply soon.";
+    return applyUrl ? `Quick win - review and apply: ${applyUrl}` : "Quick win - review requirements and apply soon.";
   }
   return applyUrl ? `Save and apply when ready: ${applyUrl}` : "Save this match and apply when you have time.";
 }
@@ -206,7 +206,7 @@ export function scoreScholarshipSource(
   const essayPref = (profile.essay_preference ?? "any").toLowerCase();
   if (essayPref === "prefer_no_essay" && !source.essay_required) {
     score += 4;
-    rationale.push("No essay required — matches your preference");
+    rationale.push("No essay required - matches your preference");
   }
 
   const days = daysUntil(source.deadline);

@@ -1,23 +1,7 @@
 "use client";
 
-import { PillBadge } from "@/components/ProductUI";
+import { Badge, Button } from "@/components/ui";
 import type { UserSchoolAidTask } from "@/lib/types";
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 36,
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
 
 function priorityTone(priority: UserSchoolAidTask["priority"]): "green" | "amber" | "coral" | "blue" | "gray" {
   if (priority === "urgent") return "coral";
@@ -38,7 +22,7 @@ export default function SchoolAidTaskList({ tasks, savingId, onUpdateStatus }: S
 
   if (tasks.length === 0) {
     return (
-      <p style={{ fontSize: 13, fontWeight: 500, color: "#9AA4B2", margin: 0, lineHeight: 1.55 }}>
+      <p style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-400)", margin: 0, lineHeight: 1.55 }}>
         No follow-up tasks yet. Tasks appear when you add a school or when a status needs attention.
       </p>
     );
@@ -52,42 +36,45 @@ export default function SchoolAidTaskList({ tasks, savingId, onUpdateStatus }: S
           style={{
             padding: "12px 14px",
             borderRadius: 12,
-            background: "#F9FAFB",
-            border: "1px solid #EAEEF3",
+            background: "var(--blue-50)",
+            border: "1px solid var(--border-card)",
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#15212E" }}>{task.title}</div>
-            <PillBadge tone={priorityTone(task.priority)}>{task.priority}</PillBadge>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)" }}>{task.title}</div>
+            <Badge tone={priorityTone(task.priority)}>{task.priority}</Badge>
           </div>
           {task.description ? (
-            <p style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", margin: "0 0 10px", lineHeight: 1.55 }}>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 10px", lineHeight: 1.55 }}>
               {task.description}
             </p>
           ) : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <button
-              type="button"
-              style={secondaryBtn}
+            <Button
+              variant="secondary"
+              size="sm"
+              shape="pill"
+              iconLeft="check"
               disabled={savingId === task.id}
               onClick={() => onUpdateStatus(task.id, "done")}
             >
               {savingId === task.id ? "Saving..." : "Mark done"}
-            </button>
-            <button
-              type="button"
-              style={{ ...secondaryBtn, background: "#F3F4F6", color: "#6B7280" }}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              shape="pill"
               disabled={savingId === task.id}
               onClick={() => onUpdateStatus(task.id, "skipped")}
             >
               Skip
-            </button>
+            </Button>
           </div>
         </div>
       ))}
 
       {doneTasks.length > 0 ? (
-        <p style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2", margin: "4px 0 0" }}>
+        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-400)", margin: "4px 0 0" }}>
           {doneTasks.length} completed or skipped task{doneTasks.length === 1 ? "" : "s"}
         </p>
       ) : null}

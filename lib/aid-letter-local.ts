@@ -6,7 +6,7 @@ export const AID_LETTER_LOCAL_STORE_KEY = "aidpilot_aid_letter_local_store";
 export const AID_LETTER_LOCAL_MODE_KEY = "aidpilot_aid_letter_local_mode";
 
 export const AID_LETTER_LOCAL_BANNER_MESSAGE =
-  "Saved on this device only. Your decoder still works — account syncing will catch up when save is available.";
+  "Saved on this device only. Your decoder still works - account syncing will catch up when save is available.";
 
 export type AidLetterLocalStore = {
   userId: string;

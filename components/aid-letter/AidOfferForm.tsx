@@ -1,45 +1,39 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Button, Select, TextField } from "@/components/ui";
 import { AID_OFFER_STATUS_LABELS, formatDollarInput, parseDollarInput } from "@/lib/aid-letter/calculateAidOffer";
 import type { AidOfferInput } from "@/hooks/useAidOffers";
 import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
 import { AID_OFFER_RECORD_STATUSES } from "@/lib/types";
 
-const inputStyle = {
+const sectionHeading = {
+  fontSize: 14,
+  fontWeight: 800,
+  color: "var(--ink-900)",
+  margin: "4px 0 0",
+  fontFamily: "var(--font-display)",
+} as const;
+
+const textareaStyle = {
   width: "100%",
-  padding: "11px 12px",
-  borderRadius: 10,
-  border: "1px solid #EAEEF3",
-  fontSize: 14,
-  fontWeight: 500,
-  color: "#15212E",
-  fontFamily: "inherit",
   boxSizing: "border-box" as const,
+  borderRadius: "var(--radius-md)",
+  border: "1.5px solid var(--border-default)",
+  padding: "13px 16px",
+  fontSize: 15,
+  fontFamily: "var(--font-body)",
+  color: "var(--ink-800)",
+  outline: "none",
+  resize: "vertical" as const,
 };
 
-const labelStyle = {
-  display: "block",
-  fontSize: 12,
+const textareaLabelStyle = {
+  fontSize: 13,
   fontWeight: 700,
-  color: "#5B6573",
+  color: "var(--ink-700)",
   marginBottom: 6,
-};
-
-const submitBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 44,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "10px 18px",
-  borderRadius: 12,
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
+  display: "block",
 } as const;
 
 type FormState = {
@@ -147,20 +141,15 @@ function DollarField({
   onChange: (value: string) => void;
 }) {
   return (
-    <div>
-      <label htmlFor={id} style={labelStyle}>
-        {label}
-      </label>
-      <input
-        id={id}
-        inputMode="decimal"
-        min={0}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="0"
-        style={inputStyle}
-      />
-    </div>
+    <TextField
+      id={id}
+      label={label}
+      inputMode="decimal"
+      min={0}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder="0"
+    />
   );
 }
 
@@ -174,53 +163,36 @@ export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel 
   }
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <form onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-        <div>
-          <label htmlFor="school-name" style={labelStyle}>
-            School name
-          </label>
-          <input
-            id="school-name"
-            value={form.school_name}
-            onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))}
-            required
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label htmlFor="academic-year" style={labelStyle}>
-            Academic year
-          </label>
-          <input
-            id="academic-year"
-            value={form.academic_year}
-            onChange={(event) => setForm((prev) => ({ ...prev, academic_year: event.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label htmlFor="offer-status" style={labelStyle}>
-            Offer status
-          </label>
-          <select
-            id="offer-status"
-            value={form.offer_status}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, offer_status: event.target.value as AidOfferRecordStatus }))
-            }
-            style={inputStyle}
-          >
-            {AID_OFFER_RECORD_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {AID_OFFER_STATUS_LABELS[status]}
-              </option>
-            ))}
-          </select>
-        </div>
+        <TextField
+          id="school-name"
+          label="School name"
+          value={form.school_name}
+          onChange={(event) => setForm((prev) => ({ ...prev, school_name: event.target.value }))}
+          required
+        />
+        <TextField
+          id="academic-year"
+          label="Academic year"
+          value={form.academic_year}
+          onChange={(event) => setForm((prev) => ({ ...prev, academic_year: event.target.value }))}
+        />
+        <Select
+          id="offer-status"
+          label="Offer status"
+          value={form.offer_status}
+          onChange={(event) =>
+            setForm((prev) => ({ ...prev, offer_status: event.target.value as AidOfferRecordStatus }))
+          }
+          options={AID_OFFER_RECORD_STATUSES.map((status) => ({
+            value: status,
+            label: AID_OFFER_STATUS_LABELS[status],
+          }))}
+        />
       </div>
 
-      <h3 style={{ fontSize: 14, fontWeight: 800, color: "#15212E", margin: "4px 0 0" }}>Costs</h3>
+      <h3 style={sectionHeading}>Costs</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
         <DollarField id="coa" label="Cost of attendance" value={form.cost_of_attendance} onChange={(v) => setForm((p) => ({ ...p, cost_of_attendance: v }))} />
         <DollarField id="tuition" label="Tuition and fees" value={form.tuition_and_fees} onChange={(v) => setForm((p) => ({ ...p, tuition_and_fees: v }))} />
@@ -230,7 +202,7 @@ export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel 
         <DollarField id="personal" label="Personal expenses" value={form.personal_expenses} onChange={(v) => setForm((p) => ({ ...p, personal_expenses: v }))} />
       </div>
 
-      <h3 style={{ fontSize: 14, fontWeight: 800, color: "#15212E", margin: "4px 0 0" }}>Aid shown</h3>
+      <h3 style={sectionHeading}>Aid shown</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
         <DollarField id="grants" label="Grants and scholarships" value={form.grants_and_scholarships} onChange={(v) => setForm((p) => ({ ...p, grants_and_scholarships: v }))} />
         <DollarField id="work-study" label="Work-study" value={form.work_study} onChange={(v) => setForm((p) => ({ ...p, work_study: v }))} />
@@ -241,7 +213,7 @@ export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel 
       </div>
 
       <div>
-        <label htmlFor="renewal-notes" style={labelStyle}>
+        <label htmlFor="renewal-notes" style={textareaLabelStyle}>
           Renewal notes
         </label>
         <textarea
@@ -250,12 +222,12 @@ export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel 
           value={form.renewal_notes}
           onChange={(event) => setForm((prev) => ({ ...prev, renewal_notes: event.target.value }))}
           placeholder="Which scholarships renew? What GPA or hours are required?"
-          style={{ ...inputStyle, resize: "vertical" as const }}
+          style={textareaStyle}
         />
       </div>
 
       <div>
-        <label htmlFor="notes" style={labelStyle}>
+        <label htmlFor="notes" style={textareaLabelStyle}>
           Notes
         </label>
         <textarea
@@ -264,26 +236,18 @@ export default function AidOfferForm({ initialOffer, saving, onSubmit, onCancel 
           value={form.notes}
           onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
           placeholder="Anything else to remember about this offer"
-          style={{ ...inputStyle, resize: "vertical" as const }}
+          style={textareaStyle}
         />
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <button type="submit" disabled={saving || !form.school_name.trim()} style={submitBtn}>
+        <Button type="submit" variant="clay" disabled={saving || !form.school_name.trim()}>
           {saving ? "Saving..." : initialOffer ? "Save changes" : "Save aid offer"}
-        </button>
+        </Button>
         {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            style={{
-              ...submitBtn,
-              background: "#EAF3FF",
-              color: "#0B5CAD",
-            }}
-          >
+          <Button type="button" variant="secondary" onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
         ) : null}
       </div>
     </form>

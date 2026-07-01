@@ -1,0 +1,108 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AidPilot — Color tokens
+   ----------------------------------------------------------------------
+   Values are transcribed verbatim from the AidPilot codebase
+   (app/globals.css, components/*.tsx) and the designer's own written
+   "Color Rationale" in the Figma file. Do not round or snap them.
+
+   The palette is a single trust-blue system warmed by three soft status
+   tints (green = safe, amber = attention, coral = friendly risk). It is
+   intentionally calm: soft off-white backgrounds, navy-gray text instead
+   of pure black, and one saturated blue reserved for actions.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Primary blue — the trust color. Buttons, links, active nav, key actions ── */
+  --blue-900: #094B8E;   /* pressed / darkest */
+  --blue-700: #0B5CAD;   /* PRIMARY brand blue */
+  --blue-500: #3E86D6;   /* progress-bar gradient end, lighter accent */
+  --blue-300: #A9C7EE;   /* pale connector lines, faint strokes */
+  --blue-200: #D7E7FB;   /* soft-blue card border */
+  --blue-100: #EAF3FF;   /* Soft Blue — friendly academic fills, highlights */
+  --blue-50:  #F4F8FE;   /* app canvas tint, hero fade */
+
+  /* ── Soft Green — safe, complete, protected, on track ── */
+  --green-600: #15885A;  /* protected/complete text + icons */
+  --green-700: #15803D;  /* denser success text (badges on tables) */
+  --green-200: #D5F0E2;  /* green panel border */
+  --green-100: #EAFBF1;  /* Soft Green fill */
+
+  /* ── Soft Amber — gentle urgency, due soon, reminders ── */
+  --amber-700: #B45309;  /* denser amber text */
+  --amber-600: #B7791F;  /* deadline / attention text */
+  --amber-200: #F2E6C8;  /* amber panel border */
+  --amber-100: #FFF7E6;  /* Soft Amber fill */
+
+  /* ── Soft Coral — warmth + friendly risk, missing docs. Use sparingly ── */
+  --coral-700: #B91C1C;  /* strong error text */
+  --coral-600: #C04E57;  /* risk / missing-doc text */
+  --coral-200: #F4D2D6;  /* coral panel border */
+  --coral-100: #FFE4E6;  /* Soft Coral fill */
+
+  /* ── Ink & neutrals — navy-gray, never pure black ── */
+  --ink-900: #15212E;    /* display headlines, dashboard numbers */
+  --ink-800: #1F2937;    /* Main Text — body, card titles, labels */
+  --ink-700: #374151;    /* form-control label text */
+  --ink-600: #5B6573;    /* muted body copy on marketing */
+  --gray-500: #6B7280;   /* Muted Text — descriptions, helper, timestamps */
+  --gray-400: #9AA4B2;   /* subtle text, disabled, faint sub-labels */
+  --gray-300: #CBD2DA;   /* dividers, dots, faint icons */
+  --gray-200: #E5E7EB;   /* Border — inputs, dividers, default line */
+  --gray-100: #F3F4F6;   /* neutral chip fill */
+
+  /* ── Surfaces ── */
+  --white: #FFFFFF;
+  --surface-page: #F9FAFB;  /* marketing canvas — calm, official off-white */
+  --surface-app:  #F4F8FE;  /* signed-in app canvas — soft blue wash */
+  --surface-card: #FFFFFF;  /* Card White — clarity + separation */
+
+  /* ── Border palette (soft, structural — never heavy) ── */
+  --border-default: #E5E7EB; /* inputs, tables, dividers */
+  --border-card:    #E6EDF6; /* product card outline */
+  --border-soft:    #E9EDF2; /* modal / auth card outline */
+  --border-nav:     #EAECEF; /* sticky nav underline */
+  --border-strong:  #E2E8F0; /* secondary button outline */
+  --track:          #E9EEF3; /* progress-bar track */
+
+  /* ══ Semantic aliases — reach for these in product code ══ */
+  --color-primary:        var(--blue-700);
+  --color-primary-hover:  var(--blue-900);
+  --color-primary-soft:   var(--blue-100);
+  --color-link:           var(--blue-700);
+  --color-focus-ring:     rgba(11, 92, 173, 0.35);
+
+  --text-heading:   var(--ink-900);
+  --text-body:      var(--ink-800);
+  --text-muted:     var(--gray-500);
+  --text-subtle:    var(--gray-400);
+  --text-on-brand:  var(--white);
+
+  /* Status — pair a fill with its foreground */
+  --status-safe-fill:   var(--green-100);
+  --status-safe-fg:     var(--green-600);
+  --status-safe-border: var(--green-200);
+
+  --status-warn-fill:   var(--amber-100);
+  --status-warn-fg:     var(--amber-600);
+  --status-warn-border: var(--amber-200);
+
+  --status-risk-fill:   var(--coral-100);
+  --status-risk-fg:     var(--coral-600);
+  --status-risk-border: var(--coral-200);
+
+  --status-info-fill:   var(--blue-100);
+  --status-info-fg:     var(--blue-700);
+  --status-info-border: var(--blue-200);
+
+  --status-neutral-fill: var(--gray-100);
+  --status-neutral-fg:   var(--gray-500);
+
+  /* Signature gradients */
+  --gradient-progress: linear-gradient(90deg, #0B5CAD, #3E86D6);  /* @kind color */
+  --gradient-hero:     linear-gradient(180deg, #FFFFFF 0%, #F4F8FE 100%);  /* @kind color */
+  --gradient-auth:     linear-gradient(180deg, #F4F8FE 0%, #EAFBF1 100%);  /* @kind color */
+  --gradient-safe:     linear-gradient(135deg, #EAFBF1, #F4FBF7);  /* @kind color */
+  --gradient-warn:     linear-gradient(135deg, #FFF7E6, #FFFBF0);  /* @kind color */
+  --gradient-risk:     linear-gradient(135deg, #FFE4E6, #FFF1F2);  /* @kind color */
+  --gradient-info:     linear-gradient(135deg, #EAF3FF, #F4F8FE);  /* @kind color */
+}

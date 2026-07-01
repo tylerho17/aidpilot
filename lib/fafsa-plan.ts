@@ -49,7 +49,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     priority: "High",
     why_it_matters: "Using the correct aid year keeps your application tied to the right enrollment period.",
     instructions: `Verify you are applying for aid year ${year} on StudentAid.gov before you start.`,
-    required_info: "Aid year only — no tax numbers or SSN needed here.",
+    required_info: "Aid year only - no tax numbers or SSN needed here.",
     blocking_reason: null,
     action_url: STUDENTAID_URL,
     description: `Aid year: ${year}`,
@@ -76,7 +76,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
     priority: "High",
     why_it_matters: "Schools only receive your FAFSA if they are listed on your application.",
     instructions: `Add or verify these schools on FAFSA: ${schools}. Use each school's federal school code from their financial aid website.`,
-    required_info: "School names only — gather federal school codes from official school sites.",
+    required_info: "School names only - gather federal school codes from official school sites.",
     blocking_reason: null,
     action_url: STUDENTAID_URL,
   });
@@ -87,10 +87,10 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
       title: "Confirm access to tax and financial information",
       stage: "Get ready",
       priority: "High",
-      why_it_matters: "FAFSA may ask whether you can access tax information — you do not enter those numbers in AidPilot.",
+      why_it_matters: "FAFSA may ask whether you can access tax information - you do not enter those numbers in AidPilot.",
       instructions:
         "Check whether you or a parent/contributor can access tax records if FAFSA asks. AidPilot only tracks whether you have access, not account numbers or return values.",
-      required_info: "Know whether tax info is available — not the actual tax figures.",
+      required_info: "Know whether tax info is available - not the actual tax figures.",
       blocking_reason: "Unclear access to financial information",
       action_url: STUDENTAID_URL,
     });
@@ -102,7 +102,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
       priority: "Medium",
       why_it_matters: "Having a short checklist reduces surprises when you sit down to fill out FAFSA.",
       instructions:
-        "Skim the official FAFSA checklist on StudentAid.gov. AidPilot tracks readiness only — do not store SSNs, bank numbers, or tax return values here.",
+        "Skim the official FAFSA checklist on StudentAid.gov. AidPilot tracks readiness only - do not store SSNs, bank numbers, or tax return values here.",
       required_info: "General awareness of what categories FAFSA may cover.",
       blocking_reason: null,
       action_url: STUDENTAID_URL,
@@ -145,7 +145,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
         priority: "High",
         why_it_matters: "Many students need a parent or other contributor to complete their FAFSA section.",
         instructions:
-          "Share official StudentAid.gov instructions with your contributor. They create their own account — AidPilot does not collect their credentials.",
+          "Share official StudentAid.gov instructions with your contributor. They create their own account - AidPilot does not collect their credentials.",
         required_info: "Contributor contact method (text, email, or in person).",
         blocking_reason: "Contributor account not ready",
         action_url: "https://studentaid.gov/fsa-id/create-account",
@@ -159,7 +159,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
       priority: "High",
       why_it_matters: "FAFSA cannot be processed for many students until the contributor section is finished.",
       instructions:
-        "Invite your contributor through StudentAid.gov or sit with them to complete their section. Track progress here — do not enter their SSN or tax numbers in AidPilot.",
+        "Invite your contributor through StudentAid.gov or sit with them to complete their section. Track progress here - do not enter their SSN or tax numbers in AidPilot.",
       required_info: "Contributor availability and StudentAid.gov access.",
       blocking_reason: "Contributor section incomplete",
       action_url: STUDENTAID_URL,
@@ -215,7 +215,7 @@ export function generateFafsaPlan(intake: FafsaIntakeFormData | FafsaIntakeRespo
       stage: "Documents and verification",
       priority: "High",
       why_it_matters: "Aid may not disburse until verification is finished.",
-      instructions: "Check your school portal for requested forms. Upload only through official school channels — not AidPilot.",
+      instructions: "Check your school portal for requested forms. Upload only through official school channels - not AidPilot.",
       required_info: "School portal access and list of requested documents.",
       blocking_reason: "Verification documents requested",
       action_url: null,

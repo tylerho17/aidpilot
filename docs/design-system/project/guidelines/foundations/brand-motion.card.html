@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" viewport="700x180" name="Motion" subtitle="Calm floats, one spring, card lift — never jittery" -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><link rel="stylesheet" href="../../styles.css" />
+<style>
+  body { margin: 0; background: var(--surface-card); font-family: var(--font-body); }
+  .wrap { padding: 22px 26px; display: flex; align-items: center; gap: 30px; }
+  .stage { position: relative; width: 150px; height: 100px; flex-shrink: 0; }
+  .blob { position: absolute; width: 60px; height: 60px; border-radius: 56% 44% 50% 50% / 50% 52% 48% 50%; }
+  .b1 { background: var(--blue-100); top: 6px; left: 6px; }
+  .b2 { background: var(--green-100); bottom: 4px; right: 14px; width: 46px; height: 46px; }
+  .plane { position: absolute; top: 32px; left: 50px; }
+  .info { font-size: 13px; color: var(--gray-500); line-height: 1.7; font-weight: 500; }
+  .info b { color: var(--ink-800); font-weight: 700; }
+  code { font-family: var(--font-body); font-size: 12px; color: var(--blue-700); background: var(--blue-100); padding: 1px 7px; border-radius: 6px; font-weight: 700; }
+</style></head>
+<body><div class="wrap">
+  <div class="stage">
+    <div class="blob b1 animate-floaty-slow"></div>
+    <div class="blob b2 animate-floaty2-slow"></div>
+    <img class="plane animate-floaty" src="../../assets/aidpilot-mark.png" height="46" alt="" />
+  </div>
+  <div class="info">
+    <b>Signature easing</b> &nbsp;<code>cubic-bezier(.2,.7,.2,1)</code><br />
+    Blobs drift on 7–15s <b>floaty</b> loops · cards <b>lift 3px</b> on hover · check-offs <b>pop</b> once (0.42s spring) · progress bars ease their width. Respects <code>prefers-reduced-motion</code>.
+  </div>
+</div></body></html>

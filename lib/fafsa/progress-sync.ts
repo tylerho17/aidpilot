@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { FAFSA_STEPS } from "@/lib/fafsa/steps";
 
-/** Guided FAFSA progress rows (plan_key). Uses fafsa_step_progress — not user_fafsa_steps (workflow_step_id). */
+/** Guided FAFSA progress rows (plan_key). Uses fafsa_step_progress - not user_fafsa_steps (workflow_step_id). */
 const FAFSA_PROGRESS_TABLE = "fafsa_step_progress";
 
 export const FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE =

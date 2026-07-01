@@ -3,8 +3,19 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PlaneSVG, ProgressBar } from "@/components/ProductUI";
 import { createClient } from "@/lib/supabase/client";
+import {
+  Button,
+  Card,
+  Checkbox,
+  IconTile,
+  Logo,
+  OptionCard,
+  ProgressBar,
+  Select,
+  SegmentedControl,
+  TextField,
+} from "@/components/ui";
 import {
   EFFORT_PREFERENCE_OPTIONS,
   ESSAY_PREFERENCE_OPTIONS,
@@ -18,6 +29,8 @@ import {
   saveOnboardingProfile,
 } from "@/lib/onboarding-profile";
 import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
+import { useLanguage } from "@/lib/i18n";
+import { ONBOARDING_STRINGS, optionLabel } from "./strings";
 import type { OnboardingFormData, School } from "@/lib/types";
 
 const PROFILE_ESSAY_OPTIONS = [
@@ -44,6 +57,8 @@ const GOAL_OPTIONS = ["Protect my aid", "Catch deadlines", "Upload documents", "
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { lang, setLang, t } = useLanguage();
+  const L = t(ONBOARDING_STRINGS);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
@@ -77,7 +92,7 @@ export default function OnboardingPage() {
     profile_essay_preference: "any",
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7; // language first, then the six profile steps
   const pct = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -156,8 +171,8 @@ export default function OnboardingPage() {
 
   const schoolOptions =
     schools.length > 0
-      ? [...schools.map((s) => ({ label: s.name, value: s.name })), { label: "Other", value: "Other" }]
-      : SCHOOL_FALLBACK;
+      ? [...schools.map((s) => ({ label: s.name, value: s.name })), { label: L.labels.other, value: "Other" }]
+      : SCHOOL_FALLBACK.map((o) => (o.value === "Other" ? { ...o, label: L.labels.other } : o));
 
   const resolvedSchool =
     form.school === "Other" ? manualSchool.trim() : form.school;
@@ -174,12 +189,12 @@ export default function OnboardingPage() {
     e.preventDefault();
 
     if (!resolvedSchool) {
-      setError("Please select or enter your school.");
+      setError(L.errors.schoolRequired);
       return;
     }
 
     if (form.main_goals.length === 0) {
-      setError("Select at least one goal.");
+      setError(L.errors.goalRequired);
       return;
     }
 
@@ -195,11 +210,11 @@ export default function OnboardingPage() {
       } = await supabase.auth.getUser();
 
       if (authError) {
-        throw new Error("We couldn't verify your account. Please log in again.");
+        throw new Error(L.errors.verifyFailed);
       }
 
       if (!user) {
-        setError("Please log in again to finish onboarding.");
+        setError(L.errors.loginAgain);
         router.replace("/login");
         return;
       }
@@ -220,7 +235,7 @@ export default function OnboardingPage() {
       router.replace("/dashboard");
     } catch (err) {
       console.error("Onboarding submit failed:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setError(err instanceof Error ? err.message : L.errors.generic);
     } finally {
       if (!redirected) {
         setIsSubmitting(false);
@@ -229,251 +244,328 @@ export default function OnboardingPage() {
   }
 
   if (checkingAuth) {
-    return <div style={{ minHeight: "100vh", background: "#F4F8FE" }} />;
+    return <div style={{ minHeight: "100vh", background: "var(--surface-app)" }} />;
   }
 
   if (!userId) {
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
-        <div style={{ maxWidth: 480, textAlign: "center", background: "#fff", borderRadius: 24, padding: 32, border: "1px solid #E9EDF2", boxShadow: "0 24px 48px -20px rgba(11,92,173,.18)" }}>
-          <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "0 0 12px", color: "#15212E" }}>Let&apos;s build your aid check-in</h1>
-          <p style={{ fontSize: 16, color: "#6B7280", lineHeight: 1.6, margin: "0 0 24px" }}>
-            Create a free account to save your aid plan, checklist, and scholarship matches.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/signup" style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: "#0B5CAD", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Create account</Link>
-            <Link href="/login" style={{ fontSize: 15, fontWeight: 700, color: "#0B5CAD", background: "#fff", border: "1.5px solid #E2E8F0", padding: "12px 22px", borderRadius: 13, textDecoration: "none" }}>Log in</Link>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "var(--gradient-auth)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          fontFamily: "var(--font-body)",
+        }}
+      >
+        <Card
+          variant="clay"
+          padding="36px 32px"
+          style={{ maxWidth: 480, width: "100%", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}
+        >
+          <IconTile icon="shield-check" tone="blue" size={56} />
+          <div>
+            <h1 className="font-display" style={{ fontSize: 28, fontWeight: 900, margin: "0 0 8px", color: "var(--ink-800)" }}>
+              Let&apos;s build your aid check-in
+            </h1>
+            <p style={{ fontSize: 16, color: "var(--gray-500)", lineHeight: 1.6, margin: 0 }}>
+              Create a free account to save your aid plan, checklist, and scholarship matches.
+            </p>
           </div>
-          <p style={{ marginTop: 20, fontSize: 13 }}>
-            <Link href="/" style={{ color: "#9AA4B2", textDecoration: "underline" }}>Back to home</Link>
-          </p>
-        </div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/signup" style={{ textDecoration: "none" }}>
+              <Button variant="clay">Create account</Button>
+            </Link>
+            <Link href="/login" style={{ textDecoration: "none" }}>
+              <Button variant="secondary">Log in</Button>
+            </Link>
+          </div>
+          <Link href="/" style={{ fontSize: 13, color: "var(--gray-400)", textDecoration: "underline" }}>
+            Back to home
+          </Link>
+        </Card>
       </div>
     );
   }
 
-  const inputStyle = { width: "100%", borderRadius: 14, border: "1.5px solid #E5E7EB", padding: "13px 16px", fontSize: 15, outline: "none", fontFamily: "inherit", boxSizing: "border-box" as const };
+  const heading = L.headings[step];
 
   return (
-    <div className="min-h-screen" style={{ minHeight: "100vh", overflowY: "auto", background: "linear-gradient(180deg,#F4F8FE 0%,#EAFBF1 100%)", fontFamily: "var(--font-hanken), system-ui, sans-serif" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        overflowY: "auto",
+        background: "var(--gradient-auth)",
+        fontFamily: "var(--font-body)",
+      }}
+    >
       <div style={{ padding: "18px 40px" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <span style={{ display: "flex", width: 36, height: 36, borderRadius: 11, background: "#0B5CAD", alignItems: "center", justifyContent: "center" }}>
-            <PlaneSVG size={18} color="#fff" />
-          </span>
-          <span className="font-display" style={{ fontSize: 20, fontWeight: 900 }}>
-            <span style={{ color: "#1F2937" }}>Aid</span><span style={{ color: "#0B5CAD" }}>Pilot</span>
-          </span>
+        <Link href="/" aria-label="AidPilot home" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+          <Logo variant="full" size={30} />
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="overflow-y-auto" style={{ maxWidth: 560, margin: "0 auto", padding: "24px 24px 120px", overflowY: "auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: 16, background: "#EAF3FF", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-            <PlaneSVG size={24} color="#0B5CAD" />
-          </div>
-          <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, margin: "0 0 10px", color: "#15212E" }}>
-            Let&apos;s build your aid check-in.
+      <form
+        onSubmit={handleSubmit}
+        style={{ maxWidth: 640, margin: "0 auto", padding: "12px 24px 120px" }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <IconTile icon="plane" tone="blue" size={54} style={{ marginBottom: 16 }} />
+          <h1 className="font-display" style={{ fontSize: 30, fontWeight: 900, margin: "0 0 10px", color: "var(--ink-800)" }}>
+            {heading.title}
           </h1>
-          <p style={{ fontSize: 16, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-            Answer a few quick questions so AidPilot can protect your aid and find scholarships that fit you. We never ask for SSNs, FAFSA logins, or tax documents.
+          <p style={{ fontSize: 15, color: "var(--gray-500)", margin: "0 auto", maxWidth: 520, lineHeight: 1.6 }}>
+            {heading.subtitle}
           </p>
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>
-            <span>Step {step + 1} of {totalSteps}</span>
-            <span style={{ color: "#0B5CAD" }}>{pct}%</span>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, fontWeight: 600, color: "var(--gray-400)" }}>
+            <span>{L.ui.step} {step + 1} {L.ui.of} {totalSteps}</span>
+            <span style={{ color: "var(--blue-700)", fontWeight: 700 }}>{pct}%</span>
           </div>
           <ProgressBar pct={pct} />
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #E9EDF2", borderRadius: 24, padding: "28px 24px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+        <Card
+          key={step}
+          className="page-enter"
+          variant="clay"
+          padding="28px 24px"
+          style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 16 }}
+        >
           {step === 0 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                We use your name and school to personalize deadlines, documents, and scholarship matches.
-              </p>
-              <input required style={inputStyle} placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
-              <input required type="email" style={inputStyle} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              <select required style={inputStyle} value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })}>
-                {schoolOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              {form.school === "Other" && (
-                <input
-                  required
-                  style={inputStyle}
-                  placeholder="Enter your school name"
-                  value={manualSchool}
-                  onChange={(e) => setManualSchool(e.target.value)}
-                />
-              )}
-              {!schoolsLoaded && (
-                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>Loading schools...</p>
-              )}
-              {schoolsLoaded && schools.length === 0 && (
-                <p style={{ fontSize: 12, color: "#9AA4B2", margin: 0 }}>
-                  School list unavailable. Choose Other and enter your school.
-                </p>
-              )}
-              <select required style={inputStyle} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
-                {YEAR_OPTIONS.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+              <OptionCard
+                title={L.ui.languageEnglish}
+                description={L.ui.languageEnglishSub}
+                selected={lang === "en"}
+                onClick={() => setLang("en")}
+              />
+              <OptionCard
+                title={L.ui.languageSpanish}
+                description={L.ui.languageSpanishSub}
+                selected={lang === "es"}
+                onClick={() => setLang("es")}
+              />
             </>
           )}
 
           {step === 1 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                State and student type help us surface relevant aid programs. FAFSA status helps prioritize your checklist — we never access your FAFSA account.
-              </p>
-              <input required style={inputStyle} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-              <select required style={inputStyle} value={form.student_type} onChange={(e) => setForm({ ...form, student_type: e.target.value })}>
-                {STUDENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <select required style={inputStyle} value={form.fafsa_status} onChange={(e) => setForm({ ...form, fafsa_status: e.target.value })}>
-                {FAFSA_OPTIONS.map((o) => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
+              <TextField
+                required
+                label={L.fields.firstName}
+                placeholder={L.fields.firstName}
+                value={form.first_name}
+                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+              />
+              <TextField
+                required
+                type="email"
+                label={L.fields.email}
+                placeholder={L.fields.email}
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+              <Select
+                required
+                label={L.fields.school}
+                value={form.school}
+                onChange={(e) => setForm({ ...form, school: e.target.value })}
+                options={schoolOptions}
+              />
+              {form.school === "Other" && (
+                <TextField
+                  required
+                  label={L.fields.schoolName}
+                  placeholder={L.fields.schoolNamePlaceholder}
+                  value={manualSchool}
+                  onChange={(e) => setManualSchool(e.target.value)}
+                />
+              )}
+              {!schoolsLoaded && (
+                <p style={{ fontSize: 12, color: "var(--gray-400)", margin: 0 }}>{L.ui.loadingSchools}</p>
+              )}
+              {schoolsLoaded && schools.length === 0 && (
+                <p style={{ fontSize: 12, color: "var(--gray-400)", margin: 0 }}>
+                  {L.ui.schoolListUnavailable}
+                </p>
+              )}
+              <Select
+                required
+                label={L.fields.year}
+                value={form.year}
+                onChange={(e) => setForm({ ...form, year: e.target.value })}
+                options={YEAR_OPTIONS.map((v) => ({ value: v, label: optionLabel(L.labels.year, v) }))}
+              />
             </>
           )}
 
           {step === 2 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Knowing your current aid types helps AidPilot tailor reminders and scholarship suggestions. Select all that apply.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Do you currently receive financial aid?</p>
-              {AID_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.aid_types.includes(o)} onChange={() => toggleArray("aid_types", o)} />
-                  {o}
-                </label>
-              ))}
+              <TextField
+                required
+                label={L.fields.state}
+                placeholder={L.fields.state}
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+              />
+              <Select
+                required
+                label={L.fields.studentType}
+                value={form.student_type}
+                onChange={(e) => setForm({ ...form, student_type: e.target.value })}
+                options={STUDENT_TYPES.map((v) => ({ value: v, label: optionLabel(L.labels.studentType, v) }))}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)" }}>{L.fields.fafsaQuestion}</span>
+                <SegmentedControl
+                  options={FAFSA_OPTIONS.map((v) => ({ value: v, label: optionLabel(L.labels.fafsa, v) }))}
+                  value={form.fafsa_status}
+                  onChange={(value) => setForm({ ...form, fafsa_status: value })}
+                />
+              </div>
             </>
           )}
 
           {step === 3 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Your goals shape what AidPilot highlights first on your dashboard and weekly report.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>What do you want help with most?</p>
-              {GOAL_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.main_goals.includes(o)} onChange={() => toggleArray("main_goals", o)} />
-                  {o}
-                </label>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-800)" }}>{L.fields.aidQuestion}</span>
+              {AID_OPTIONS.map((o) => (
+                <OptionCard
+                  key={o}
+                  title={optionLabel(L.labels.aid, o)}
+                  selected={form.aid_types.includes(o)}
+                  onClick={() => toggleArray("aid_types", o)}
+                />
               ))}
-              <p style={{ fontSize: 12, color: "#9AA4B2", lineHeight: 1.6, margin: "8px 0 0" }}>
-                AidPilot is an organizational and educational tool, not official financial aid advice. We never collect FAFSA logins, SSNs, or tax documents.
-              </p>
             </>
           )}
 
           {step === 4 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Scholarship categories and effort preferences improve match quality. You can change these anytime in Settings.
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#15212E", margin: 0 }}>Scholarship interests</p>
-              {SCHOLARSHIP_CATEGORY_OPTIONS.map((o) => (
-                <label key={o} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                  <input type="checkbox" checked={form.interested_categories.includes(o)} onChange={() => toggleArray("interested_categories", o)} />
-                  {o}
-                </label>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-800)" }}>{L.fields.goalsQuestion}</span>
+              {GOAL_OPTIONS.map((o) => (
+                <OptionCard
+                  key={o}
+                  title={optionLabel(L.labels.goal, o)}
+                  selected={form.main_goals.includes(o)}
+                  onClick={() => toggleArray("main_goals", o)}
+                />
               ))}
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
-                <select style={inputStyle} value={form.essay_preference} onChange={(e) => setForm({ ...form, essay_preference: e.target.value })}>
-                  {ESSAY_PREFERENCE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Effort preference</span>
-                <select style={inputStyle} value={form.effort_preference} onChange={(e) => setForm({ ...form, effort_preference: e.target.value })}>
-                  {EFFORT_PREFERENCE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
+              <p style={{ fontSize: 12, color: "var(--gray-400)", lineHeight: 1.6, margin: "4px 0 0" }}>
+                {L.ui.trustCopy}
+              </p>
             </>
           )}
 
           {step === 5 && (
             <>
-              <p style={{ fontSize: 13, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
-                Tell us only what helps matching. Never enter SSNs, bank info, or FAFSA passwords.
-              </p>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Majors</span>
-                <input style={inputStyle} placeholder="e.g. computer science, nursing" value={joinCommaSeparated(form.majors)} onChange={(e) => setForm({ ...form, majors: parseCommaSeparated(e.target.value) })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Interests</span>
-                <input style={inputStyle} placeholder="e.g. robotics, community service" value={joinCommaSeparated(form.interests)} onChange={(e) => setForm({ ...form, interests: parseCommaSeparated(e.target.value) })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>GPA (optional)</span>
-                <input style={inputStyle} type="number" min={0} max={4} step={0.01} placeholder="3.50" value={form.gpa} onChange={(e) => setForm({ ...form, gpa: e.target.value })} />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Essay preference</span>
-                <select style={inputStyle} value={form.profile_essay_preference} onChange={(e) => setForm({ ...form, profile_essay_preference: e.target.value })}>
-                  {PROFILE_ESSAY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.first_generation} onChange={(e) => setForm({ ...form, first_generation: e.target.checked })} />
-                First-generation college student
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.transfer_student} onChange={(e) => setForm({ ...form, transfer_student: e.target.checked })} />
-                Transfer student
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.pell_grant_eligible} onChange={(e) => setForm({ ...form, pell_grant_eligible: e.target.checked })} />
-                Pell Grant eligible
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 600, color: "#374151" }}>
-                <input type="checkbox" checked={form.cal_grant_eligible} onChange={(e) => setForm({ ...form, cal_grant_eligible: e.target.checked })} />
-                Cal Grant eligible
-              </label>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink-800)" }}>{L.fields.scholarshipInterests}</span>
+              {SCHOLARSHIP_CATEGORY_OPTIONS.map((o) => (
+                <OptionCard
+                  key={o}
+                  title={optionLabel(L.labels.category, o)}
+                  selected={form.interested_categories.includes(o)}
+                  onClick={() => toggleArray("interested_categories", o)}
+                />
+              ))}
+              <Select
+                label={L.fields.essayPreference}
+                value={form.essay_preference}
+                onChange={(e) => setForm({ ...form, essay_preference: e.target.value })}
+                options={ESSAY_PREFERENCE_OPTIONS.map((o) => ({ value: o.value, label: L.labels.essayPref[o.value] ?? o.label }))}
+              />
+              <Select
+                label={L.fields.effortPreference}
+                value={form.effort_preference}
+                onChange={(e) => setForm({ ...form, effort_preference: e.target.value })}
+                options={EFFORT_PREFERENCE_OPTIONS.map((o) => ({ value: o.value, label: L.labels.effortPref[o.value] ?? o.label }))}
+              />
             </>
           )}
-        </div>
+
+          {step === 6 && (
+            <>
+              <TextField
+                label={L.fields.majors}
+                placeholder={L.fields.majorsPlaceholder}
+                value={joinCommaSeparated(form.majors)}
+                onChange={(e) => setForm({ ...form, majors: parseCommaSeparated(e.target.value) })}
+              />
+              <TextField
+                label={L.fields.interests}
+                placeholder={L.fields.interestsPlaceholder}
+                value={joinCommaSeparated(form.interests)}
+                onChange={(e) => setForm({ ...form, interests: parseCommaSeparated(e.target.value) })}
+              />
+              <TextField
+                label={L.fields.gpa}
+                type="number"
+                min={0}
+                max={4}
+                step={0.01}
+                placeholder="3.50"
+                value={form.gpa}
+                onChange={(e) => setForm({ ...form, gpa: e.target.value })}
+              />
+              <Select
+                label={L.fields.essayPreference}
+                value={form.profile_essay_preference}
+                onChange={(e) => setForm({ ...form, profile_essay_preference: e.target.value })}
+                options={PROFILE_ESSAY_OPTIONS.map((o) => ({ value: o.value, label: L.labels.profileEssay[o.value] ?? o.label }))}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 2 }}>
+                <Checkbox
+                  label={L.fields.firstGeneration}
+                  checked={form.first_generation}
+                  onChange={(e) => setForm({ ...form, first_generation: e.target.checked })}
+                />
+                <Checkbox
+                  label={L.fields.transferStudent}
+                  checked={form.transfer_student}
+                  onChange={(e) => setForm({ ...form, transfer_student: e.target.checked })}
+                />
+                <Checkbox
+                  label={L.fields.pellEligible}
+                  checked={form.pell_grant_eligible}
+                  onChange={(e) => setForm({ ...form, pell_grant_eligible: e.target.checked })}
+                />
+                <Checkbox
+                  label={L.fields.calGrantEligible}
+                  checked={form.cal_grant_eligible}
+                  onChange={(e) => setForm({ ...form, cal_grant_eligible: e.target.checked })}
+                />
+              </div>
+            </>
+          )}
+        </Card>
 
         {error && (
-          <p style={{ color: "#C04E57", fontSize: 14, marginBottom: 12, lineHeight: 1.5 }}>
+          <p style={{ color: "var(--coral-600)", fontSize: 14, marginBottom: 12, lineHeight: 1.5, fontWeight: 600 }}>
             {error}
           </p>
         )}
 
         {step < totalSteps - 1 ? (
-          <button type="button" onClick={() => setStep((s) => s + 1)} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: "#0B5CAD", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-            Continue
-          </button>
+          <Button type="button" variant="clay" fullWidth size="lg" onClick={() => setStep((s) => s + 1)}>
+            {L.ui.continue}
+          </Button>
         ) : (
-          <button type="submit" disabled={isSubmitting} style={{ width: "100%", padding: "15px 24px", borderRadius: 14, background: isSubmitting ? "#E5E7EB" : "#0B5CAD", color: isSubmitting ? "#9AA4B2" : "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: isSubmitting ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {isSubmitting ? "Setting up your plan..." : "Continue to dashboard"}
-          </button>
+          <Button type="submit" variant="clay" fullWidth size="lg" disabled={isSubmitting}>
+            {isSubmitting ? L.ui.settingUp : L.ui.continueToDashboard}
+          </Button>
         )}
 
         {step > 0 && (
-          <button type="button" onClick={() => setStep((s) => s - 1)} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", fontSize: 14, fontWeight: 600, color: "#9AA4B2", cursor: "pointer", fontFamily: "inherit" }}>
-            Back
-          </button>
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <Button type="button" variant="ghost" iconLeft="chevron-left" onClick={() => setStep((s) => s - 1)}>
+              {L.ui.back}
+            </Button>
+          </div>
         )}
       </form>
     </div>

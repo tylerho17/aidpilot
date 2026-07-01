@@ -1,27 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { PillBadge, ProductCard } from "@/components/ProductUI";
+import { Badge, Button, Card } from "@/components/ui";
+import { money as moneyStyle } from "@/components/app/screens/shared";
 import AidOfferFlags from "@/components/aid-letter/AidOfferFlags";
 import { getAidOfferReportHref } from "@/lib/aid-letter/buildAidHealthReport";
 import { AID_OFFER_STATUS_LABELS, calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { AidOfferRecordStatus, UserAidOffer } from "@/lib/types";
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
 
 function money(value: number) {
   return `$${value.toLocaleString()}`;
@@ -61,76 +46,75 @@ export default function AidOfferSummaryCard({
   const status = offer.offer_status;
 
   return (
-    <ProductCard style={{ padding: 22, marginBottom: 16 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+    <Card variant="clay" padding={24} style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
         <div>
-          <h3 className="font-display" style={{ fontSize: 20, fontWeight: 900, margin: "0 0 8px", color: "#15212E" }}>
+          <h3 className="font-display" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-.3px", margin: "0 0 8px", color: "var(--ink-900)" }}>
             {offer.school_name}
           </h3>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#9AA4B2" }}>Offer status</span>
-            <PillBadge tone={statusTone(status)}>{AID_OFFER_STATUS_LABELS[status]}</PillBadge>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-400)" }}>Offer status</span>
+            <Badge tone={statusTone(status)}>{AID_OFFER_STATUS_LABELS[status]}</Badge>
           </div>
         </div>
         {offer.academic_year ? (
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#9AA4B2" }}>{offer.academic_year}</span>
+          <Badge tone="gray">{offer.academic_year}</Badge>
         ) : null}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 12 }}>
-        <Stat label="Gift aid" value={money(calc.giftAid)} color="#15885A" />
-        <Stat label="Work-study" value={money(calc.workStudy)} color="#0B5CAD" />
-        <Stat label="Loans" value={money(calc.loanTotal)} color="#B7791F" />
-        <Stat label="Net after gift aid" value={money(calc.netCostAfterGiftAid)} color="#15212E" />
-        <Stat label="Remaining gap" value={money(calc.remainingGapAfterAllAid)} color="#C04E57" />
+        <Stat label="Gift aid" value={money(calc.giftAid)} color="var(--green-600)" />
+        <Stat label="Work-study" value={money(calc.workStudy)} color="var(--blue-700)" />
+        <Stat label="Loans" value={money(calc.loanTotal)} color="var(--amber-600)" />
+        <Stat label="Net after gift aid" value={money(calc.netCostAfterGiftAid)} color="var(--ink-900)" />
+        <Stat label="Remaining gap" value={money(calc.remainingGapAfterAllAid)} color="var(--coral-600)" />
         {calc.surplusAid > 0 ? (
-          <Stat label="Surplus aid shown" value={money(calc.surplusAid)} color="#15885A" />
+          <Stat label="Surplus aid shown" value={money(calc.surplusAid)} color="var(--green-600)" />
         ) : null}
       </div>
 
       <AidOfferFlags flags={calc.flags} />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-        <Link href={getAidOfferReportHref(offer.id)} style={{ ...secondaryBtn, textDecoration: "none" }}>
-          View Aid Health Report
+        <Link href={getAidOfferReportHref(offer.id)} style={{ textDecoration: "none" }}>
+          <Button variant="clay" size="sm" iconRight="arrow-right">View Aid Health Report</Button>
         </Link>
         {(status === "draft" || status === "estimated") && onMarkOfficial ? (
-          <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
+          <Button variant="secondary" size="sm" disabled={saving} onClick={() => onMarkOfficial(offer.id)}>
             Mark official
-          </button>
+          </Button>
         ) : null}
         {status === "official" && onMarkReviewed ? (
-          <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkReviewed(offer.id)}>
+          <Button variant="secondary" size="sm" disabled={saving} onClick={() => onMarkReviewed(offer.id)}>
             Mark reviewed
-          </button>
+          </Button>
         ) : null}
         {onEdit ? (
-          <button type="button" style={secondaryBtn} onClick={() => onEdit(offer)}>
+          <Button variant="secondary" size="sm" onClick={() => onEdit(offer)}>
             Edit
-          </button>
+          </Button>
         ) : null}
         {onDelete ? (
-          <button
-            type="button"
-            style={{ ...secondaryBtn, background: "#FEF2F2", color: "#C04E57" }}
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={saving}
             onClick={() => onDelete(offer.id)}
+            style={{ background: "var(--coral-100)", color: "var(--coral-600)", border: "none" }}
           >
             Delete
-          </button>
+          </Button>
         ) : null}
       </div>
-    </ProductCard>
+    </Card>
   );
 }
 
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ padding: 12, borderRadius: 12, background: "#F9FAFB", border: "1px solid #EAEEF3" }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#9AA4B2", marginBottom: 4 }}>{label}</div>
-      <div className="font-display" style={{ fontSize: 18, fontWeight: 900, color }}>
-        {value}
-      </div>
+    <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "var(--blue-50)", border: "1px solid var(--border-card)" }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray-400)", marginBottom: 4 }}>{label}</div>
+      <div style={{ ...moneyStyle, fontSize: 18, color }}>{value}</div>
     </div>
   );
 }

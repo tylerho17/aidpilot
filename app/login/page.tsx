@@ -54,7 +54,7 @@ export default function LoginPage() {
       footer={
         <>
           New to AidPilot?{" "}
-          <Link href="/signup" style={{ color: "#0B5CAD", fontWeight: 700, textDecoration: "none" }}>
+          <Link href="/signup" style={{ color: "var(--color-link)", fontWeight: 700, textDecoration: "none" }}>
             Create an account
           </Link>
         </>
@@ -75,7 +75,11 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p style={{ fontSize: 14, color: "#C04E57", margin: 0 }}>{error}</p>}
+        {error && (
+          <p style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--coral-600)", margin: 0 }}>
+            {error}
+          </p>
+        )}
         <AuthButton loading={loading}>Log in</AuthButton>
       </form>
     </AuthShell>

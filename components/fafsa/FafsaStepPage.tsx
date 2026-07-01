@@ -4,8 +4,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
-import { PillBadge, ProductCard } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { Badge, Button, Card, StatusPanel } from "@/components/ui";
 import { useFafsaProgress } from "@/hooks/useFafsaProgress";
 import { FafsaSyncBanner } from "@/components/fafsa/FafsaSyncBanner";
 import {
@@ -15,43 +15,6 @@ import {
   type FafsaStep,
   type FafsaRiskLevel,
 } from "@/lib/fafsa/steps";
-
-const focusRing = "0 0 0 3px rgba(11,92,173,.35)";
-
-const primaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 48,
-  fontSize: 15,
-  fontWeight: 700,
-  color: "#fff",
-  background: "#0B5CAD",
-  padding: "12px 22px",
-  borderRadius: 13,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  boxShadow: "0 10px 20px rgba(11,92,173,.22)",
-} as const;
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 44,
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "10px 18px",
-  borderRadius: 999,
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-} as const;
 
 function riskTone(risk: FafsaRiskLevel): "green" | "amber" | "coral" {
   if (risk === "low") return "green";
@@ -79,7 +42,7 @@ function Section({
       <h2
         id={id}
         className="font-display"
-        style={{ fontSize: 17, fontWeight: 800, margin: "0 0 10px", color: "#15212E" }}
+        style={{ fontSize: 17, fontWeight: 900, margin: "0 0 10px", color: "var(--ink-900)", letterSpacing: "-.2px" }}
       >
         {title}
       </h2>
@@ -92,7 +55,7 @@ function BulletList({ items }: { items: string[] }) {
   return (
     <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
       {items.map((item) => (
-        <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "#374151", lineHeight: 1.6 }}>
+        <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-700)", lineHeight: 1.6 }}>
           {item}
         </li>
       ))}
@@ -128,58 +91,45 @@ export default function FafsaStepPage({ step }: FafsaStepPageProps) {
   }
 
   return (
-    <AppShell>
+    <AppChrome>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <Link
-          href="/fafsa"
-          style={{
-            display: "inline-flex",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "#0B5CAD",
-            textDecoration: "none",
-            marginBottom: 18,
-            minHeight: 44,
-            alignItems: "center",
-          }}
-        >
-          ← Back to FAFSA plan
+        <Link href="/fafsa" style={{ textDecoration: "none", display: "inline-block", marginBottom: 16 }}>
+          <Button variant="ghost" size="sm" iconLeft="chevron-left" style={{ paddingLeft: 4 }}>
+            Back to FAFSA plan
+          </Button>
         </Link>
 
         {syncMessage && <FafsaSyncBanner message={syncMessage} />}
 
-        <ProductCard
-          style={{
-            padding: 24,
-            marginBottom: 20,
-            background: "linear-gradient(135deg,#EAF3FF,#F4F8FE)",
-            border: "1px solid #D7E7FB",
-          }}
+        <Card
+          variant="clay"
+          padding={24}
+          style={{ marginBottom: 20, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--blue-50) 150%)" }}
         >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12, alignItems: "center" }}>
-            <PillBadge tone="blue">Step {step.stepNumber} of 9</PillBadge>
-            <PillBadge tone={riskTone(step.riskLevel)}>{riskLabel(step.riskLevel)}</PillBadge>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#6B7280" }}>{step.estimatedTime}</span>
-            {complete && <PillBadge tone="green">Complete</PillBadge>}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, alignItems: "center" }}>
+            <Badge tone="blue">Step {step.stepNumber} of 9</Badge>
+            <Badge tone={riskTone(step.riskLevel)}>{riskLabel(step.riskLevel)}</Badge>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-500)" }}>{step.estimatedTime}</span>
+            {complete && <Badge tone="green" icon="check">Complete</Badge>}
           </div>
 
           <h1
             className="font-display"
-            style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-.6px", margin: "0 0 8px", color: "#15212E", lineHeight: 1.2 }}
+            style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-.6px", margin: "0 0 8px", color: "var(--ink-900)", lineHeight: 1.2 }}
           >
             {step.title}
           </h1>
-          <p style={{ fontSize: 15, fontWeight: 500, color: "#6B7280", margin: "0 0 12px", lineHeight: 1.65 }}>
+          <p style={{ fontSize: 15, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 12px", lineHeight: 1.65 }}>
             {step.subtitle}
           </p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#5B6573", margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-700)", margin: 0, lineHeight: 1.6 }}>
             Who is involved: {step.whoIsInvolved}
           </p>
-        </ProductCard>
+        </Card>
 
-        <ProductCard style={{ padding: 24, marginBottom: 20 }}>
+        <Card variant="clay" padding={24} style={{ marginBottom: 20 }}>
           <Section title="Why this matters" id="why-it-matters">
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#374151", margin: 0, lineHeight: 1.65 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-700)", margin: 0, lineHeight: 1.65 }}>
               {step.whyItMatters}
             </p>
           </Section>
@@ -191,8 +141,8 @@ export default function FafsaStepPage({ step }: FafsaStepPageProps) {
           <Section title="Exact instructions" id="exact-instructions">
             <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 }}>
               {step.exactInstructions.map((item, index) => (
-                <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "#374151", lineHeight: 1.6 }}>
-                  <span style={{ fontWeight: 700, color: "#0B5CAD", marginRight: 6 }}>{index + 1}.</span>
+                <li key={item} style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-700)", lineHeight: 1.6 }}>
+                  <span style={{ fontWeight: 800, color: "var(--blue-700)", marginRight: 6 }}>{index + 1}.</span>
                   {item}
                 </li>
               ))}
@@ -208,17 +158,21 @@ export default function FafsaStepPage({ step }: FafsaStepPageProps) {
           </Section>
 
           <Section title="Privacy reminder" id="privacy-reminder">
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.65 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.65 }}>
               {step.privacyReminder}
             </p>
           </Section>
 
-          <ProductCard style={{ padding: 16, background: "#F9FAFB", border: "1px solid #EAEEF3", marginBottom: 20 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: "#5B6573", margin: 0, lineHeight: 1.6 }}>
-              Official-site reminder: Complete sensitive FAFSA actions only on StudentAid.gov or your school&apos;s
-              official portal — not in AidPilot.
-            </p>
-          </ProductCard>
+          <StatusPanel
+            tone="amber"
+            icon="shield-check"
+            eyebrow="Official-site reminder"
+            title="Do sensitive FAFSA actions on official sites only"
+            style={{ marginBottom: 20 }}
+          >
+            Complete sensitive FAFSA actions only on StudentAid.gov or your school&apos;s official portal - not in
+            AidPilot.
+          </StatusPanel>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
             {officialUrl.startsWith("http") ? (
@@ -226,69 +180,71 @@ export default function FafsaStepPage({ step }: FafsaStepPageProps) {
                 href={officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={primaryBtn}
+                style={{ textDecoration: "none" }}
                 aria-label={`${step.primaryCtaLabel} (opens StudentAid.gov in a new tab)`}
               >
-                {step.primaryCtaLabel} ↗
+                <Button variant="clay" iconRight="arrow-right">
+                  {step.primaryCtaLabel}
+                </Button>
               </a>
             ) : (
-              <Link href={officialUrl} style={primaryBtn}>
-                {step.primaryCtaLabel}
+              <Link href={officialUrl} style={{ textDecoration: "none" }}>
+                <Button variant="clay">{step.primaryCtaLabel}</Button>
               </Link>
             )}
 
             {step.followUpCtaLabel ? (
-              <Link href={getFollowUpTrackerHref()} style={secondaryBtn}>
-                {step.followUpCtaLabel}
+              <Link href={getFollowUpTrackerHref()} style={{ textDecoration: "none" }}>
+                <Button variant="secondary" shape="pill">
+                  {step.followUpCtaLabel}
+                </Button>
               </Link>
             ) : null}
 
             {step.aidDecoderCtaLabel ? (
-              <Link href="/aid-letter" style={secondaryBtn}>
-                {step.aidDecoderCtaLabel}
+              <Link href="/aid-letter" style={{ textDecoration: "none" }}>
+                <Button variant="secondary" shape="pill">
+                  {step.aidDecoderCtaLabel}
+                </Button>
               </Link>
             ) : null}
 
-            <button
-              type="button"
+            <Button
               onClick={handleToggleComplete}
               disabled={saving}
-              style={{
-                ...primaryBtn,
-                background: complete ? "#6B7280" : "#15885A",
-                boxShadow: complete ? "none" : "0 10px 20px rgba(21,136,90,.22)",
-              }}
+              variant={complete ? "secondary" : "primary"}
+              iconLeft={complete ? undefined : "check"}
               aria-pressed={complete}
-              onFocus={(e) => {
-                e.currentTarget.style.outline = "none";
-                e.currentTarget.style.boxShadow = focusRing;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = complete ? "none" : "0 10px 20px rgba(21,136,90,.22)";
-              }}
+              style={complete ? undefined : { backgroundColor: "var(--green-600)" }}
             >
               {saving ? "Saving..." : complete ? "Mark incomplete" : "Mark step complete"}
-            </button>
+            </Button>
           </div>
 
           <nav aria-label="Step navigation" style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {step.previousPlanKey ? (
-              <Link href={getFafsaStepHref(step.previousPlanKey)} style={secondaryBtn}>
-                ← Previous step
+              <Link href={getFafsaStepHref(step.previousPlanKey)} style={{ textDecoration: "none" }}>
+                <Button variant="secondary" shape="pill" iconLeft="chevron-left">
+                  Previous step
+                </Button>
               </Link>
             ) : null}
             {step.nextPlanKey ? (
-              <Link href={getFafsaStepHref(step.nextPlanKey)} style={secondaryBtn}>
-                Next step →
+              <Link href={getFafsaStepHref(step.nextPlanKey)} style={{ textDecoration: "none" }}>
+                <Button variant="secondary" shape="pill" iconRight="arrow-right">
+                  Next step
+                </Button>
               </Link>
             ) : (
-              <Link href="/fafsa" style={secondaryBtn}>
-                Back to FAFSA home
+              <Link href="/fafsa" style={{ textDecoration: "none" }}>
+                <Button variant="secondary" shape="pill">
+                  Back to FAFSA home
+                </Button>
               </Link>
             )}
           </nav>
-        </ProductCard>
+        </Card>
       </div>
-    </AppShell>
+    </AppChrome>
   );
 }

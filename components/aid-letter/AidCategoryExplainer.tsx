@@ -1,4 +1,4 @@
-import { ProductCard } from "@/components/ProductUI";
+import { Card } from "@/components/ui";
 
 const items = [
   {
@@ -21,18 +21,21 @@ const items = [
 
 export default function AidCategoryExplainer() {
   return (
-    <ProductCard style={{ padding: 22, marginBottom: 20 }}>
-      <h2 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: "0 0 14px", color: "#15212E" }}>
+    <Card variant="clay" padding={24} style={{ marginBottom: 20 }}>
+      <h2
+        className="font-display"
+        style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-.3px", margin: "0 0 14px", color: "var(--ink-900)" }}
+      >
         How to read an aid offer
       </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {items.map((item) => (
           <div key={item.title}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#15212E", marginBottom: 4 }}>{item.title}</div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>{item.body}</p>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-900)", marginBottom: 4 }}>{item.title}</div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.6 }}>{item.body}</p>
           </div>
         ))}
       </div>
-    </ProductCard>
+    </Card>
   );
 }

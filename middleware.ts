@@ -10,10 +10,27 @@ const PROTECTED_ROUTES = [
   "/fafsa",
   "/scholarships",
   "/aid-letter",
+  "/aid-money",
+  "/docs-dates",
   "/settings",
   "/report",
   "/report/scholarships",
 ];
+
+// Design IA consolidates 9 destinations into 4 tabs. Old top-level routes
+// redirect to their merged tab (sub-routes like /aid-letter/compare stay).
+const MERGED_REDIRECTS: Record<string, string> = {
+  "/scholarships": "/aid-money",
+  "/aid-letter": "/aid-money",
+  "/documents": "/docs-dates",
+  "/deadlines": "/docs-dates",
+  "/protect": "/dashboard",
+  // Old standalone destinations the design's 4-tab IA folds into a tab:
+  "/checklist": "/dashboard",
+  "/actions": "/dashboard",
+  "/report": "/dashboard",
+  "/report/scholarships": "/aid-money",
+};
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -46,7 +63,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Enforce HTTPS on all served pages (harmless over http in local dev).
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+
   const pathname = request.nextUrl.pathname;
+
+  const mergedTarget = MERGED_REDIRECTS[pathname];
+  if (mergedTarget) {
+    const to = request.nextUrl.clone();
+    to.pathname = mergedTarget;
+    to.search = "";
+    return NextResponse.redirect(to);
+  }
+
   const isAdminRoute = pathname.startsWith("/admin");
   const isProtected =
     isAdminRoute ||

@@ -1,11 +1,12 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
-import { PillBadge, ProductCard, ProgressBar } from "@/components/ProductUI";
+import { AppChrome } from "@/components/app/AppChrome";
+import { Badge, Button, Card, ProgressBar, Select } from "@/components/ui";
+import { money } from "@/components/app/screens/shared";
 import { useUserData } from "@/hooks/useUserData";
 import { FAFSA_DEMO_GUEST_USER_ID } from "@/lib/fafsa-demo-fallback";
 import { isRecoverableWithLocalFallback, toFriendlyError } from "@/lib/friendly-errors";
@@ -40,29 +41,25 @@ const US_STATES = [
   "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
 ];
 
-const inputStyle: CSSProperties = {
-  width: "100%",
-  fontSize: 15,
-  fontWeight: 500,
-  borderRadius: 12,
-  border: "1.5px solid #E5E7EB",
-  padding: "12px 14px",
-  fontFamily: "inherit",
-  color: "#15212E",
-  background: "#fff",
-};
-
 const labelStyle: CSSProperties = {
   display: "block",
   fontSize: 14,
   fontWeight: 700,
-  color: "#15212E",
-  marginBottom: 8,
+  color: "var(--ink-800)",
+  marginBottom: 10,
 };
+
+function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor: string }) {
+  return (
+    <label htmlFor={htmlFor} style={labelStyle}>
+      {children}
+    </label>
+  );
+}
 
 function PrivacyNote() {
   return (
-    <p style={{ fontSize: 12.5, fontWeight: 500, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.6 }}>
+    <p style={{ fontSize: 12.5, fontWeight: 500, color: "var(--gray-500)", margin: "0 0 20px", lineHeight: 1.6 }}>
       AidPilot tracks readiness only. Do not enter SSNs, passwords, bank account numbers, or tax return values here.
     </p>
   );
@@ -138,201 +135,226 @@ export default function FafsaReadinessClient() {
 
   if (loading) {
     return (
-      <AppShell>
-        <p style={{ color: "#9AA4B2" }}>Loading FAFSA readiness wizard...</p>
-      </AppShell>
+      <AppChrome>
+        <p style={{ color: "var(--gray-400)", fontSize: 15, fontWeight: 500 }}>Loading FAFSA readiness wizard...</p>
+      </AppChrome>
     );
   }
 
   return (
-    <AppShell>
+    <AppChrome>
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
-          <PillBadge tone="blue">FAFSA Readiness</PillBadge>
-          <h1 className="font-display" style={{ fontSize: 32, fontWeight: 900, letterSpacing: "-.8px", margin: "12px 0 8px", color: "#15212E" }}>
+          <Badge tone="blue">FAFSA Readiness</Badge>
+          <h1
+            className="font-display"
+            style={{ fontSize: 32, fontWeight: 900, letterSpacing: "-.8px", margin: "14px 0 8px", color: "var(--ink-900)" }}
+          >
             Build your FAFSA plan
           </h1>
-          <p style={{ fontSize: 16, fontWeight: 500, color: "#6B7280", margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 16, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.6 }}>
             Answer a few questions so AidPilot can build a step-by-step plan. About 3 minutes.
           </p>
         </div>
 
-        <ProductCard style={{ padding: 28 }}>
+        <Card variant="clay" padding={28}>
           <div style={{ marginBottom: 22 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#6B7280" }}>Step {step + 1} of {totalSteps}</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#0B5CAD" }}>{pct}%</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gray-500)" }}>
+                Step {step + 1} of {totalSteps}
+              </span>
+              <span style={{ ...money, fontSize: 20, color: "var(--blue-700)" }}>{pct}%</span>
             </div>
-            <ProgressBar pct={pct} />
+            <ProgressBar pct={pct} height={12} />
           </div>
 
           <PrivacyNote />
 
           {step === 0 && (
             <div>
-              <label style={labelStyle}>1. What aid year are you applying for?</label>
-              <select value={form.aid_year} onChange={(e) => updateField("aid_year", e.target.value)} style={inputStyle}>
-                {AID_YEARS.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-aid-year">1. What aid year are you applying for?</FieldLabel>
+              <Select
+                id="q-aid-year"
+                value={form.aid_year}
+                onChange={(e) => updateField("aid_year", e.target.value)}
+                options={AID_YEARS}
+              />
             </div>
           )}
 
           {step === 1 && (
             <div>
-              <label style={labelStyle}>2. What best describes you?</label>
-              <select value={form.student_situation} onChange={(e) => updateField("student_situation", e.target.value)} style={inputStyle}>
-                {SITUATIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-situation">2. What best describes you?</FieldLabel>
+              <Select
+                id="q-situation"
+                value={form.student_situation}
+                onChange={(e) => updateField("student_situation", e.target.value)}
+                options={SITUATIONS}
+              />
             </div>
           )}
 
           {step === 2 && (
             <div>
-              <label style={labelStyle}>3. What state is your permanent home address in?</label>
-              <select value={form.state} onChange={(e) => updateField("state", e.target.value)} style={inputStyle}>
-                {US_STATES.map((st) => (
-                  <option key={st} value={st}>{st}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-state">3. What state is your permanent home address in?</FieldLabel>
+              <Select
+                id="q-state"
+                value={form.state}
+                onChange={(e) => updateField("state", e.target.value)}
+                options={US_STATES}
+              />
             </div>
           )}
 
           {step === 3 && (
             <div>
-              <label style={labelStyle}>4. What schools are you applying to or attending?</label>
+              <FieldLabel htmlFor="q-schools">4. What schools are you applying to or attending?</FieldLabel>
               <textarea
+                id="q-schools"
                 value={form.schools}
                 onChange={(e) => updateField("schools", e.target.value)}
                 rows={4}
                 placeholder="e.g. UC Irvine, Cal State Long Beach"
-                style={{ ...inputStyle, resize: "vertical" }}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  borderRadius: "var(--radius-md)",
+                  border: "1.5px solid var(--border-default)",
+                  padding: "13px 16px",
+                  fontSize: 15,
+                  fontFamily: "var(--font-body)",
+                  color: "var(--ink-800)",
+                  outline: "none",
+                  resize: "vertical",
+                }}
               />
             </div>
           )}
 
           {step === 4 && (
             <div>
-              <label style={labelStyle}>5. Where are you with FAFSA?</label>
-              <select value={form.fafsa_progress} onChange={(e) => updateField("fafsa_progress", e.target.value)} style={inputStyle}>
-                {FAFSA_PROGRESS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-progress">5. Where are you with FAFSA?</FieldLabel>
+              <Select
+                id="q-progress"
+                value={form.fafsa_progress}
+                onChange={(e) => updateField("fafsa_progress", e.target.value)}
+                options={FAFSA_PROGRESS}
+              />
             </div>
           )}
 
           {step === 5 && (
             <div>
-              <label style={labelStyle}>6. Do you have a StudentAid.gov account?</label>
-              <select value={form.has_student_aid_account} onChange={(e) => updateField("has_student_aid_account", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-saccount">6. Do you have a StudentAid.gov account?</FieldLabel>
+              <Select
+                id="q-saccount"
+                value={form.has_student_aid_account}
+                onChange={(e) => updateField("has_student_aid_account", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
           {step === 6 && (
             <div>
-              <label style={labelStyle}>7. Do you think FAFSA needs parent or contributor information?</label>
-              <select value={form.contributor_required} onChange={(e) => updateField("contributor_required", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-contributor">7. Do you think FAFSA needs parent or contributor information?</FieldLabel>
+              <Select
+                id="q-contributor"
+                value={form.contributor_required}
+                onChange={(e) => updateField("contributor_required", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
           {step === 7 && (
             <div>
-              <label style={labelStyle}>8. Does your parent or contributor have their own StudentAid.gov account?</label>
-              <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 12px" }}>
-                {needsParent ? "Many students need a contributor to finish FAFSA." : "You indicated contributor info may not be required — you can still answer for planning."}
+              <FieldLabel htmlFor="q-parent-account">
+                8. Does your parent or contributor have their own StudentAid.gov account?
+              </FieldLabel>
+              <p style={{ fontSize: 13, color: "var(--gray-400)", margin: "-4px 0 12px" }}>
+                {needsParent
+                  ? "Many students need a contributor to finish FAFSA."
+                  : "You indicated contributor info may not be required - you can still answer for planning."}
               </p>
-              <select value={form.parent_has_student_aid_account} onChange={(e) => updateField("parent_has_student_aid_account", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <Select
+                id="q-parent-account"
+                value={form.parent_has_student_aid_account}
+                onChange={(e) => updateField("parent_has_student_aid_account", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
           {step === 8 && (
             <div>
-              <label style={labelStyle}>9. Do you have access to tax or financial info if FAFSA asks for it?</label>
-              <p style={{ fontSize: 13, color: "#9AA4B2", margin: "0 0 12px" }}>
-                AidPilot only tracks whether you can access this information — not the actual numbers.
+              <FieldLabel htmlFor="q-tax">9. Do you have access to tax or financial info if FAFSA asks for it?</FieldLabel>
+              <p style={{ fontSize: 13, color: "var(--gray-400)", margin: "-4px 0 12px" }}>
+                AidPilot only tracks whether you can access this information - not the actual numbers.
               </p>
-              <select value={form.has_tax_info} onChange={(e) => updateField("has_tax_info", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <Select
+                id="q-tax"
+                value={form.has_tax_info}
+                onChange={(e) => updateField("has_tax_info", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
           {step === 9 && (
             <div>
-              <label style={labelStyle}>10. Have you received a financial aid offer yet?</label>
-              <select value={form.has_aid_offer} onChange={(e) => updateField("has_aid_offer", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-offer">10. Have you received a financial aid offer yet?</FieldLabel>
+              <Select
+                id="q-offer"
+                value={form.has_aid_offer}
+                onChange={(e) => updateField("has_aid_offer", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
           {step === 10 && (
             <div>
-              <label style={labelStyle}>11. Has your school asked for verification documents?</label>
-              <select value={form.has_verification_request} onChange={(e) => updateField("has_verification_request", e.target.value)} style={inputStyle}>
-                {YES_NO_NOT_SURE.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <FieldLabel htmlFor="q-verification">11. Has your school asked for verification documents?</FieldLabel>
+              <Select
+                id="q-verification"
+                value={form.has_verification_request}
+                onChange={(e) => updateField("has_verification_request", e.target.value)}
+                options={YES_NO_NOT_SURE}
+              />
             </div>
           )}
 
-          {error && <p style={{ color: "#C04E57", fontSize: 14, marginTop: 16 }}>{error}</p>}
+          {error && (
+            <p style={{ color: "var(--coral-600)", fontSize: 14, fontWeight: 600, marginTop: 16 }}>{error}</p>
+          )}
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 28 }}>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={step === 0 || submitting}
-              style={{ fontSize: 14, fontWeight: 700, color: "#0B5CAD", background: "#EAF3FF", border: "none", padding: "12px 18px", borderRadius: 12, cursor: step === 0 ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: step === 0 ? 0.5 : 1 }}
             >
               Back
-            </button>
+            </Button>
             {step < totalSteps - 1 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => s + 1)}
-                style={{ fontSize: 14, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 12, cursor: "pointer", fontFamily: "inherit" }}
-              >
+              <Button variant="clay" iconRight="arrow-right" onClick={() => setStep((s) => s + 1)}>
                 Continue
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
-                onClick={() => void handleSubmit()}
-                disabled={submitting}
-                style={{ fontSize: 14, fontWeight: 700, color: "#fff", background: "#0B5CAD", border: "none", padding: "12px 22px", borderRadius: 12, cursor: submitting ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: submitting ? 0.7 : 1 }}
-              >
+              <Button variant="clay" onClick={() => void handleSubmit()} disabled={submitting} loading={submitting}>
                 {submitting ? "Building plan..." : "Build my FAFSA plan"}
-              </button>
+              </Button>
             )}
           </div>
-        </ProductCard>
+        </Card>
 
-        <p style={{ marginTop: 20, fontSize: 12, color: "#9AA4B2", textAlign: "center" }}>
-          <Link href="/fafsa" style={{ color: "#0B5CAD", textDecoration: "none" }}>Back to FAFSA plan</Link>
+        <p style={{ marginTop: 20, fontSize: 12.5, fontWeight: 500, color: "var(--gray-400)", textAlign: "center" }}>
+          <Link href="/fafsa" style={{ color: "var(--blue-700)", textDecoration: "none", fontWeight: 700 }}>
+            Back to FAFSA plan
+          </Link>
         </p>
       </div>
-    </AppShell>
+    </AppChrome>
   );
 }

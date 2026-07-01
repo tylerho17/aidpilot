@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductCard } from "@/components/ProductUI";
+import { Button, Card, Select, TextField } from "@/components/ui";
 import SchoolAidNextAction from "@/components/fafsa/SchoolAidNextAction";
 import SchoolAidTaskList from "@/components/fafsa/SchoolAidTaskList";
 import {
@@ -20,43 +20,6 @@ import {
   PORTAL_CHECKED_STATUSES,
   VERIFICATION_STATUSES,
 } from "@/lib/types";
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #EAEEF3",
-  fontSize: 14,
-  fontWeight: 500,
-  color: "#15212E",
-  fontFamily: "inherit",
-  boxSizing: "border-box" as const,
-};
-
-const labelStyle = {
-  display: "block",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "#5B6573",
-  marginBottom: 6,
-};
-
-const secondaryBtn = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: 40,
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#0B5CAD",
-  background: "#EAF3FF",
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textDecoration: "none",
-} as const;
 
 type SchoolAidStatusCardProps = {
   status: UserSchoolAidStatus;
@@ -86,24 +49,14 @@ function StatusSelect<T extends string>({
   disabled?: boolean;
 }) {
   return (
-    <div>
-      <label htmlFor={id} style={labelStyle}>
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value as T)}
-        style={inputStyle}
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {labels[option]}
-          </option>
-        ))}
-      </select>
-    </div>
+    <Select
+      id={id}
+      label={label}
+      value={value}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value as T)}
+      options={options.map((option) => ({ value: option, label: labels[option] }))}
+    />
   );
 }
 
@@ -117,12 +70,12 @@ export default function SchoolAidStatusCard({
   savingTaskId,
 }: SchoolAidStatusCardProps) {
   return (
-    <ProductCard style={{ padding: 22, marginBottom: 16 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-        <h3 className="font-display" style={{ fontSize: 18, fontWeight: 900, margin: 0, color: "#15212E" }}>
+    <Card variant="clay" padding={22} style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 16 }}>
+        <h3 className="font-display" style={{ fontSize: 19, fontWeight: 900, margin: 0, color: "var(--ink-900)", letterSpacing: "-.3px" }}>
           {status.school_name}
         </h3>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "#9AA4B2" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--gray-400)" }}>
           Last checked: {formatLastCheckedAt(status.last_checked_at)}
         </span>
       </div>
@@ -176,48 +129,38 @@ export default function SchoolAidStatusCard({
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
-        <div>
-          <label htmlFor={`portal-url-${status.id}`} style={labelStyle}>
-            Portal URL
-          </label>
-          <input
-            id={`portal-url-${status.id}`}
-            type="url"
-            defaultValue={status.portal_url ?? ""}
-            placeholder="https://portal.yourschool.edu"
-            disabled={saving}
-            style={inputStyle}
-            onBlur={(event) => {
-              const next = event.target.value.trim();
-              if (next !== (status.portal_url ?? "")) {
-                onUpdate(status.id, { portal_url: next || null });
-              }
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor={`school-email-${status.id}`} style={labelStyle}>
-            Financial aid email
-          </label>
-          <input
-            id={`school-email-${status.id}`}
-            type="email"
-            defaultValue={status.school_email ?? ""}
-            placeholder="financialaid@school.edu"
-            disabled={saving}
-            style={inputStyle}
-            onBlur={(event) => {
-              const next = event.target.value.trim();
-              if (next !== (status.school_email ?? "")) {
-                onUpdate(status.id, { school_email: next || null });
-              }
-            }}
-          />
-        </div>
+        <TextField
+          id={`portal-url-${status.id}`}
+          type="url"
+          label="Portal URL"
+          defaultValue={status.portal_url ?? ""}
+          placeholder="https://portal.yourschool.edu"
+          disabled={saving}
+          onBlur={(event) => {
+            const next = event.target.value.trim();
+            if (next !== (status.portal_url ?? "")) {
+              onUpdate(status.id, { portal_url: next || null });
+            }
+          }}
+        />
+        <TextField
+          id={`school-email-${status.id}`}
+          type="email"
+          label="Financial aid email"
+          defaultValue={status.school_email ?? ""}
+          placeholder="financialaid@school.edu"
+          disabled={saving}
+          onBlur={(event) => {
+            const next = event.target.value.trim();
+            if (next !== (status.school_email ?? "")) {
+              onUpdate(status.id, { school_email: next || null });
+            }
+          }}
+        />
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label htmlFor={`notes-${status.id}`} style={labelStyle}>
+        <label htmlFor={`notes-${status.id}`} style={{ display: "block", fontSize: 13, fontWeight: 700, color: "var(--ink-700)", marginBottom: 6 }}>
           Notes
         </label>
         <textarea
@@ -226,7 +169,18 @@ export default function SchoolAidStatusCard({
           rows={3}
           disabled={saving}
           placeholder="Reminder: check portal every two weeks, call aid office if no update by March 1..."
-          style={{ ...inputStyle, resize: "vertical" as const }}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            borderRadius: "var(--radius-md)",
+            border: "1.5px solid var(--border-default)",
+            padding: "13px 16px",
+            fontSize: 15,
+            fontFamily: "var(--font-body)",
+            color: "var(--ink-800)",
+            outline: "none",
+            resize: "vertical",
+          }}
           onBlur={(event) => {
             const next = event.target.value.trim();
             if (next !== (status.notes ?? "")) {
@@ -237,12 +191,14 @@ export default function SchoolAidStatusCard({
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
-        <button type="button" style={secondaryBtn} disabled={saving} onClick={() => onMarkPortalChecked(status.id)}>
+        <Button variant="secondary" size="sm" shape="pill" iconLeft="calendar-check" disabled={saving} onClick={() => onMarkPortalChecked(status.id)}>
           I checked this portal today
-        </button>
+        </Button>
         {status.portal_url ? (
-          <a href={status.portal_url} target="_blank" rel="noopener noreferrer" style={secondaryBtn}>
-            Open portal ↗
+          <a href={status.portal_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+            <Button variant="secondary" size="sm" shape="pill" iconRight="arrow-right">
+              Open portal
+            </Button>
           </a>
         ) : null}
       </div>
@@ -252,9 +208,11 @@ export default function SchoolAidStatusCard({
       </div>
 
       <div>
-        <h4 style={{ fontSize: 14, fontWeight: 800, color: "#15212E", margin: "0 0 10px" }}>Follow-up tasks</h4>
+        <h4 className="font-display" style={{ fontSize: 15, fontWeight: 900, color: "var(--ink-900)", margin: "0 0 10px", letterSpacing: "-.2px" }}>
+          Follow-up tasks
+        </h4>
         <SchoolAidTaskList tasks={tasks} savingId={savingTaskId} onUpdateStatus={onUpdateTaskStatus} />
       </div>
-    </ProductCard>
+    </Card>
   );
 }

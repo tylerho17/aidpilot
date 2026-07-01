@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { PillBadge } from "@/components/ProductUI";
+import { Badge } from "@/components/ui";
+import { money as moneyStyle } from "@/components/app/screens/shared";
 import {
   AID_OFFER_STATUS_LABELS,
   calculateAidOfferFromRecord,
@@ -29,22 +30,25 @@ const cellStyle = {
   padding: "12px 14px",
   fontSize: 14,
   whiteSpace: "nowrap" as const,
+  borderBottom: "1px solid var(--border-card)",
+  color: "var(--ink-800)",
 };
 
 const schoolCellStyle = {
   ...cellStyle,
   minWidth: 180,
   fontWeight: 700,
-  color: "#15212E",
+  color: "var(--ink-900)",
 };
 
 const headerStyle = {
   textAlign: "left" as const,
   fontSize: 12,
   fontWeight: 700,
-  color: "#9AA4B2",
+  color: "var(--gray-500)",
   padding: "10px 14px",
   whiteSpace: "nowrap" as const,
+  borderBottom: "2px solid var(--border-card)",
 };
 
 const schoolHeaderStyle = {
@@ -93,7 +97,7 @@ export default function AidOfferComparisonTable({ offers, onSelect }: AidOfferCo
     >
       <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "collapse" }}>
         <thead>
-          <tr style={{ borderBottom: "2px solid #EAEEF3" }}>
+          <tr>
             {HEADERS.map((header) => (
               <th key={header} style={header === "School" ? schoolHeaderStyle : headerStyle}>
                 {header}
@@ -105,22 +109,22 @@ export default function AidOfferComparisonTable({ offers, onSelect }: AidOfferCo
           {rows.map(({ offer, calculation }) => (
             <tr
               key={offer.id}
-              style={{ borderBottom: "1px solid #EAEEF3", cursor: onSelect ? "pointer" : "default" }}
+              style={{ cursor: onSelect ? "pointer" : "default" }}
               onClick={onSelect ? () => onSelect(offer) : undefined}
             >
               <td style={schoolCellStyle}>{offer.school_name}</td>
-              <td style={{ ...cellStyle, color: "#374151" }}>{money(offer.cost_of_attendance)}</td>
-              <td style={{ ...cellStyle, color: "#15885A", fontWeight: 600 }}>{money(calculation.giftAid)}</td>
-              <td style={{ ...cellStyle, color: "#374151" }}>{money(calculation.workStudy)}</td>
-              <td style={{ ...cellStyle, color: "#B7791F", fontWeight: 600 }}>{money(calculation.loanTotal)}</td>
-              <td style={{ ...cellStyle, fontWeight: 700, color: "#15212E" }}>{money(calculation.netCostAfterGiftAid)}</td>
-              <td style={{ ...cellStyle, fontWeight: 700, color: "#C04E57" }}>
+              <td style={{ ...cellStyle, ...moneyStyle }}>{money(offer.cost_of_attendance)}</td>
+              <td style={{ ...cellStyle, ...moneyStyle, color: "var(--green-600)" }}>{money(calculation.giftAid)}</td>
+              <td style={{ ...cellStyle, ...moneyStyle }}>{money(calculation.workStudy)}</td>
+              <td style={{ ...cellStyle, ...moneyStyle, color: "var(--amber-600)" }}>{money(calculation.loanTotal)}</td>
+              <td style={{ ...cellStyle, ...moneyStyle, fontWeight: 700, color: "var(--ink-900)" }}>{money(calculation.netCostAfterGiftAid)}</td>
+              <td style={{ ...cellStyle, ...moneyStyle, fontWeight: 700, color: "var(--coral-600)" }}>
                 {money(calculation.remainingGapAfterAllAid)}
               </td>
               <td style={cellStyle}>
-                <PillBadge tone={statusTone(offer.offer_status)}>
+                <Badge tone={statusTone(offer.offer_status)}>
                   {AID_OFFER_STATUS_LABELS[offer.offer_status]}
-                </PillBadge>
+                </Badge>
               </td>
             </tr>
           ))}

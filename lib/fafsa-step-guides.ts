@@ -25,14 +25,14 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Confirm your FAFSA aid year",
     stage: "Get ready",
     why_it_matters:
-      "Picking the wrong aid year is one of the easiest mistakes to make — and schools may not see your application for the term you actually plan to attend.",
+      "Picking the wrong aid year is one of the easiest mistakes to make - and schools may not see your application for the term you actually plan to attend.",
     before_you_start: [
       "Know which school year you are applying for (for example, fall 2025 = aid year 2025-26).",
       "Have your list of schools handy so you apply for the right enrollment period.",
     ],
     instructions: [
       "Go to StudentAid.gov and sign in (or start a new FAFSA).",
-      "Look for the aid year on the first screen — it usually shows as something like 2025-26.",
+      "Look for the aid year on the first screen - it usually shows as something like 2025-26.",
       "Match that year to when you plan to start or continue college.",
       "If you are unsure, check your school's financial aid website for which aid year they are accepting.",
       "Do not continue until the aid year looks correct.",
@@ -44,7 +44,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     if_stuck: [
       "Email or call your school's financial aid office and ask: \"Which FAFSA aid year should I file for my start term?\"",
-      "If you already started the wrong year, do not panic — ask the school whether you need to start a new FAFSA for the correct year.",
+      "If you already started the wrong year, do not panic - ask the school whether you need to start a new FAFSA for the correct year.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -63,9 +63,9 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     instructions: [
       "Open StudentAid.gov and choose to create an account (sometimes called FSA ID).",
-      "Use your own email — you will need it for password resets and FAFSA updates.",
+      "Use your own email - you will need it for password resets and FAFSA updates.",
       "Follow the identity verification steps on StudentAid.gov only.",
-      "Write down your username somewhere safe — not in AidPilot.",
+      "Write down your username somewhere safe - not in AidPilot.",
       "Complete any email or phone verification the site asks for before you close the tab.",
       "Log out and log back in once to confirm the account works.",
     ],
@@ -76,9 +76,9 @@ const GUIDES: FafsaStepGuide[] = [
       "Rushing through verification and getting locked out.",
     ],
     if_stuck: [
-      "Use the official \"Forgot username\" or \"Forgot password\" links on StudentAid.gov — not third-party sites.",
+      "Use the official \"Forgot username\" or \"Forgot password\" links on StudentAid.gov - not third-party sites.",
       "If identity verification fails, read the on-screen help on StudentAid.gov or contact Federal Student Aid support through their official site.",
-      "Ask a school counselor to walk you through account setup in person — they should not type your SSN for you.",
+      "Ask a school counselor to walk you through account setup in person - they should not type your SSN for you.",
     ],
     action_url: CREATE_ACCOUNT_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -88,17 +88,17 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Identify your required FAFSA contributors",
     stage: "Contributor completion",
     why_it_matters:
-      "FAFSA may need information from a parent, stepparent, or spouse — not every student needs the same people. Knowing who is required saves days of back-and-forth.",
+      "FAFSA may need information from a parent, stepparent, or spouse - not every student needs the same people. Knowing who is required saves days of back-and-forth.",
     before_you_start: [
       "Your basic living situation (who you live with most of the year).",
       "Whether you are married or have dependents of your own.",
       "Access to StudentAid.gov help articles on \"Who is a contributor?\"",
     ],
     instructions: [
-      "Start FAFSA on StudentAid.gov — the form will ask questions about your household.",
+      "Start FAFSA on StudentAid.gov - the form will ask questions about your household.",
       "Answer honestly about who provides financial support and who you live with.",
       "When FAFSA names a required contributor, write down their role (for example, Parent 1) and their name.",
-      "Tell that person they will need their own StudentAid.gov account — separate from yours.",
+      "Tell that person they will need their own StudentAid.gov account - separate from yours.",
       "If FAFSA says no contributor is needed, you can skip inviting anyone.",
       "If you are not sure, choose \"I'm not sure\" in AidPilot's readiness wizard and confirm on StudentAid.gov.",
     ],
@@ -108,9 +108,9 @@ const GUIDES: FafsaStepGuide[] = [
       "Waiting until the night before a deadline to tell your contributor they are required.",
     ],
     if_stuck: [
-      "Read the contributor help on StudentAid.gov while you answer FAFSA questions — the form explains who counts.",
+      "Read the contributor help on StudentAid.gov while you answer FAFSA questions - the form explains who counts.",
       "Call your school's financial aid office with a general description of your household (no SSNs needed on the phone).",
-      "If your parents are divorced, FAFSA has specific rules — follow what the official form asks, not family assumptions.",
+      "If your parents are divorced, FAFSA has specific rules - follow what the official form asks, not family assumptions.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -124,13 +124,13 @@ const GUIDES: FafsaStepGuide[] = [
     before_you_start: [
       "The name and contact info for the person FAFSA listed as your contributor.",
       "A time when they can sit down for 10–15 minutes without distractions.",
-      "Official link: studentaid.gov account creation (send them the real site — not a screenshot of your login).",
+      "Official link: studentaid.gov account creation (send them the real site - not a screenshot of your login).",
     ],
     instructions: [
       "Text or talk to your contributor and explain FAFSA needs their section completed.",
-      "Send them the official StudentAid.gov create-account link — they must use their own email.",
+      "Send them the official StudentAid.gov create-account link - they must use their own email.",
       "Ask them to finish identity verification on StudentAid.gov the same day if possible.",
-      "Confirm they saved their username — you do not need their password.",
+      "Confirm they saved their username - you do not need their password.",
       "Once their account works, move on to inviting them inside your FAFSA (next step).",
     ],
     common_mistakes: [
@@ -139,7 +139,7 @@ const GUIDES: FafsaStepGuide[] = [
       "Assuming a parent who filed FAFSA for an older sibling can reuse that login for your application without checking.",
     ],
     if_stuck: [
-      "Offer to sit with them while they create the account on StudentAid.gov — you can read steps aloud without typing their SSN.",
+      "Offer to sit with them while they create the account on StudentAid.gov - you can read steps aloud without typing their SSN.",
       "If they had an account years ago, use \"Forgot username\" on StudentAid.gov before making a duplicate.",
       "School financial aid offices can explain why a contributor is required without collecting sensitive data.",
     ],
@@ -151,17 +151,17 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Gather tax and financial records",
     stage: "Get ready",
     why_it_matters:
-      "FAFSA might pause you mid-form if nobody can answer money questions. You are not entering dollar amounts here — just checking whether you can find tax info when StudentAid.gov asks.",
+      "FAFSA might pause you mid-form if nobody can answer money questions. You are not entering dollar amounts here - just checking whether you can find tax info when StudentAid.gov asks.",
     before_you_start: [
       "Know whether you or a parent filed taxes for the year FAFSA asks about.",
-      "Locate where tax documents are stored (IRS account, tax preparer, filing cabinet) — you do not upload these to AidPilot.",
+      "Locate where tax documents are stored (IRS account, tax preparer, filing cabinet) - you do not upload these to AidPilot.",
       "List of any untaxed income or special situations you might need to report on StudentAid.gov.",
     ],
     instructions: [
       "Check StudentAid.gov for which tax year FAFSA uses for your aid year.",
       "Ask your contributor whether they can log in to the IRS or access their tax return if FAFSA requests it.",
       "Make a simple checklist on paper: who filed, where documents live, who can answer money questions.",
-      "Do not enter dollar amounts or SSNs into AidPilot — only track whether you can access the info.",
+      "Do not enter dollar amounts or SSNs into AidPilot - only track whether you can access the info.",
       "Set a 30-minute block to sit down with your contributor if their section will need financial answers.",
     ],
     common_mistakes: [
@@ -170,7 +170,7 @@ const GUIDES: FafsaStepGuide[] = [
       "Entering bank balances or tax figures into unofficial apps or screenshots shared in group chats.",
     ],
     if_stuck: [
-      "If taxes were not filed, FAFSA has paths for that — follow the official questions on StudentAid.gov.",
+      "If taxes were not filed, FAFSA has paths for that - follow the official questions on StudentAid.gov.",
       "Your school's financial aid office can explain what documents they may ask for later (verification is separate from FAFSA).",
       "Use IRS.gov official tools only when FAFSA directs you there.",
     ],
@@ -200,7 +200,7 @@ const GUIDES: FafsaStepGuide[] = [
       "Storing SSNs or account passwords on a phone notes app labeled \"FAFSA.\"",
     ],
     if_stuck: [
-      "Attend a FAFSA night at your high school or college — they walk through the official site.",
+      "Attend a FAFSA night at your high school or college - they walk through the official site.",
       "Ask one trusted question at a time to your financial aid office.",
     ],
     action_url: STUDENTAID_URL,
@@ -211,7 +211,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Start your FAFSA form",
     stage: "Fill FAFSA",
     why_it_matters:
-      "Starting early beats a last-minute panic. You can save progress on StudentAid.gov and come back — AidPilot just helps you know what to do next.",
+      "Starting early beats a last-minute panic. You can save progress on StudentAid.gov and come back - AidPilot just helps you know what to do next.",
     before_you_start: [
       "Working StudentAid.gov account.",
       "Confirmed aid year.",
@@ -221,18 +221,18 @@ const GUIDES: FafsaStepGuide[] = [
     instructions: [
       "Sign in at StudentAid.gov and select FAFSA for your aid year.",
       "Choose \"Start a new FAFSA\" if you have not begun, or resume if you saved progress.",
-      "Work through one section at a time — use Save as you go.",
+      "Work through one section at a time - use Save as you go.",
       "Stop if you are unsure about an answer; look up help text on the same page before guessing.",
       "Do not submit until student and contributor sections (if required) are complete.",
     ],
     common_mistakes: [
       "Submitting before inviting a required contributor.",
       "Closing the browser without saving and losing progress.",
-      "Copying answers from a friend's FAFSA — your answers must be yours.",
+      "Copying answers from a friend's FAFSA - your answers must be yours.",
     ],
     if_stuck: [
       "Use the ? help icons on each FAFSA question.",
-      "Take a break and return the same day — FAFSA saves your place when you use Save.",
+      "Take a break and return the same day - FAFSA saves your place when you use Save.",
       "Contact Federal Student Aid through official channels linked from StudentAid.gov.",
     ],
     action_url: STUDENTAID_URL,
@@ -251,7 +251,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     instructions: [
       "Open your in-progress FAFSA on StudentAid.gov.",
-      "Complete all student questions — read each one slowly.",
+      "Complete all student questions - read each one slowly.",
       "Double-check your state of legal residence and school list before moving on.",
       "If a question asks for SSN or financial numbers, enter them only on StudentAid.gov.",
       "Save and note whether FAFSA says a contributor is still required.",
@@ -263,7 +263,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     if_stuck: [
       "Compare tricky questions to StudentAid.gov glossary entries.",
-      "Ask your school counselor to explain a question concept — not to enter your SSN.",
+      "Ask your school counselor to explain a question concept - not to enter your SSN.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -292,7 +292,7 @@ const GUIDES: FafsaStepGuide[] = [
       "Submitting FAFSA while contributor status still says incomplete.",
     ],
     if_stuck: [
-      "Cancel and resend the invite if the email bounced — verify spelling with your contributor.",
+      "Cancel and resend the invite if the email bounced - verify spelling with your contributor.",
       "Sit together and complete the contributor section in one session if they are willing.",
       "Financial aid office can confirm whether your FAFSA is waiting on a contributor.",
     ],
@@ -312,7 +312,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     instructions: [
       "Contributor signs in to StudentAid.gov with their own account.",
-      "Opens the FAFSA they were invited to — not the student's login.",
+      "Opens the FAFSA they were invited to - not the student's login.",
       "Answers each contributor question on the official form.",
       "Reviews and signs when FAFSA prompts for signature.",
       "Student checks that FAFSA shows both sections complete before final submit.",
@@ -320,11 +320,11 @@ const GUIDES: FafsaStepGuide[] = [
     common_mistakes: [
       "Student filling out contributor answers while logged in as themselves.",
       "Contributor skipping signature because they thought invite was enough.",
-      "Entering estimates when FAFSA offers a data retrieval option — follow on-screen guidance.",
+      "Entering estimates when FAFSA offers a data retrieval option - follow on-screen guidance.",
     ],
     if_stuck: [
       "Use StudentAid.gov live help during business hours.",
-      "Ask financial aid whether professional judgment is possible if family situation changed — that comes after FAFSA.",
+      "Ask financial aid whether professional judgment is possible if family situation changed - that comes after FAFSA.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -338,23 +338,23 @@ const GUIDES: FafsaStepGuide[] = [
     before_you_start: [
       "Submitted FAFSA for the correct aid year.",
       "StudentAid.gov login.",
-      "A few minutes to read carefully — not while multitasking.",
+      "A few minutes to read carefully - not while multitasking.",
     ],
     instructions: [
       "Log in to StudentAid.gov after you submit FAFSA.",
       "Download or view your FAFSA Submission Summary (name may vary slightly by year).",
       "Check name, schools listed, dependency status, and contributor status.",
-      "If something looks wrong, follow StudentAid.gov instructions to make a correction — do not retype data in AidPilot.",
+      "If something looks wrong, follow StudentAid.gov instructions to make a correction - do not retype data in AidPilot.",
       "Save a copy in a secure place on your device or print it for your records.",
     ],
     common_mistakes: [
-      "Assuming submit means perfect — typos happen.",
+      "Assuming submit means perfect - typos happen.",
       "Throwing away the summary and forgetting which schools received your FAFSA.",
       "Screenshotting the summary with SSN visible and texting it to friends.",
     ],
     if_stuck: [
       "Use FAFSA correction process on StudentAid.gov for fixable errors.",
-      "Call a school listed on the summary to ask if they received your application — have your name and aid year ready, not your SSN in email.",
+      "Call a school listed on the summary to ask if they received your application - have your name and aid year ready, not your SSN in email.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -379,7 +379,7 @@ const GUIDES: FafsaStepGuide[] = [
       "Only telling your parent \"I submitted\" without keeping proof.",
     ],
     if_stuck: [
-      "Log back in to StudentAid.gov — submitted FAFSAs usually appear in your dashboard.",
+      "Log back in to StudentAid.gov - submitted FAFSAs usually appear in your dashboard.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -396,17 +396,17 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     instructions: [
       "Sign in and read any banner or message marked action required.",
-      "Follow the exact steps StudentAid.gov lists — each issue has its own fix.",
+      "Follow the exact steps StudentAid.gov lists - each issue has its own fix.",
       "Complete corrections or uploads only on the official site.",
       "Recheck status after 24–48 hours.",
     ],
     common_mistakes: [
-      "Ignoring emails thinking they are spam — verify sender is official.",
+      "Ignoring emails thinking they are spam - verify sender is official.",
       "Trying to fix issues through unofficial third-party services.",
     ],
     if_stuck: [
       "Contact Federal Student Aid support through StudentAid.gov.",
-      "Tell your school's financial aid office you have an action required flag — they may know common fixes.",
+      "Tell your school's financial aid office you have an action required flag - they may know common fixes.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -429,10 +429,10 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     common_mistakes: [
       "Checking once and assuming nothing will change.",
-      "Expecting an aid offer the day after submit — processing takes time.",
+      "Expecting an aid offer the day after submit - processing takes time.",
     ],
     if_stuck: [
-      "Ask financial aid: \"Has my FAFSA been received?\" — they can often see this without you emailing SSNs.",
+      "Ask financial aid: \"Has my FAFSA been received?\" - they can often see this without you emailing SSNs.",
     ],
     action_url: STUDENTAID_URL,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -442,7 +442,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Check your school financial aid portal",
     stage: "Documents and verification",
     why_it_matters:
-      "Schools post verification requests and missing documents on their portal — not always by paper mail.",
+      "Schools post verification requests and missing documents on their portal - not always by paper mail.",
     before_you_start: [
       "School portal login (often same as applicant or student portal).",
       "List of schools where you submitted FAFSA.",
@@ -456,7 +456,7 @@ const GUIDES: FafsaStepGuide[] = [
     common_mistakes: [
       "Only checking email and missing portal tasks.",
       "Uploading forms to the wrong school.",
-      "Sending tax returns over regular email — use secure school systems only.",
+      "Sending tax returns over regular email - use secure school systems only.",
     ],
     if_stuck: [
       "Call financial aid and ask how to activate your portal account.",
@@ -470,14 +470,14 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Upload requested verification documents",
     stage: "Documents and verification",
     why_it_matters:
-      "Federal aid often cannot disburse until verification is finished — this is normal and not a sign you did something wrong.",
+      "Federal aid often cannot disburse until verification is finished - this is normal and not a sign you did something wrong.",
     before_you_start: [
       "List of documents your school requested (from their portal or email).",
-      "Originals or clear scans — follow school format rules.",
+      "Originals or clear scans - follow school format rules.",
       "Due date from the financial aid office.",
     ],
     instructions: [
-      "Read each request carefully — schools ask for specific forms (not always the same as FAFSA).",
+      "Read each request carefully - schools ask for specific forms (not always the same as FAFSA).",
       "Complete forms with accurate information on the school's site.",
       "Upload through the official portal before the deadline.",
       "Keep copies of what you submitted.",
@@ -490,7 +490,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     if_stuck: [
       "Ask financial aid which item is blocking disbursement.",
-      "If family taxes are complicated, request a meeting — do not email SSNs or full tax returns unencrypted.",
+      "If family taxes are complicated, request a meeting - do not email SSNs or full tax returns unencrypted.",
     ],
     action_url: null,
     privacy_reminder: FAFSA_STEP_PRIVACY_REMINDER,
@@ -500,7 +500,7 @@ const GUIDES: FafsaStepGuide[] = [
     title: "Watch for your financial aid offer",
     stage: "Aid offer review",
     why_it_matters:
-      "Your offer shows grants, scholarships, loans, and estimated cost — you need it to compare schools.",
+      "Your offer shows grants, scholarships, loans, and estimated cost - you need it to compare schools.",
     before_you_start: [
       "FAFSA submitted and schools listed.",
       "Admission decisions (offers often come after acceptance).",
@@ -510,10 +510,10 @@ const GUIDES: FafsaStepGuide[] = [
       "Check email daily during spring of your senior year (or your college start term).",
       "Log in to each school's aid portal when admitted.",
       "Note whether aid is estimated or final.",
-      "When an offer arrives, open AidPilot's aid letter tool or your school site to review — not random calculators with your SSN.",
+      "When an offer arrives, open AidPilot's aid letter tool or your school site to review - not random calculators with your SSN.",
     ],
     common_mistakes: [
-      "Assuming no email means no aid — check spam and portal.",
+      "Assuming no email means no aid - check spam and portal.",
       "Comparing schools using sticker price instead of net cost after grants.",
     ],
     if_stuck: [
@@ -535,7 +535,7 @@ const GUIDES: FafsaStepGuide[] = [
     instructions: [
       "Open your school's official aid offer or portal.",
       "Find cost of attendance, grants, scholarships, loans, and work-study.",
-      "Use AidPilot's aid letter page to enter summary numbers for planning — never enter SSN or bank info.",
+      "Use AidPilot's aid letter page to enter summary numbers for planning - never enter SSN or bank info.",
       "Subtract grants and scholarships from cost to estimate what you still need to cover.",
       "Call financial aid if any line item is confusing before accepting loans.",
     ],
@@ -563,7 +563,7 @@ const GUIDES: FafsaStepGuide[] = [
     ],
     instructions: [
       "For each school, search \"[school name] federal school code\" on the school's official site.",
-      "Add every school you want to receive your FAFSA — you can usually add up to the limit FAFSA allows.",
+      "Add every school you want to receive your FAFSA - you can usually add up to the limit FAFSA allows.",
       "Remove schools you are definitely not attending if FAFSA lets you edit the list.",
       "Double-check spelling and campus location (some systems have multiple campuses).",
     ],

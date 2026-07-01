@@ -128,7 +128,7 @@ export function buildAidHealthReport(offer: UserAidOffer): AidHealthReport {
   const flags = [...calculation.flags];
 
   if (!offer.academic_year?.trim()) {
-    flags.push("Academic year is missing — add it so you can track this offer by year.");
+    flags.push("Academic year is missing - add it so you can track this offer by year.");
   }
 
   if (offer.offer_status === "draft") {

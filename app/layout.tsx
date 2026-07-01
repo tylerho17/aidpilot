@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito, Hanken_Grotesk } from "next/font/google";
+import { Nunito, Hanken_Grotesk, Rubik } from "next/font/google";
 import { ClientProviders } from "@/components/providers/ClientProviders";
 import "./globals.css";
 
@@ -13,6 +13,13 @@ const hanken = Hanken_Grotesk({
   variable: "--font-hanken",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+});
+
+// Rubik - the metric face: money, day-counts, percentages in the big stat boxes.
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${nunito.variable} ${hanken.variable} h-full antialiased`}
+      className={`${nunito.variable} ${hanken.variable} ${rubik.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ClientProviders>{children}</ClientProviders>

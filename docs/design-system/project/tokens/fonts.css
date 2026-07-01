@@ -1,0 +1,8 @@
+/* ── AidPilot webfonts ──────────────────────────────────────────────
+   Nunito (display / wordmark) + Hanken Grotesk (body / UI) are the exact
+   families the AidPilot app loads. Rubik is added for money + metrics —
+   a professional, even-width grotesque that reads clearly for parents
+   and students in the big data boxes. All served from Google Fonts. */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Rubik:wght@500;600;700;800&display=swap');
+

@@ -1,0 +1,62 @@
+/* ══════════════════════════════════════════════════════════════════════
+   AidPilot — Typography tokens
+   ----------------------------------------------------------------------
+   Two families, both loaded from Google Fonts (see fonts.css):
+     • Nunito         — rounded, friendly, heavy. Display + wordmark only.
+     • Hanken Grotesk — clean humanist grotesque. All body + UI text.
+
+   Nunito carries the warmth ("your calm coach"); Hanken keeps the
+   interface legible and official. Headlines run heavy (800–900) with
+   tight negative tracking; body stays 400–600 at a comfortable line
+   height. Numbers and dashboard stats are ALWAYS Nunito 900.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Families */
+  --font-display: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Metrics / money — a precise, professional grotesque. Use for the big
+     numbers in dashboard stat boxes (dollar amounts, day counts, %), where
+     Nunito reads too playful for parents. Labels can stay Nunito/Hanken. */
+  --font-metric: 'Rubik', 'Hanken Grotesk', system-ui, sans-serif;
+  /* Legacy alias names used across the app codebase */
+  --font-nunito: var(--font-display);
+  --font-hanken: var(--font-body);
+
+  /* Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --weight-black: 900;
+
+  /* Type scale — the real sizes used across AidPilot surfaces (px) */
+  --text-hero: 60px;     /* marketing H1 */
+  --text-display: 44px;  /* large section heads */
+  --text-h1: 30px;       /* auth / page title */
+  --text-h2: 26px;       /* stat value, sub-hero */
+  --text-h3: 24px;       /* hero subhead */
+  --text-h4: 20px;       /* card / section heading */
+  --text-lg: 19px;       /* lead paragraph */
+  --text-md: 17px;       /* button, emphasised body */
+  --text-base: 15px;     /* default body + inputs */
+  --text-sm: 14px;       /* labels, nav, secondary */
+  --text-xs: 13px;       /* dense labels, meta */
+  --text-2xs: 12px;      /* badges, captions */
+  --text-3xs: 11px;      /* eyebrow, fine print */
+
+  /* Line heights */
+  --leading-tight: 1.03;   /* hero display */
+  --leading-snug: 1.2;     /* headings */
+  --leading-normal: 1.35;  /* subheads */
+  --leading-relaxed: 1.6;  /* body copy */
+
+  /* Letter spacing — display sizes ride tight */
+  --tracking-hero: -1.8px;
+  --tracking-tight: -0.8px;
+  --tracking-snug: -0.5px;
+  --tracking-wordmark: -0.3px;
+  --tracking-normal: 0;
+  --tracking-eyebrow: 0.8px;  /* uppercase micro-labels */
+}

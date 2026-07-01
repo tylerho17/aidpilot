@@ -39,7 +39,7 @@ const GAP_WARNING_THRESHOLD = 1000;
 
 export const LOAN_TYPE_EXPLANATIONS = {
   subsidized:
-    "Generally the safer federal student loan — the government may pay interest while you are in school at least half-time.",
+    "Generally the safer federal student loan - the government may pay interest while you are in school at least half-time.",
   unsubsidized:
     "Federal loan where interest can build while you are in school. You are responsible for all interest over time.",
   parentPlus:
@@ -122,7 +122,7 @@ function buildAidOfferWarnings({
     warnings.push({
       id: "parent_plus",
       title: "Parent debt warning",
-      message: `Your package includes $${loanBreakdown.parentPlus.toLocaleString()} in Parent PLUS loans. That debt is in your parent's name — talk together about repayment before accepting.`,
+      message: `Your package includes $${loanBreakdown.parentPlus.toLocaleString()} in Parent PLUS loans. That debt is in your parent's name - talk together about repayment before accepting.`,
       tone: "amber",
     });
   }
@@ -131,7 +131,7 @@ function buildAidOfferWarnings({
     warnings.push({
       id: "private_loan",
       title: "Private loan caution",
-      message: `You listed $${loanBreakdown.private.toLocaleString()} in private loans. These often have fewer protections than federal loans — compare interest rates and read terms closely with your family.`,
+      message: `You listed $${loanBreakdown.private.toLocaleString()} in private loans. These often have fewer protections than federal loans - compare interest rates and read terms closely with your family.`,
       tone: "red",
     });
   }
@@ -161,7 +161,7 @@ function buildAidOfferWarnings({
     warnings.push({
       id: "gap",
       title: "AidPilot heads-up",
-      message: `After free money, work-study, and loans, about $${estimatedGapAfterAllAid.toLocaleString()} may still be uncovered. Look at outside scholarships, payment plans, or a careful appeal — confirm with your financial aid office.`,
+      message: `After free money, work-study, and loans, about $${estimatedGapAfterAllAid.toLocaleString()} may still be uncovered. Look at outside scholarships, payment plans, or a careful appeal - confirm with your financial aid office.`,
       tone: "blue",
     });
   } else if (totalFreeMoney < coa * 0.25 && totalLoans > 0) {
@@ -169,7 +169,7 @@ function buildAidOfferWarnings({
       id: "general",
       title: "AidPilot heads-up",
       message:
-        "Free money covers less than a quarter of your cost. Your package relies heavily on loans — double-check each line item with your school.",
+        "Free money covers less than a quarter of your cost. Your package relies heavily on loans - double-check each line item with your school.",
       tone: "blue",
     });
   } else if (estimatedGapAfterAllAid === 0 && totalLoans > 0) {

@@ -133,7 +133,7 @@ function useUserDataState() {
 
   const supabase = useMemo(() => createClient(), []);
   const hasLoadedOnceRef = useRef(false);
-  const adminCacheRef = useRef<{ userId: string; isAdmin: boolean } | null>(null);
+  const adminCacheRef = useRef<{ userId: string; isAdmin: boolean; checkedAt: number } | null>(null);
   const loadInFlightRef = useRef<Promise<void> | null>(null);
   const scholarshipSchemaModeRef = useRef<ScholarshipSchemaMode>("extended");
 
@@ -226,10 +226,12 @@ function useUserDataState() {
 
           const cachedAdmin = adminCacheRef.current;
           const adminPromise =
-            cachedAdmin?.userId === resolvedUser.id
+            cachedAdmin &&
+            cachedAdmin.userId === resolvedUser.id &&
+            Date.now() - cachedAdmin.checkedAt < 5 * 60 * 1000
               ? Promise.resolve(cachedAdmin.isAdmin)
               : checkScholarshipAdmin(supabase).then((isAdmin) => {
-                  adminCacheRef.current = { userId: resolvedUser.id, isAdmin };
+                  adminCacheRef.current = { userId: resolvedUser.id, isAdmin, checkedAt: Date.now() };
                   return isAdmin;
                 });
 
@@ -304,7 +306,7 @@ function useUserDataState() {
           if (errors.length > 0) {
             console.error("useUserData: some queries failed", errors);
             if (!options?.silent) {
-              setLoadError("Some data could not be loaded. You can still use AidPilot — try refreshing the page.");
+              setLoadError("Some data could not be loaded. You can still use AidPilot - try refreshing the page.");
             }
           }
 
