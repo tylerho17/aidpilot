@@ -64,16 +64,16 @@ export async function POST() {
   });
 
   try {
+    const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
+    if (deleteUserError) {
+      return NextResponse.json({ error: deleteUserError.message }, { status: 500 });
+    }
+
     for (const table of USER_TABLES) {
       const { error } = await admin.from(table).delete().eq(table === "student_profiles" ? "id" : "user_id", user.id);
       if (error) {
         console.error(`Delete account: failed on ${table}`, error);
       }
-    }
-
-    const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
-    if (deleteUserError) {
-      return NextResponse.json({ error: deleteUserError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
