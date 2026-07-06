@@ -191,6 +191,7 @@ export default function AidOfferDecoderClient() {
             </h2>
             {showForm ? (
               <AidOfferForm
+                key={editingOffer?.id ?? "new"}
                 initialOffer={editingOffer}
                 saving={Boolean(savingId)}
                 onSubmit={async (input, offerId) => {
