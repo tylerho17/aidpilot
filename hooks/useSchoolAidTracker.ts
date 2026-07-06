@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toFriendlyError } from "@/lib/friendly-errors";
 import {
@@ -53,6 +53,7 @@ export function useSchoolAidTracker() {
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
+  const loadVersionRef = useRef(0);
 
   const createTasksIfNeeded = useCallback(
     async (status: UserSchoolAidStatus, currentTasks: UserSchoolAidTask[]) => {
@@ -84,20 +85,30 @@ export function useSchoolAidTracker() {
 
   const loadTracker = useCallback(
     async (options?: { silent?: boolean }) => {
+      const loadVersion = ++loadVersionRef.current;
+
       if (!options?.silent) {
         setLoading(true);
+        setStatuses([]);
+        setTasks([]);
       }
       setLoadError(null);
 
       try {
         const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const {
           data: { user },
         } = await supabase.auth.getUser();
+        const resolvedUserId = (user ?? session?.user)?.id ?? null;
 
-        setUserId(user?.id ?? null);
+        if (loadVersion !== loadVersionRef.current) return;
+
+        setUserId(resolvedUserId);
         setAuthReady(true);
 
-        if (!user) {
+        if (!resolvedUserId) {
           setStatuses([]);
           setTasks([]);
           return;
@@ -107,25 +118,29 @@ export function useSchoolAidTracker() {
           supabase
             .from("user_school_aid_statuses")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("user_id", resolvedUserId)
             .order("school_name"),
           supabase
             .from("user_school_aid_tasks")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("user_id", resolvedUserId)
             .order("created_at"),
         ]);
 
+        if (loadVersion !== loadVersionRef.current) return;
         if (statusRes.error) throw statusRes.error;
         if (taskRes.error) throw taskRes.error;
 
         setStatuses((statusRes.data ?? []) as UserSchoolAidStatus[]);
         setTasks((taskRes.data ?? []) as UserSchoolAidTask[]);
       } catch (error) {
+        if (loadVersion !== loadVersionRef.current) return;
         console.error("useSchoolAidTracker load failed:", error);
+        setStatuses([]);
+        setTasks([]);
         setLoadError(toFriendlyError(error, SCHOOL_AID_LOAD_ERROR));
       } finally {
-        if (!options?.silent) {
+        if (loadVersion === loadVersionRef.current && !options?.silent) {
           setLoading(false);
         }
       }
@@ -143,10 +158,37 @@ export function useSchoolAidTracker() {
 
     void bootstrap();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
+
+      const nextUserId = session?.user?.id ?? null;
+
+      if (!nextUserId) {
+        loadVersionRef.current += 1;
+        setUserId(null);
+        setAuthReady(true);
+        setStatuses([]);
+        setTasks([]);
+        setLoadError(null);
+        setActionError(null);
+        setSavingId(null);
+        setLoading(false);
+        return;
+      }
+
+      setUserId(nextUserId);
+      setAuthReady(true);
+      void loadTracker();
+    });
+
     return () => {
       cancelled = true;
+      loadVersionRef.current += 1;
+      subscription.unsubscribe();
     };
-  }, [loadTracker]);
+  }, [loadTracker, supabase]);
 
   const addSchool = useCallback(
     async (input: AddSchoolInput) => {
