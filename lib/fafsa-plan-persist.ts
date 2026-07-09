@@ -78,7 +78,7 @@ export async function persistFafsaPlan(
   intake: FafsaIntakeFormData | FafsaIntakeResponse
 ): Promise<AidTask[]> {
   const planned = generateFafsaPlan(intake);
-  const planKeys = planned.map((t) => t.plan_key);
+  const planKeys = new Set(planned.map((t) => t.plan_key));
 
   const { data: existingRows, error: existingError } = await supabase
     .from("aid_tasks")
@@ -119,10 +119,11 @@ export async function persistFafsaPlan(
     saved.push(data as AidTask);
   }
 
-  const staleIds = (existingRows ?? [])
+  const staleRows = (existingRows ?? [])
     .map((row) => row as AidTask)
-    .filter((row) => row.plan_key && !planKeys.includes(row.plan_key))
-    .map((row) => row.id);
+    .filter((row) => row.plan_key && !planKeys.has(row.plan_key));
+  const staleCompletedRows = staleRows.filter((row) => isAidTaskComplete(row.status));
+  const staleIds = staleRows.filter((row) => !isAidTaskComplete(row.status)).map((row) => row.id);
 
   if (staleIds.length > 0) {
     const { error: deleteError } = await supabase.from("aid_tasks").delete().in("id", staleIds);
@@ -132,7 +133,7 @@ export async function persistFafsaPlan(
     }
   }
 
-  return saved.sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0));
+  return [...saved, ...staleCompletedRows].sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0));
 }
 
 async function upsertFafsaIntakeRow(
