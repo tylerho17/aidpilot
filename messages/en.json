@@ -373,9 +373,15 @@
             },
             "ssnOrItin": {
               "label": "SSN or ITIN (if you have one)",
-              "whatItMeans": "If you don’t have an SSN, leave it blank or enter all zeroes. If you or your parents file taxes with an ITIN, use the ITIN.",
+              "whatItMeans": "Entering an SSN or ITIN is optional. Enter your ITIN if you have one; if you have neither, leave it blank or enter all zeroes.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "citizenshipStatus": {
+              "label": "Citizenship status",
+              "whatItMeans": "Undocumented, DACA, U-visa, and TPS students select “neither citizen nor eligible noncitizen.”",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "Indicating you are a citizen or eligible noncitizen redirects you to the FAFSA."
             },
             "email": {
               "label": "Email address",
@@ -447,13 +453,13 @@
           "fields": {
             "taxFilingStatus": {
               "label": "Tax filing status",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
-              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "whatItMeans": "If you haven’t filed your 2024 taxes yet, choose “will file,” use estimates, and update after filing. If you choose “not going to file,” you still report income — W-2 box 1 plus box 8, or net profit if self-employed.",
+              "documentNeeded": "W-2s (box 1 and box 8), or records of net profit if self-employed.",
+              "commonError": "Earning over the IRS filing threshold flags the form and requires getting an ITIN and filing."
             },
             "studentIncome": {
               "label": "Student income",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "The 2026–27 CADAA uses 2024 tax information. The CADAA does not import IRS data — you enter income and tax information manually.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
@@ -493,15 +499,15 @@
           "fields": {
             "parentTaxFilingStatus": {
               "label": "Parent tax filing status",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "If they haven’t filed their 2024 taxes yet, choose “will file,” use estimates, and update after filing. If “not going to file,” income is still reported — W-2 box 1 plus box 8, or net profit if self-employed.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "parentIncome": {
               "label": "Parent income",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "Dependent students provide parent household and income information.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "commonError": "If circumstances changed, complete the form as best you can, submit, then talk to the school’s financial aid office."
             },
             "parentAssets": {
               "label": "Parent assets",
@@ -522,15 +528,15 @@
           "fields": {
             "studentSignature": {
               "label": "Student signature",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
-              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "whatItMeans": "After you submit, CSAC emails a nine-digit Dream ID. Use it to create a WebGrants 4 Students account to check your status.",
+              "documentNeeded": "Cal Grant GPA verification — submit it by March 2.",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "parentSignature": {
               "label": "Parent signature",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "For dependent students, the parent signs with a Parent PIN.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "commonError": "Save the Parent PIN — it’s reused every year."
             }
           }
         }

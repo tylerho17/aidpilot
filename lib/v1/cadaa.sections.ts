@@ -15,6 +15,9 @@ export const CADAA_SECTIONS: WalkSection[] = [
     "fullName",
     "dateOfBirth",
     "ssnOrItin",
+    // Sourced (content-source.md): undocumented/DACA/U-visa/TPS select "neither
+    // citizen nor eligible noncitizen". VERIFY against dream.csac.ca.gov.
+    "citizenshipStatus",
     "email",
     "phone",
     "mailingAddress",
@@ -26,13 +29,13 @@ export const CADAA_SECTIONS: WalkSection[] = [
 
   makeSection("cadaa", "studentColleges", ["caCollegeList"]),
 
-  // Financials stay TODO: source from dream.csac.ca.gov (state form, MANUAL
-  // income entry — do NOT reuse FAFSA IRS-import/consent language here).
+  // Financials sourced from dream.csac.ca.gov (content-source.md) — VERIFY
+  // there. CADAA enters income MANUALLY; never reuse FAFSA IRS-import language.
   makeSection("cadaa", "studentFinancials", ["taxFilingStatus", "studentIncome", "studentAssets"]),
 
   makeSection("cadaa", "parentInformation", ["parentFullName", "parentDateOfBirth", "parentEmail"]),
 
-  // Same guardrail as studentFinancials: dream.csac.ca.gov only, manual entry.
+  // Sourced from dream.csac.ca.gov (content-source.md) — VERIFY there.
   makeSection("cadaa", "parentFinancials", [
     "parentTaxFilingStatus",
     "parentIncome",

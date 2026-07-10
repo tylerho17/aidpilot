@@ -1,0 +1,37 @@
+{
+  "_note": "Owner-supplied Spanish DRAFTS (NEEDS_NATIVE_REVIEW — not approved). Deep-merged over the EN clone by scripts/gen-stub-locales.mjs. See docs/content-source.md.",
+  "trust": {
+    "privacy": "AidPilot no guarda nada sobre ti. Todo lo que ingresas permanece en tu dispositivo. Nunca enviamos nada por ti y nunca vemos tu nombre, número de Seguro Social ni tu información financiera.",
+    "cadaa": "La información que proporcionas en la Solicitud de la Ley California Dream se usa únicamente para determinar tu elegibilidad para la ayuda financiera estatal. Nunca se comparte con el gobierno federal ni se usa para fines de control migratorio."
+  },
+  "walkthrough": {
+    "fafsa": {
+      "sections": {
+        "contributorFsaId": {
+          "body": "Un contribuyente es cualquier persona que debe proporcionar información en la FAFSA: el estudiante, su cónyuge, un padre biológico o adoptivo, o el cónyuge de un padre. Los abuelos, tutores legales, padres de crianza y hermanos no son contribuyentes. Ser contribuyente no te hace responsable de pagar los estudios.\n\nEvery student and contributor needs their own StudentAid.gov account (FSA ID). It is a legally binding signature — never share it. For 2026–27, verification is instant for SSN holders (no more 1–3 day wait). You’ll need: your SSN (if you have one), full legal name, date of birth, your own email, and your own mobile number.\n\nA parent or spouse without an SSN CAN make an account and complete their section — they verify with an ITIN, mailing address, and ID documents, which can take longer.\n\nYou and every contributor must give consent to import IRS tax information — even if they didn’t file a tax return. If anyone refuses consent, no federal aid.\n\nLo que necesitarás: tu número de Seguro Social si lo tienes (para la CADAA, un ITIN o déjalo en blanco o con ceros), tu declaración de impuestos federales de 2024 y formularios W-2, registros de ingresos no tributables, y los saldos actuales de tus cuentas bancarias e inversiones.\n\nCreate your StudentAid.gov account before you start.\n\nFile as early as you can — the form opens around October 1. Much state aid is first-come, first-served, and California’s priority deadline is March 2."
+        },
+        "studentFinancials": {
+          "fields": {
+            "irsDataConsent": {
+              "whatItMeans": "Tú y cada contribuyente deben dar su consentimiento para importar la información tributaria federal del IRS. Es obligatorio para recibir ayuda federal, incluso si no declaraste impuestos; si alguien se niega, no recibirás ayuda federal."
+            }
+          }
+        },
+        "parentContributor": {
+          "fields": {
+            "parentSsnStatus": {
+              "whatItMeans": "Un padre o madre sin número de Seguro Social puede crear una cuenta y completar su sección; se verifica con su ITIN, dirección postal y documentos de identidad, lo cual puede tardar más."
+            }
+          }
+        }
+      }
+    },
+    "cadaa": {
+      "sections": {
+        "contributorAccount": {
+          "body": "La CADAA es la solicitud estatal de California; los estudiantes indocumentados la presentan en lugar de la FAFSA para recibir ayuda estatal (Cal Grants, exención de cuotas en colegios comunitarios, becas institucionales) y pagar matrícula estatal. No otorga ayuda federal.\n\nDACA students file the CADAA, not the FAFSA.\n\nU.S. citizens and green-card holders with undocumented parent(s) or spouse may file the CADAA instead of the FAFSA if they don’t want to submit a FAFSA — doing so forgoes federal aid.\n\nCreate your login at dream.csac.ca.gov before you start.\n\nLo que necesitarás: tu número de Seguro Social si lo tienes (para la CADAA, un ITIN o déjalo en blanco o con ceros), tu declaración de impuestos federales de 2024 y formularios W-2, registros de ingresos no tributables, y los saldos actuales de tus cuentas bancarias e inversiones.\n\nFile as early as you can — the form opens around October 1. Much state aid is first-come, first-served, and California’s priority deadline is March 2."
+        }
+      }
+    }
+  }
+}

@@ -134,14 +134,58 @@ parentTaxFilingStatus.whatItMeans, parentIncome.commonError,
 parentAssets.whatItMeans}`, `…parentContributor.fields.parentSsnStatus.
 whatItMeans` (extended with income-without-return + not-asked-citizenship).
 
+## CADAA financials / consent (sourced from dream.csac.ca.gov)
+
+- The 2026-27 CADAA uses 2024 tax information. Entering an SSN or ITIN is
+  optional: enter your ITIN if you have one; if you have neither, enter all
+  zeroes. On citizenship, undocumented / DACA / U-visa / TPS students select
+  "neither citizen nor eligible noncitizen" (indicating citizen/eligible
+  noncitizen redirects you to the FAFSA).
+- The CADAA does NOT import IRS data — you enter income and tax information
+  manually. Do not reuse FAFSA IRS-import language here (standing guardrail).
+- Tax filing status: haven't filed yet → "will file," use estimates, update
+  after filing; "not going to file" → still report income (W-2 box 1 + 8;
+  self-employed net profit). Earning over the IRS filing threshold flags the
+  form and requires getting an ITIN and filing.
+- Dependent students provide parent household/income info; the parent signs
+  with a Parent PIN (save it — reused yearly).
+- Changed circumstances: complete as best you can, submit, then talk to the
+  school's financial aid office.
+- After submitting: CSAC emails a nine-digit Dream ID → create a WebGrants 4
+  Students account to check status. Submit Cal Grant GPA verification by
+  March 2.
+
+**Placed in:** `walkthrough.cadaa.sections.studentIdentity.fields.
+{ssnOrItin.whatItMeans, citizenshipStatus.whatItMeans/commonError}` (the
+citizenshipStatus field was added to the CADAA content model to host the
+sourced citizenship-selection guidance),
+`…studentFinancials.fields.{taxFilingStatus.*, studentIncome.whatItMeans}`,
+`…parentFinancials.fields.{parentTaxFilingStatus.whatItMeans,
+parentIncome.whatItMeans/commonError}`,
+`…reviewAndSign.fields.{studentSignature.whatItMeans/documentNeeded,
+parentSignature.whatItMeans/commonError}`. VERIFY against dream.csac.ca.gov.
+
+## Spanish draft strings (ES — NEEDS_NATIVE_REVIEW, not final)
+
+Draft Spanish supplied by the project owner for: trust line (`trust.cadaa`),
+privacy line (`trust.privacy`), FAFSA consent
+(`walkthrough.fafsa…irsDataConsent.whatItMeans`), contributor definition +
+what-you'll-need documents (first + documents paragraphs of
+`walkthrough.fafsa…contributorFsaId.body`), non-SSN parent
+(`walkthrough.fafsa…parentSsnStatus.whatItMeans`), CADAA overview + documents
+(first + documents paragraphs of `walkthrough.cadaa…contributorAccount.body`).
+
+**Mechanics:** ES drafts live in `messages/es.overrides.json`;
+`scripts/gen-stub-locales.mjs` deep-merges them over the EN clone when
+regenerating, so `es.json` stays reproducible and remains flagged
+`NEEDS_NATIVE_REVIEW`. If an EN explainer body changes, re-compose the two body
+overrides. **Vietnamese has NO drafts** — vi.json stays a pure EN stub until
+native review; never machine-translate.
+
 ## NOT yet sourced (stays TODO — next human pass)
 
 Every remaining `whatItMeans/documentNeeded/commonError` slot not listed in a
-placement map above (identity fields, citizenship, circumstances, demographics,
-signatures, family size, CADAA residency documents, etc.), counselor screen
-explainer + "why" slot, triage notSenior note.
-
-**CADAA financials/consent — sourcing guardrail:** source from
-dream.csac.ca.gov only. The CADAA is a state form with **manual income entry**
-— do NOT reuse the FAFSA IRS-import/consent language for any
-`walkthrough.cadaa.sections.studentFinancials.*` or `…parentFinancials.*` slot.
+placement map above (identity fields, FAFSA citizenship, circumstances,
+demographics, family size, CADAA residency documents, etc.), counselor screen
+explainer + "why" slot, triage notSenior note, all Vietnamese translations,
+native review of the Spanish drafts.
