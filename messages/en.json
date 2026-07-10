@@ -113,38 +113,223 @@
     },
     "fafsa": {
       "sections": {
-        "account": {
-          "title": "TODO: FAFSA — create your account (FSA ID)",
-          "body": "TODO: Placeholder explainer about the contributor / FSA ID concept. Explainer only — no data is collected on this screen."
+        "contributorFsaId": {
+          "title": "Contributors & the FSA ID",
+          "body": "TODO: Placeholder explainer (human-sourced). Explainer only — nothing is collected on this screen."
         },
-        "about": {
-          "title": "TODO: FAFSA — about you",
+        "studentIdentity": {
+          "title": "Student — personal information",
           "fields": {
             "fullName": {
-              "label": "TODO: Field — full legal name",
+              "label": "Full legal name",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
-            "dob": {
-              "label": "TODO: Field — date of birth",
+            "dateOfBirth": {
+              "label": "Date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "ssn": {
+              "label": "Social Security Number",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "email": {
+              "label": "Email address",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "phone": {
+              "label": "Phone number",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "mailingAddress": {
+              "label": "Mailing address",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             }
           }
         },
-        "money": {
-          "title": "TODO: FAFSA — household & money",
+        "studentCitizenship": {
+          "title": "Student — citizenship status",
           "fields": {
-            "householdSize": {
-              "label": "TODO: Field — household size",
+            "citizenshipStatus": {
+              "label": "Citizenship status",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "alienRegistrationNumber": {
+              "label": "A-Number (Alien Registration Number)",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentCircumstances": {
+          "title": "Student — circumstances",
+          "fields": {
+            "maritalStatus": {
+              "label": "Marital status",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "dependencyStatus": {
+              "label": "Dependency questions",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "unusualCircumstances": {
+              "label": "Unusual circumstances",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentDemographics": {
+          "title": "Student — demographics",
+          "fields": {
+            "gender": {
+              "label": "Gender",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "raceEthnicity": {
+              "label": "Race and ethnicity",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentColleges": {
+          "title": "Student — colleges",
+          "fields": {
+            "collegeList": {
+              "label": "Colleges to receive your information",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentFinancials": {
+          "title": "Student — financials",
+          "fields": {
+            "irsDataConsent": {
+              "label": "Consent to transfer federal tax information",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "taxFilingStatus": {
+              "label": "Tax filing status",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "studentIncome": {
+              "label": "Student income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "studentAssets": {
+              "label": "Student assets",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "parentContributor": {
+          "title": "Parent contributor — identity",
+          "fields": {
+            "parentFullName": {
+              "label": "Parent full legal name",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentDateOfBirth": {
+              "label": "Parent date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentSsnStatus": {
+              "label": "Parent Social Security Number",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentEmail": {
+              "label": "Parent email address",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "parentFinancials": {
+          "title": "Parent contributor — financials",
+          "fields": {
+            "parentIrsDataConsent": {
+              "label": "Parent consent to transfer federal tax information",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentTaxFilingStatus": {
+              "label": "Parent tax filing status",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "parentIncome": {
-              "label": "TODO: Field — parent income",
+              "label": "Parent income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentAssets": {
+              "label": "Parent assets",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "familySize": {
+              "label": "Family size",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "reviewAndSign": {
+          "title": "Review & sign",
+          "fields": {
+            "studentSignature": {
+              "label": "Student signature",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentSignature": {
+              "label": "Parent signature",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
@@ -155,38 +340,182 @@
     },
     "cadaa": {
       "sections": {
-        "account": {
-          "title": "TODO: CADAA — create your account",
-          "body": "TODO: Placeholder explainer about the CADAA account concept. Explainer only — no data is collected on this screen."
+        "contributorAccount": {
+          "title": "Your CSAC account & contributors",
+          "body": "TODO: Placeholder explainer (human-sourced). Explainer only — nothing is collected on this screen."
         },
-        "about": {
-          "title": "TODO: CADAA — about you",
+        "studentIdentity": {
+          "title": "Student — personal information",
           "fields": {
             "fullName": {
-              "label": "TODO: Field — full legal name",
+              "label": "Full legal name",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
-            "dob": {
-              "label": "TODO: Field — date of birth",
+            "dateOfBirth": {
+              "label": "Date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "ssnOrItin": {
+              "label": "SSN or ITIN (if you have one)",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "email": {
+              "label": "Email address",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "phone": {
+              "label": "Phone number",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "mailingAddress": {
+              "label": "Mailing address",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             }
           }
         },
-        "money": {
-          "title": "TODO: CADAA — household & money",
+        "residencyAb540": {
+          "title": "California residency & AB 540",
           "fields": {
-            "householdSize": {
-              "label": "TODO: Field — household size",
+            "caResidency": {
+              "label": "California residency",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "ab540Eligibility": {
+              "label": "AB 540 eligibility",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentCircumstances": {
+          "title": "Student — circumstances",
+          "fields": {
+            "maritalStatus": {
+              "label": "Marital status",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "dependencyStatus": {
+              "label": "Dependency questions",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentColleges": {
+          "title": "Student — colleges",
+          "fields": {
+            "caCollegeList": {
+              "label": "California colleges to receive your information",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "studentFinancials": {
+          "title": "Student — financials",
+          "fields": {
+            "taxFilingStatus": {
+              "label": "Tax filing status",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "studentIncome": {
+              "label": "Student income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "studentAssets": {
+              "label": "Student assets",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "parentInformation": {
+          "title": "Parent — identity",
+          "fields": {
+            "parentFullName": {
+              "label": "Parent full legal name",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentDateOfBirth": {
+              "label": "Parent date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentEmail": {
+              "label": "Parent email address",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "parentFinancials": {
+          "title": "Parent — financials",
+          "fields": {
+            "parentTaxFilingStatus": {
+              "label": "Parent tax filing status",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "parentIncome": {
-              "label": "TODO: Field — parent income",
+              "label": "Parent income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentAssets": {
+              "label": "Parent assets",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "familySize": {
+              "label": "Family size",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "reviewAndSign": {
+          "title": "Review & sign",
+          "fields": {
+            "studentSignature": {
+              "label": "Student signature",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentSignature": {
+              "label": "Parent signature",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
@@ -194,7 +523,8 @@
           }
         }
       }
-    }
+    },
+    "_verify": "VERIFY section/field structure against the current-year FAFSA (studentaid.gov) and CADAA (dream.csac.ca.gov) before launch."
   },
   "worksheet": {
     "eyebrow": "TODO: Your worksheet",

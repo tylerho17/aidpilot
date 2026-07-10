@@ -13,15 +13,14 @@ import {
 } from "@/components/ui";
 import { useSession } from "@/components/v1/session";
 import { WALKTHROUGH, type WalkSection } from "@/lib/v1/walkthrough";
-import { WalkthroughField } from "@/components/v1/WalkthroughField";
 
-// F4 — Walkthrough shell. Section-by-section flow driven by lib/v1/walkthrough.
-// All content is i18n placeholders; answers live in session only, nothing sent.
+// v1-flow 3/4 — Walkthrough renderer. Sections/fields come from the typed
+// content files (real structure, placeholder explanations). Nothing transmitted.
 export default function WalkthroughPage() {
   const t = useTranslations("walkthrough");
   const common = useTranslations("common");
   const router = useRouter();
-  const { path, answers } = useSession();
+  const { path } = useSession();
   const [current, setCurrent] = useState(0);
 
   // No form path → send the user to triage (counselor-routed students get the
@@ -51,19 +50,12 @@ export default function WalkthroughPage() {
   }
 
   const sections = WALKTHROUGH[path];
+  const section = sections[Math.min(current, sections.length - 1)];
 
-  const isDone = (s: WalkSection): boolean => {
-    if (s.explainerOnly) return true; // nothing to fill
-    return s.fields.every((f) => {
-      const v = answers[f.answerKey];
-      if (typeof v === "string") return v.trim() !== "";
-      return v !== null && v !== undefined;
-    });
-  };
-
+  // Section completion becomes reviewed-driven in v1-flow 4.
+  const isDone = (s: WalkSection) => s.explainer;
   const doneCount = sections.filter(isDone).length;
   const pct = Math.round((doneCount / sections.length) * 100);
-  const section = sections[current];
 
   function goBack() {
     if (current === 0) {
@@ -93,7 +85,7 @@ export default function WalkthroughPage() {
             key={s.sectionKey}
             done={isDone(s)}
             title={t(s.titleKey)}
-            badge={s.explainerOnly ? t("explainerBadge") : undefined}
+            badge={s.explainer ? t("explainerBadge") : undefined}
             badgeTone="gray"
             divider={i < sections.length - 1}
             onToggle={() => setCurrent(i)}
@@ -108,16 +100,27 @@ export default function WalkthroughPage() {
         title={t(section.titleKey)}
       />
 
-      {section.explainerOnly ? (
+      {section.explainer ? (
         <StatusPanel tone="blue" icon="shield" title={t(section.titleKey)}>
           {section.bodyKey ? t(section.bodyKey) : null}
         </StatusPanel>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {section.fields.map((f) => (
-            <WalkthroughField key={f.answerKey} field={f} />
+        <Card variant="clay" padding="clamp(16px, 4vw, 22px)">
+          {section.fields.map((f, i) => (
+            <div
+              key={f.fieldKey}
+              style={{
+                padding: "11px 4px",
+                borderBottom: i < section.fields.length - 1 ? "1px solid var(--border-card)" : "none",
+                fontSize: 14.5,
+                fontWeight: 600,
+                color: "var(--ink-800)",
+              }}
+            >
+              {t(f.labelKey)}
+            </div>
           ))}
-        </div>
+        </Card>
       )}
 
       {/* Section nav */}

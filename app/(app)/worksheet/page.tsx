@@ -9,8 +9,8 @@ import { CompletionReport } from "@/components/v1/CompletionReport";
 import { WALKTHROUGH } from "@/lib/v1/walkthrough";
 import type { WorksheetData } from "@/lib/v1/worksheet-pdf";
 
-// F5 — Worksheet generator. Compiles session answers into a client-side,
-// downloadable/printable worksheet. Nothing is transmitted (Rule 1).
+// F5 / v1-flow 5 — Worksheet. Compiles the walked path's sections/fields into a
+// printable prep sheet, generated client-side only. Nothing is transmitted.
 export default function WorksheetPage() {
   const t = useTranslations("worksheet");
   // Section titles and field labels come from the walkthrough content model,
@@ -18,7 +18,7 @@ export default function WorksheetPage() {
   const tw = useTranslations("walkthrough");
   const locale = useLocale();
   const router = useRouter();
-  const { path, answers } = useSession();
+  const { path } = useSession();
   const [busy, setBusy] = useState(false);
 
   // No form path → nothing to build (counselor-routed students don't get a
@@ -51,13 +51,10 @@ export default function WorksheetPage() {
   const generatedOn = t("generatedOn", { date: new Date().toLocaleDateString(locale) });
 
   const sections = WALKTHROUGH[path]
-    .filter((s) => !s.explainerOnly)
+    .filter((s) => !s.explainer)
     .map((s) => ({
       title: tw(s.titleKey),
-      rows: s.fields.map((f) => {
-        const v = answers[f.answerKey];
-        return { label: tw(f.labelKey), value: typeof v === "string" || typeof v === "number" ? String(v) : "" };
-      }),
+      rows: s.fields.map((f) => ({ label: tw(f.labelKey), value: "" })),
     }));
 
   const data: WorksheetData = {
