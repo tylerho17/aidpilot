@@ -564,6 +564,13 @@
       "counselorCta": "See your next step"
     }
   },
+  "referral": {
+    "eyebrow": "Garden Grove financial aid",
+    "title": "Your counselor sent you here to finish your aid application.",
+    "subtitle": "Free, in your language, and nothing about you is stored. About 10 minutes to find your path.",
+    "cta": "Start now",
+    "langHint": "Choose your language:"
+  },
   "counselor": {
     "eyebrow": "Your next step",
     "title": "Talk to your counselor.",
