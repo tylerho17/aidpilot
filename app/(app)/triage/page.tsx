@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -15,9 +15,10 @@ import {
 import { useSession } from "@/components/v1/session";
 import {
   TRIAGE_QUESTIONS,
-  resolveOutcome,
+  QUESTION_ORDER,
+  nextTriageStep,
+  type TriageAnswers,
   type TriageOutcome,
-  type TriageSignal,
 } from "@/lib/v1/triage";
 
 const OUTCOME_TONE: Record<TriageOutcome, "blue" | "green" | "amber"> = {
@@ -31,83 +32,81 @@ const OUTCOME_ICON: Record<TriageOutcome, string> = {
   counselor: "letter",
 };
 
-// F3 — Triage wizard. One question per step; routes to FAFSA / CADAA / counselor.
-// All copy is i18n placeholders; nothing entered is saved or sent.
+// F3 — REAL triage. Three questions route to FAFSA, CADAA, or the counselor
+// (conservative: any doubt → counselor; mixed-status → counselor, not solved
+// in v1). Question text: VERIFY against CSAC "which application is right for
+// me" before launch (see lib/v1/triage.ts + messages/en.json triage._verify).
 export default function TriagePage() {
   const t = useTranslations("triage");
   const common = useTranslations("common");
   const router = useRouter();
   const { setPath } = useSession();
 
-  const total = TRIAGE_QUESTIONS.length;
-  const [step, setStep] = useState(0); // 0..total-1 = questions, total = result
-  const [selections, setSelections] = useState<Record<string, string>>({}); // questionKey → valueKey
-  const [outcome, setOutcome] = useState<TriageOutcome | null>(null);
+  // Triage answers include sensitive eligibility info, so they live ONLY in
+  // this component's state — never in session state, storage, or the network
+  // (Rule 1). Only the resulting path is written to the session.
+  const [answers, setAnswers] = useState<TriageAnswers>({});
+  const [selection, setSelection] = useState<string | null>(null);
 
-  const atResult = step >= total;
-  const question = atResult ? null : TRIAGE_QUESTIONS[step];
-  const answered = question ? selections[question.key] !== undefined : true;
+  const step = nextTriageStep(answers);
+  const answeredCount = QUESTION_ORDER.filter((k) => answers[k] !== undefined).length;
+  // Q2 is skipped for CADAA candidates (Q1 = "no"), so they see 2 questions.
+  const total = answers.citizenship === "no" ? 2 : 3;
 
-  function choose(questionKey: string, valueKey: string) {
-    setSelections((prev) => ({ ...prev, [questionKey]: valueKey }));
+  function commit() {
+    if (step.kind !== "question" || selection === null) return;
+    const next = { ...answers, [step.key]: selection } as TriageAnswers;
+    const resolved = nextTriageStep(next);
+    if (resolved.kind === "outcome") {
+      setPath(resolved.outcome === "counselor" ? null : resolved.outcome);
+    }
+    setAnswers(next);
+    setSelection(null);
   }
 
   function goBack() {
-    if (step === 0) {
+    const answered = QUESTION_ORDER.filter((k) => answers[k] !== undefined);
+    if (answered.length === 0) {
       router.push("/");
       return;
     }
-    setStep((s) => Math.max(0, s - 1));
-  }
-
-  function goNext() {
-    if (!question) return;
-    if (step < total - 1) {
-      setStep((s) => s + 1);
-      return;
-    }
-    // Last question answered → resolve signals and route.
-    const signals = TRIAGE_QUESTIONS.map((q) => {
-      const chosen = selections[q.key];
-      return q.options.find((o) => o.valueKey === chosen)?.signal;
-    }).filter(Boolean) as TriageSignal[];
-    const result = resolveOutcome(signals);
-    setOutcome(result);
-    setPath(result === "counselor" ? null : result);
-    setStep(total);
+    const last = answered[answered.length - 1];
+    const rest = { ...answers };
+    setSelection(rest[last] ?? null);
+    delete rest[last];
+    setAnswers(rest);
   }
 
   function startOver() {
-    setSelections({});
-    setOutcome(null);
+    setAnswers({});
+    setSelection(null);
     setPath(null);
-    setStep(0);
   }
 
-  const progressPct = useMemo(
-    () => Math.round((Math.min(step, total) / total) * 100),
-    [step, total],
-  );
-
-  if (atResult && outcome) {
+  // ── Summary screen ──
+  if (step.kind === "outcome") {
+    const { outcome, info } = step;
     return (
       <>
-        <SectionHeading eyebrow={t("resultEyebrow")} title={t(`outcomes.${outcome}.title`)} />
+        <SectionHeading eyebrow={t("summaryEyebrow")} title={t("summaryTitle")} />
         <StatusPanel
           tone={OUTCOME_TONE[outcome]}
           icon={OUTCOME_ICON[outcome]}
-          title={t(`outcomes.${outcome}.title`)}
+          title={t(`paths.${outcome}`)}
         >
-          {t(`outcomes.${outcome}.body`)}
+          {outcome === "counselor" ? (
+            <>
+              {t("counselor.explainer")}
+              {info === "notSenior" && (
+                <span style={{ display: "block", marginTop: 8 }}>{t("counselor.notSeniorNote")}</span>
+              )}
+            </>
+          ) : null}
         </StatusPanel>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {outcome === "counselor" ? (
-            <Button iconRight="arrow-right" onClick={() => router.push("/for-counselors")}>
-              {t("outcomes.counselor.cta")}
-            </Button>
-          ) : (
+          {outcome !== "counselor" && (
             <Button iconRight="arrow-right" onClick={() => router.push("/walkthrough")}>
-              {t(`outcomes.${outcome}.cta`)}
+              {t("continueWalkthrough")}
             </Button>
           )}
           <Button variant="secondary" onClick={startOver}>
@@ -118,15 +117,17 @@ export default function TriagePage() {
     );
   }
 
-  if (!question) return null;
+  // ── Question screen ──
+  const q = TRIAGE_QUESTIONS[step.key];
+  const pct = Math.round((answeredCount / total) * 100);
 
   return (
     <>
       <SectionHeading eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
 
       <ProgressBar
-        pct={progressPct}
-        label={t("progress", { current: step + 1, total })}
+        pct={pct}
+        label={t("progress", { current: answeredCount + 1, total })}
         showValue
       />
 
@@ -142,28 +143,26 @@ export default function TriagePage() {
             lineHeight: 1.25,
           }}
         >
-          {t(`questions.${question.key}.label`)}
+          {t(`questions.${q.key}.label`)}
         </h2>
 
-        {question.component === "segmented" ? (
+        {q.component === "segmented" ? (
           <SegmentedControl
-            options={question.options.map((o) => ({
-              value: o.valueKey,
-              label: t(`questions.${question.key}.options.${o.valueKey}`),
+            options={q.options.map((v) => ({
+              value: v,
+              label: t(`questions.${q.key}.options.${v}`),
             }))}
-            value={selections[question.key] ?? ""}
-            onChange={(value) => choose(question.key, value)}
+            value={selection ?? ""}
+            onChange={(v) => setSelection(v)}
           />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {question.options.map((o) => (
+            {q.options.map((v) => (
               <OptionCard
-                key={o.valueKey}
-                icon={o.icon}
-                selected={selections[question.key] === o.valueKey}
-                title={t(`questions.${question.key}.options.${o.valueKey}.title`)}
-                description={t(`questions.${question.key}.options.${o.valueKey}.desc`)}
-                onClick={() => choose(question.key, o.valueKey)}
+                key={v}
+                selected={selection === v}
+                title={t(`questions.${q.key}.options.${v}`)}
+                onClick={() => setSelection(v)}
               />
             ))}
           </div>
@@ -174,7 +173,7 @@ export default function TriagePage() {
         <Button variant="secondary" iconLeft="chevron-left" onClick={goBack}>
           {common("back")}
         </Button>
-        <Button iconRight="arrow-right" disabled={!answered} onClick={goNext}>
+        <Button iconRight="arrow-right" disabled={selection === null} onClick={commit}>
           {common("continue")}
         </Button>
       </div>

@@ -47,74 +47,48 @@
     "disclaimer": "TODO: AidPilot is not affiliated with the U.S. Department of Education or the California Student Aid Commission. It prepares a worksheet; you sign and submit on the official site yourself."
   },
   "triage": {
-    "eyebrow": "TODO: Find your path",
-    "title": "TODO: A few questions to point you to the right form.",
-    "subtitle": "TODO: Placeholder — nothing you enter here is saved or sent.",
+    "_verify": "VERIFY against CSAC 'which application is right for me' before launch.",
+    "eyebrow": "Find your path",
+    "title": "Let’s find the right application.",
+    "subtitle": "Three quick questions. Nothing you answer is saved or sent anywhere.",
     "progress": "Question {current} of {total}",
-    "resultEyebrow": "TODO: Your path",
+    "summaryEyebrow": "Your result",
+    "summaryTitle": "Based on your answers, your path is:",
     "startOver": "Start over",
+    "continueWalkthrough": "Continue to the walkthrough",
+    "paths": {
+      "fafsa": "FAFSA",
+      "cadaa": "CA Dream Act Application (CADAA)",
+      "counselor": "Talk to your counselor"
+    },
     "questions": {
-      "grade": {
-        "label": "TODO: Placeholder question 1 — grade/eligibility check.",
+      "citizenship": {
+        "label": "Are you a U.S. citizen or eligible noncitizen (e.g., permanent resident / green card holder)?",
         "options": {
-          "yes": "TODO: Option — yes",
-          "no": "TODO: Option — no"
+          "yes": "Yes",
+          "no": "No / undocumented / AB 540",
+          "notSure": "Not sure"
         }
       },
-      "status": {
-        "label": "TODO: Placeholder question 2 — which path fits your situation?",
+      "parentSsn": {
+        "label": "Will the parent(s) on your application have a Social Security Number?",
         "options": {
-          "a": {
-            "title": "TODO: Option A title",
-            "desc": "TODO: Option A description placeholder."
-          },
-          "b": {
-            "title": "TODO: Option B title",
-            "desc": "TODO: Option B description placeholder."
-          },
-          "c": {
-            "title": "TODO: Option C title",
-            "desc": "TODO: Option C description placeholder."
-          }
+          "yes": "Yes",
+          "no": "No",
+          "notSure": "Not sure"
         }
       },
-      "household": {
-        "label": "TODO: Placeholder question 3 — household situation.",
+      "senior": {
+        "label": "Are you a current California high school senior or a recent graduate heading to college?",
         "options": {
-          "a": {
-            "title": "TODO: Option A title",
-            "desc": "TODO: Option A description placeholder."
-          },
-          "b": {
-            "title": "TODO: Option B title",
-            "desc": "TODO: Option B description placeholder."
-          }
-        }
-      },
-      "readiness": {
-        "label": "TODO: Placeholder question 4 — have you started?",
-        "options": {
-          "started": "TODO: Option — already started",
-          "notStarted": "TODO: Option — not yet"
+          "yes": "Yes",
+          "no": "No"
         }
       }
     },
-    "outcomes": {
-      "fafsa": {
-        "title": "TODO: Your path looks like FAFSA.",
-        "body": "TODO: Placeholder — a short, human-sourced explanation goes here.",
-        "cta": "TODO: Continue to the FAFSA walkthrough"
-      },
-      "cadaa": {
-        "title": "TODO: Your path looks like the CA Dream Act (CADAA).",
-        "body": "TODO: Placeholder — a short, human-sourced explanation goes here.",
-        "cta": "TODO: Continue to the CADAA walkthrough"
-      },
-      "counselor": {
-        "title": "TODO: Let's get you to your counselor.",
-        "body": "TODO: Placeholder — mixed-status and other cases are routed to a counselor in v1, not solved here.",
-        "cta": "TODO: See counselor referral"
-      }
+    "counselor": {
+      "explainer": "TODO: Placeholder explainer — your counselor can confirm the right application for your situation. (Human-sourced content pending.)",
+      "notSeniorNote": "TODO: Placeholder note — this guide is designed for current California seniors and recent graduates. (Human-sourced content pending.)"
     }
   },
   "walkthrough": {
