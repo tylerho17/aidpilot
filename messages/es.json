@@ -49,7 +49,73 @@
   "triage": {
     "eyebrow": "TODO: Find your path",
     "title": "TODO: A few questions to point you to the right form.",
-    "subtitle": "TODO: Placeholder — nothing you enter here is saved or sent."
+    "subtitle": "TODO: Placeholder — nothing you enter here is saved or sent.",
+    "progress": "Question {current} of {total}",
+    "resultEyebrow": "TODO: Your path",
+    "startOver": "Start over",
+    "questions": {
+      "grade": {
+        "label": "TODO: Placeholder question 1 — grade/eligibility check.",
+        "options": {
+          "yes": "TODO: Option — yes",
+          "no": "TODO: Option — no"
+        }
+      },
+      "status": {
+        "label": "TODO: Placeholder question 2 — which path fits your situation?",
+        "options": {
+          "a": {
+            "title": "TODO: Option A title",
+            "desc": "TODO: Option A description placeholder."
+          },
+          "b": {
+            "title": "TODO: Option B title",
+            "desc": "TODO: Option B description placeholder."
+          },
+          "c": {
+            "title": "TODO: Option C title",
+            "desc": "TODO: Option C description placeholder."
+          }
+        }
+      },
+      "household": {
+        "label": "TODO: Placeholder question 3 — household situation.",
+        "options": {
+          "a": {
+            "title": "TODO: Option A title",
+            "desc": "TODO: Option A description placeholder."
+          },
+          "b": {
+            "title": "TODO: Option B title",
+            "desc": "TODO: Option B description placeholder."
+          }
+        }
+      },
+      "readiness": {
+        "label": "TODO: Placeholder question 4 — have you started?",
+        "options": {
+          "started": "TODO: Option — already started",
+          "notStarted": "TODO: Option — not yet"
+        }
+      }
+    },
+    "outcomes": {
+      "fafsa": {
+        "title": "TODO: Your path looks like FAFSA.",
+        "body": "TODO: Placeholder — a short, human-sourced explanation goes here.",
+        "cta": "TODO: Continue to the FAFSA walkthrough"
+      },
+      "cadaa": {
+        "title": "TODO: Your path looks like the CA Dream Act (CADAA).",
+        "body": "TODO: Placeholder — a short, human-sourced explanation goes here.",
+        "cta": "TODO: Continue to the CADAA walkthrough"
+      },
+      "counselor": {
+        "title": "TODO: Let's get you to your counselor.",
+        "body": "TODO: Placeholder — mixed-status and other cases are routed to a counselor in v1, not solved here.",
+        "cta": "TODO: See counselor referral"
+      }
+    }
   },
   "walkthrough": {
     "eyebrow": "TODO: Walkthrough",
