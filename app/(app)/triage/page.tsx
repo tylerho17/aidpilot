@@ -38,6 +38,7 @@ const OUTCOME_ICON: Record<TriageOutcome, string> = {
 // me" before launch (see lib/v1/triage.ts + messages/en.json triage._verify).
 export default function TriagePage() {
   const t = useTranslations("triage");
+  const trust = useTranslations("trust");
   const common = useTranslations("common");
   const router = useRouter();
   const { setPath } = useSession();
@@ -96,9 +97,9 @@ export default function TriagePage() {
           icon={OUTCOME_ICON[outcome]}
           title={t(`paths.${outcome}`)}
         >
-          {outcome === "counselor" && info === "notSenior"
-            ? t("counselor.notSeniorNote")
-            : null}
+          {outcome === "counselor" && info === "notSenior" && t("counselor.notSeniorNote")}
+          {/* Sourced CADAA trust line (docs/content-source.md) on the CADAA path */}
+          {outcome === "cadaa" && trust("cadaa")}
         </StatusPanel>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {outcome === "counselor" ? (

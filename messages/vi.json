@@ -72,7 +72,7 @@
         "label": "Are you a U.S. citizen or eligible noncitizen (e.g., permanent resident / green card holder)?",
         "options": {
           "yes": "Yes",
-          "no": "No / undocumented / AB 540",
+          "no": "No / undocumented / AB 540 / DACA",
           "notSure": "Not sure"
         }
       },
@@ -85,7 +85,7 @@
         }
       },
       "senior": {
-        "label": "Are you a current California high school senior or a recent graduate heading to college?",
+        "label": "Are you a current California high school senior or a recent graduate heading to college this year?",
         "options": {
           "yes": "Yes",
           "no": "No"
