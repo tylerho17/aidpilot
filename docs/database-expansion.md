@@ -1,3 +1,8 @@
+> **⚠️ HISTORICAL — SUPERSEDED. NOT a v1 requirement.**
+> This document predates v1. **v1 stores ZERO student PII and has no database of
+> student data.** Do not treat anything below as current scope. Kept for history
+> only. See `docs/DESIGN_SOURCE.md` and the v1 scope note for what governs v1.
+
 # AidPilot Database Expansion
 
 This document explains the v0.3 database expansion added in `supabase/002_database_expansion.sql`. It is additive and does not replace `supabase/schema.sql`.

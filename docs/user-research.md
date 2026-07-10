@@ -1,3 +1,8 @@
+> **ℹ️ REFERENCE ONLY — not v1 scope.**
+> Useful user-research background, but this document does **not** define v1
+> requirements. v1 scope is governed by `docs/DESIGN_SOURCE.md` and the v1 scope
+> note (zero student PII, no student-data database, no scholarship engine).
+
 # AidPilot User Research Doc
 
 ## Purpose

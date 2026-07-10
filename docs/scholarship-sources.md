@@ -1,3 +1,8 @@
+> **⚠️ HISTORICAL — SUPERSEDED. NOT a v1 requirement.**
+> This document predates v1. **v1 has no scholarship engine and no scholarship
+> database.** Do not treat anything below as current scope. Kept for history
+> only. See `docs/DESIGN_SOURCE.md` and the v1 scope note for what governs v1.
+
 # AidPilot Scholarship Sources
 
 ## Purpose
