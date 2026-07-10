@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { SectionHeading, Card, StatusPanel, Button } from "@/components/ui";
 import { useSession } from "@/components/v1/session";
 import { CompletionReport } from "@/components/v1/CompletionReport";
-import { WALKTHROUGH } from "@/lib/v1/walkthrough";
+import { WALKTHROUGH, reviewKey } from "@/lib/v1/walkthrough";
 import type { WorksheetData } from "@/lib/v1/worksheet-pdf";
 
 // F5 / v1-flow 5 — Worksheet. Compiles the walked path's sections/fields into a
@@ -18,7 +18,7 @@ export default function WorksheetPage() {
   const tw = useTranslations("walkthrough");
   const locale = useLocale();
   const router = useRouter();
-  const { path } = useSession();
+  const { path, reviewed } = useSession();
   const [busy, setBusy] = useState(false);
 
   // No form path → nothing to build (counselor-routed students don't get a
@@ -54,7 +54,15 @@ export default function WorksheetPage() {
     .filter((s) => !s.explainer)
     .map((s) => ({
       title: tw(s.titleKey),
-      rows: s.fields.map((f) => ({ label: tw(f.labelKey), value: "" })),
+      rows: s.fields.map((f) => {
+        const isReviewed = Boolean(reviewed[reviewKey(path, s.sectionKey, f.fieldKey)]);
+        return {
+          label: tw(f.labelKey),
+          value: "", // hand-write-in line — v1 collects nothing
+          reviewed: isReviewed,
+          reviewedText: isReviewed ? t("reviewed") : t("notReviewed"),
+        };
+      }),
     }));
 
   const data: WorksheetData = {
@@ -120,19 +128,29 @@ export default function WorksheetPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {s.rows.map((r) => (
-                <div key={r.label} style={{ borderBottom: "1px solid var(--border-card)", paddingBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-500)" }}>{r.label}</div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-metric)",
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: r.value.trim() ? "var(--ink-800)" : "var(--gray-300)",
-                      marginTop: 3,
-                    }}
-                  >
-                    {r.value.trim() || t("noValue")}
+                <div key={r.label} style={{ borderBottom: "1px solid var(--border-card)", paddingBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--gray-500)" }}>{r.label}</div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        whiteSpace: "nowrap",
+                        color: r.reviewed ? "var(--status-safe-fg)" : "var(--gray-400)",
+                      }}
+                    >
+                      {r.reviewedText}
+                    </span>
                   </div>
+                  {/* Hand-write-in line — v1 collects nothing */}
+                  <div
+                    aria-hidden
+                    style={{
+                      marginTop: 16,
+                      maxWidth: 320,
+                      borderBottom: "1.5px solid var(--gray-300)",
+                    }}
+                  />
                 </div>
               ))}
             </div>

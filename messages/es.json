@@ -536,6 +536,8 @@
     "generating": "Preparing…",
     "generatedOn": "Generated on {date}",
     "noValue": "—",
+    "reviewed": "Reviewed",
+    "notReviewed": "Not reviewed yet",
     "docTitle": "TODO: {path} preparation worksheet",
     "pathLabel": {
       "fafsa": "FAFSA",

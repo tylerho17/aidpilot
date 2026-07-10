@@ -23,7 +23,11 @@ const COLORS = {
 
 export interface WorksheetRow {
   label: string;
+  /** Pre-filled text; when empty a hand-write-in line is drawn instead. */
   value: string;
+  /** Review status from the walkthrough ("[x]"/"[ ]" marker + status text). */
+  reviewed?: boolean;
+  reviewedText?: string;
 }
 export interface WorksheetSection {
   title: string;
@@ -137,8 +141,22 @@ export async function generateWorksheetPdf(data: WorksheetData): Promise<Blob> {
     page.drawText(s.title, { x: PAGE.margin, y, size: 13, font: bold, color: COLORS.blue });
     y -= 2;
     for (const row of s.rows) {
-      drawLines(row.label, font, 9.5, COLORS.gray, 1.5);
-      drawLines(row.value.trim() || "—", bold, 12, COLORS.body, 1.4);
+      const marker = row.reviewedText ? `[${row.reviewed ? "x" : " "}] ` : "";
+      const suffix = row.reviewedText ? `  (${row.reviewedText})` : "";
+      drawLines(`${marker}${row.label}${suffix}`, font, 9.5, COLORS.gray, 1.5);
+      if (row.value.trim()) {
+        drawLines(row.value, bold, 12, COLORS.body, 1.4);
+      } else {
+        // Hand-write-in line for the student to fill offline.
+        ensure(18);
+        y -= 16;
+        page.drawLine({
+          start: { x: PAGE.margin, y },
+          end: { x: PAGE.margin + Math.min(300, contentW), y },
+          thickness: 0.8,
+          color: COLORS.gray,
+        });
+      }
       y -= 6;
     }
     y -= 6;
