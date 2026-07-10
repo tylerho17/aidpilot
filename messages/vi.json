@@ -244,5 +244,16 @@
       "body": "TODO: Placeholder — start the walkthrough to fill in your worksheet.",
       "cta": "Go to walkthrough"
     }
+  },
+  "report": {
+    "prompt": "TODO: Did you finish your application on the official site?",
+    "body": "TODO: Placeholder — let your counselor know anonymously. We count only that one more student finished — never who you are.",
+    "button": "I finished my application",
+    "sending": "Sending…",
+    "done": "TODO: Thank you — counted anonymously.",
+    "count": "{count} finished so far",
+    "error": "TODO: Couldn’t record that right now. Please try again later.",
+    "unconfigured": "TODO: Anonymous reporting isn’t set up in this environment yet.",
+    "privacyNote": "TODO: No name, no answers, no identifiers — just an anonymous +1."
   }
 }

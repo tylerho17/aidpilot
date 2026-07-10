@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { SectionHeading, Card, StatusPanel, Button } from "@/components/ui";
 import { useSession } from "@/components/v1/session";
+import { CompletionReport } from "@/components/v1/CompletionReport";
 import { WALKTHROUGH } from "@/lib/v1/walkthrough";
 import type { WorksheetData } from "@/lib/v1/worksheet-pdf";
 
@@ -132,6 +133,9 @@ export default function WorksheetPage() {
           </div>
         ))}
       </Card>
+
+      {/* F6 — anonymous completion self-report (the only server write; no PII) */}
+      <CompletionReport />
     </>
   );
 }
