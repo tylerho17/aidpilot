@@ -85,11 +85,61 @@ result, and the CADAA walkthrough. ES/VI pending native review.
 
 **Placed in:** `worksheet.disclaimerTitle` / `worksheet.disclaimerBody`.
 
+## Getting started / documents (both forms)
+
+- What you'll need: your Social Security number if you have one (for CADAA, an
+  ITIN or leave it blank/zeroes), your 2024 federal tax return and W-2s — the
+  2026-27 form uses 2024 tax information — records of untaxed income such as
+  child support received, and current balances of checking, savings, and any
+  investments (plus business or farm records if that applies).
+- Create your StudentAid.gov account before you start; for 2026-27, verification
+  is now instant. For CADAA, create your login at dream.csac.ca.gov.
+- You can list up to 20 colleges. Add any school you might apply to, even if
+  you're unsure — you can remove one later, but adding a school late can cost
+  you aid.
+- File as early as you can (the form opens around October 1). Much state aid is
+  first-come, first-served, and California's priority deadline is March 2.
+
+**Placed in:** `walkthrough.fafsa.sections.contributorFsaId.body` (what-you'll-
+need, create-account-first, file-early paragraphs),
+`walkthrough.cadaa.sections.contributorAccount.body` (CADAA flavor),
+`…fafsa.studentColleges.fields.collegeList.{whatItMeans,commonError}`,
+`…cadaa.studentColleges.fields.caCollegeList.{whatItMeans,commonError}`,
+`…fafsa.studentFinancials.fields.studentIncome.documentNeeded` (tax docs).
+
+## Financials / consent (FAFSA)
+
+- You and each contributor must give consent and approval to import federal tax
+  information from the IRS. It's required for federal aid even if you didn't
+  file taxes, and if anyone refuses, you won't get federal aid. Once you
+  consent, your 2024 tax data imports automatically — and you won't be able to
+  see or edit the imported numbers (a security feature).
+- If you didn't file a 2024 tax return, use your 2024 income information and
+  enter 0 where questions don't apply.
+- Report the current balances of your cash, savings, and investments as of the
+  day you sign — not the tax-year amounts. Report your own assets; your parent
+  reports theirs separately. Don't include your parents' assets in your section.
+- Non-SSN parent: a parent without an SSN can still create an account and enter
+  income without a tax return, and isn't asked about citizenship status.
+- Changed circumstances: if your income dropped since 2024 (a job loss, for
+  example), complete the form as instructed, then contact the school's financial
+  aid office to request an aid adjustment. You can't update a processed FAFSA
+  with new tax information yourself.
+
+**Placed in:** `walkthrough.fafsa.sections.studentFinancials.fields.
+{irsDataConsent.whatItMeans, taxFilingStatus.whatItMeans,
+studentIncome.whatItMeans, studentAssets.whatItMeans/documentNeeded/commonError}`,
+`…parentFinancials.fields.{parentIrsDataConsent.whatItMeans,
+parentTaxFilingStatus.whatItMeans, parentIncome.commonError,
+parentAssets.whatItMeans}`, `…parentContributor.fields.parentSsnStatus.
+whatItMeans` (extended with income-without-return + not-asked-citizenship).
+
 ## NOT yet sourced (stays TODO — next human pass)
 
-Financials guidance, getting-started content, every remaining
-`whatItMeans/documentNeeded/commonError` slot, explainer details beyond the
-above, counselor screen explainer + "why" slot, triage notSenior note.
+Every remaining `whatItMeans/documentNeeded/commonError` slot not listed in a
+placement map above (identity fields, citizenship, circumstances, demographics,
+signatures, family size, CADAA residency documents, etc.), counselor screen
+explainer + "why" slot, triage notSenior note.
 
 **CADAA financials/consent — sourcing guardrail:** source from
 dream.csac.ca.gov only. The CADAA is a state form with **manual income entry**

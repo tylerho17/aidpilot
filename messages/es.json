@@ -121,7 +121,7 @@
       "sections": {
         "contributorFsaId": {
           "title": "Contributors & the FSA ID",
-          "body": "A contributor is anyone required to provide information on the FAFSA: you (the student), your spouse, a biological or adoptive parent, or a parent’s spouse (stepparent). Grandparents, foster parents, legal guardians, siblings, and aunts or uncles are NOT contributors. Being a contributor does not make someone responsible for paying for college.\n\nEvery student and contributor needs their own StudentAid.gov account (FSA ID). It is a legally binding signature — never share it. For 2026–27, verification is instant for SSN holders (no more 1–3 day wait). You’ll need: your SSN (if you have one), full legal name, date of birth, your own email, and your own mobile number.\n\nA parent or spouse without an SSN CAN make an account and complete their section — they verify with an ITIN, mailing address, and ID documents, which can take longer.\n\nYou and every contributor must give consent to import IRS tax information — even if they didn’t file a tax return. If anyone refuses consent, no federal aid."
+          "body": "A contributor is anyone required to provide information on the FAFSA: you (the student), your spouse, a biological or adoptive parent, or a parent’s spouse (stepparent). Grandparents, foster parents, legal guardians, siblings, and aunts or uncles are NOT contributors. Being a contributor does not make someone responsible for paying for college.\n\nEvery student and contributor needs their own StudentAid.gov account (FSA ID). It is a legally binding signature — never share it. For 2026–27, verification is instant for SSN holders (no more 1–3 day wait). You’ll need: your SSN (if you have one), full legal name, date of birth, your own email, and your own mobile number.\n\nA parent or spouse without an SSN CAN make an account and complete their section — they verify with an ITIN, mailing address, and ID documents, which can take longer.\n\nYou and every contributor must give consent to import IRS tax information — even if they didn’t file a tax return. If anyone refuses consent, no federal aid.\n\nWhat you’ll need: your Social Security number if you have one, your 2024 federal tax return and W-2s (the 2026–27 form uses 2024 tax information), records of untaxed income such as child support received, and current balances of checking, savings, and any investments — plus business or farm records if that applies.\n\nCreate your StudentAid.gov account before you start.\n\nFile as early as you can — the form opens around October 1. Much state aid is first-come, first-served, and California’s priority deadline is March 2."
         },
         "studentIdentity": {
           "title": "Student — personal information",
@@ -226,9 +226,9 @@
           "fields": {
             "collegeList": {
               "label": "Colleges to receive your information",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "You can list up to 20 colleges. Add any school you might apply to, even if you’re unsure — you can remove one later.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "commonError": "Adding a school late can cost you aid — add every school you might apply to now; you can remove one later."
             }
           }
         },
@@ -237,27 +237,27 @@
           "fields": {
             "irsDataConsent": {
               "label": "Consent to transfer federal tax information",
-              "whatItMeans": "You and every contributor must give consent to import IRS tax information — even if you didn’t file a tax return.",
+              "whatItMeans": "You and each contributor must give consent and approval to import federal tax information from the IRS — required for federal aid even if you didn’t file taxes. Once you consent, your 2024 tax data imports automatically, and you won’t be able to see or edit the imported numbers (a security feature).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "If anyone refuses consent, no federal aid."
             },
             "taxFilingStatus": {
               "label": "Tax filing status",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "If you didn’t file a 2024 tax return, use your 2024 income information and enter 0 where questions don’t apply.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "studentIncome": {
               "label": "Student income",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
-              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "whatItMeans": "The 2026–27 form uses your 2024 tax information.",
+              "documentNeeded": "Your 2024 federal tax return and W-2s, plus records of untaxed income such as child support received.",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
             "studentAssets": {
               "label": "Student assets",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
-              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "whatItMeans": "Report the current balances of your cash, savings, and investments as of the day you sign — not the tax-year amounts.",
+              "documentNeeded": "Current balances of checking, savings, and any investments — plus business or farm records if that applies.",
+              "commonError": "Don’t include your parents’ assets in your section — report your own assets; your parent reports theirs separately."
             }
           }
         },
@@ -284,7 +284,7 @@
             },
             "parentSsnStatus": {
               "label": "Parent Social Security Number",
-              "whatItMeans": "A parent or spouse without an SSN CAN make a StudentAid.gov account and complete their section. They verify with an ITIN, mailing address, and ID documents, which can take longer.",
+              "whatItMeans": "A parent or spouse without an SSN CAN make a StudentAid.gov account and complete their section. They verify with an ITIN, mailing address, and ID documents, which can take longer. They can enter income without a tax return and are not asked about citizenship status.",
               "documentNeeded": "ITIN (if they have one), mailing address, and ID documents.",
               "commonError": "On the invite, check “my parent doesn’t have an SSN” — it then asks for the parent’s mailing address, which must match the address on their FSA ID or the accounts won’t link."
             },
@@ -301,13 +301,13 @@
           "fields": {
             "parentIrsDataConsent": {
               "label": "Parent consent to transfer federal tax information",
-              "whatItMeans": "Every contributor must give consent to import IRS tax information — even if they didn’t file a tax return.",
+              "whatItMeans": "Every contributor must give consent and approval to import federal tax information from the IRS — even if they didn’t file a tax return. Once they consent, their 2024 tax data imports automatically and can’t be seen or edited (a security feature).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "If any contributor refuses consent, no federal aid."
             },
             "parentTaxFilingStatus": {
               "label": "Parent tax filing status",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "If they didn’t file a 2024 tax return, use their 2024 income information and enter 0 where questions don’t apply.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
@@ -315,11 +315,11 @@
               "label": "Parent income",
               "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "commonError": "If income dropped since 2024 (a job loss, for example), complete the form as instructed, then contact the school’s financial aid office to request an aid adjustment — you can’t update a processed FAFSA with new tax information yourself."
             },
             "parentAssets": {
               "label": "Parent assets",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "Report the current balances of cash, savings, and investments as of the day you sign — not the tax-year amounts. Parents report their assets separately from the student’s.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
               "commonError": "TODO: common-mistake placeholder (human-sourced)."
             },
@@ -354,7 +354,7 @@
       "sections": {
         "contributorAccount": {
           "title": "Your CSAC account & contributors",
-          "body": "The California Dream Act Application (CADAA) is California’s state aid application. Undocumented students file it INSTEAD of the FAFSA to get state and institutional aid — Cal Grants, community college fee waivers, university grants, private scholarships — and in-state tuition. It does NOT provide federal aid.\n\nDACA students file the CADAA, not the FAFSA.\n\nU.S. citizens and green-card holders with undocumented parent(s) or spouse may file the CADAA instead of the FAFSA if they don’t want to submit a FAFSA — doing so forgoes federal aid."
+          "body": "The California Dream Act Application (CADAA) is California’s state aid application. Undocumented students file it INSTEAD of the FAFSA to get state and institutional aid — Cal Grants, community college fee waivers, university grants, private scholarships — and in-state tuition. It does NOT provide federal aid.\n\nDACA students file the CADAA, not the FAFSA.\n\nU.S. citizens and green-card holders with undocumented parent(s) or spouse may file the CADAA instead of the FAFSA if they don’t want to submit a FAFSA — doing so forgoes federal aid.\n\nCreate your login at dream.csac.ca.gov before you start.\n\nWhat you’ll need: an ITIN if you or your parents file taxes with one (no SSN? leave it blank or enter all zeroes), your 2024 tax information and W-2s (the 2026–27 form uses 2024 tax information), records of untaxed income such as child support received, and current balances of checking, savings, and any investments — plus business or farm records if that applies.\n\nFile as early as you can — the form opens around October 1. Much state aid is first-come, first-served, and California’s priority deadline is March 2."
         },
         "studentIdentity": {
           "title": "Student — personal information",
@@ -436,9 +436,9 @@
           "fields": {
             "caCollegeList": {
               "label": "California colleges to receive your information",
-              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "whatItMeans": "You can list up to 20 colleges. Add any school you might apply to, even if you’re unsure — you can remove one later.",
               "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
-              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+              "commonError": "Adding a school late can cost you aid — add every school you might apply to now; you can remove one later."
             }
           }
         },
