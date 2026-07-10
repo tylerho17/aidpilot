@@ -19,6 +19,7 @@ import { WALKTHROUGH, reviewKey, type WalkSection } from "@/lib/v1/walkthrough";
 // content files (real structure, placeholder explanations). Nothing transmitted.
 export default function WalkthroughPage() {
   const t = useTranslations("walkthrough");
+  const trust = useTranslations("trust");
   const common = useTranslations("common");
   const router = useRouter();
   const { path, reviewed } = useSession();
@@ -72,6 +73,13 @@ export default function WalkthroughPage() {
     <>
       <SectionHeading eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
 
+      {/* Sourced CADAA trust line (docs/content-source.md) on the CADAA path */}
+      {path === "cadaa" && (
+        <StatusPanel tone="blue" icon="shield" title={trust("cadaaTitle")}>
+          {trust("cadaa")}
+        </StatusPanel>
+      )}
+
       <ProgressBar
         pct={pct}
         label={t("sectionProgress", { done: doneCount, total: sections.length })}
@@ -105,7 +113,10 @@ export default function WalkthroughPage() {
 
       {section.explainer ? (
         <StatusPanel tone="blue" icon="shield" title={t(section.titleKey)}>
-          {section.bodyKey ? t(section.bodyKey) : null}
+          {/* Sourced multi-paragraph bodies use \n\n breaks */}
+          <span style={{ whiteSpace: "pre-line" }}>
+            {section.bodyKey ? t(section.bodyKey) : null}
+          </span>
         </StatusPanel>
       ) : (
         <Card variant="clay" padding="clamp(12px, 3vw, 18px)">

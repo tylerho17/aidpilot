@@ -40,6 +40,9 @@ export const FAFSA_SECTIONS: WalkSection[] = [
   ]),
 
   makeSection("fafsa", "parentContributor", [
+    // Which parent(s) must contribute — sourced dependency rules live in the
+    // i18n slots for this field (docs/content-source.md).
+    "whichParent",
     "parentFullName",
     "parentDateOfBirth",
     "parentSsnStatus",
