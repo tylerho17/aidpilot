@@ -12,7 +12,8 @@ import {
   Button,
 } from "@/components/ui";
 import { useSession } from "@/components/v1/session";
-import { WALKTHROUGH, type WalkSection } from "@/lib/v1/walkthrough";
+import { FieldReviewRow } from "@/components/v1/FieldReviewRow";
+import { WALKTHROUGH, reviewKey, type WalkSection } from "@/lib/v1/walkthrough";
 
 // v1-flow 3/4 — Walkthrough renderer. Sections/fields come from the typed
 // content files (real structure, placeholder explanations). Nothing transmitted.
@@ -20,7 +21,7 @@ export default function WalkthroughPage() {
   const t = useTranslations("walkthrough");
   const common = useTranslations("common");
   const router = useRouter();
-  const { path } = useSession();
+  const { path, reviewed } = useSession();
   const [current, setCurrent] = useState(0);
 
   // No form path → send the user to triage (counselor-routed students get the
@@ -52,8 +53,10 @@ export default function WalkthroughPage() {
   const sections = WALKTHROUGH[path];
   const section = sections[Math.min(current, sections.length - 1)];
 
-  // Section completion becomes reviewed-driven in v1-flow 4.
-  const isDone = (s: WalkSection) => s.explainer;
+  // A section is done when every field in it has been marked reviewed
+  // (explainer sections have nothing to review).
+  const isDone = (s: WalkSection) =>
+    s.explainer || s.fields.every((f) => reviewed[reviewKey(path, s.sectionKey, f.fieldKey)]);
   const doneCount = sections.filter(isDone).length;
   const pct = Math.round((doneCount / sections.length) * 100);
 
@@ -105,20 +108,15 @@ export default function WalkthroughPage() {
           {section.bodyKey ? t(section.bodyKey) : null}
         </StatusPanel>
       ) : (
-        <Card variant="clay" padding="clamp(16px, 4vw, 22px)">
+        <Card variant="clay" padding="clamp(12px, 3vw, 18px)">
           {section.fields.map((f, i) => (
-            <div
+            <FieldReviewRow
               key={f.fieldKey}
-              style={{
-                padding: "11px 4px",
-                borderBottom: i < section.fields.length - 1 ? "1px solid var(--border-card)" : "none",
-                fontSize: 14.5,
-                fontWeight: 600,
-                color: "var(--ink-800)",
-              }}
-            >
-              {t(f.labelKey)}
-            </div>
+              path={path}
+              sectionKey={section.sectionKey}
+              field={f}
+              divider={i < section.fields.length - 1}
+            />
           ))}
         </Card>
       )}

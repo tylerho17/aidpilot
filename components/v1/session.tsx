@@ -19,16 +19,19 @@ export type AnswerValue = string | number | boolean | string[] | null;
 export interface SessionState {
   path: AidPath;
   answers: Record<string, AnswerValue>;
+  /** Walkthrough review flags, keyed `${path}.${sectionKey}.${fieldKey}`. */
+  reviewed: Record<string, boolean>;
 }
 
 export interface SessionContextValue extends SessionState {
   setPath: (path: AidPath) => void;
   setAnswer: (key: string, value: AnswerValue) => void;
   setAnswers: (patch: Record<string, AnswerValue>) => void;
+  toggleReviewed: (key: string) => void;
   reset: () => void;
 }
 
-const initialState: SessionState = { path: null, answers: {} };
+const initialState: SessionState = { path: null, answers: {}, reviewed: {} };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
@@ -47,11 +50,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, answers: { ...prev.answers, ...patch } }));
   }, []);
 
+  const toggleReviewed = useCallback((key: string) => {
+    setState((prev) => ({
+      ...prev,
+      reviewed: { ...prev.reviewed, [key]: !prev.reviewed[key] },
+    }));
+  }, []);
+
   const reset = useCallback(() => setState(initialState), []);
 
   const value = useMemo<SessionContextValue>(
-    () => ({ ...state, setPath, setAnswer, setAnswers, reset }),
-    [state, setPath, setAnswer, setAnswers, reset],
+    () => ({ ...state, setPath, setAnswer, setAnswers, toggleReviewed, reset }),
+    [state, setPath, setAnswer, setAnswers, toggleReviewed, reset],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
