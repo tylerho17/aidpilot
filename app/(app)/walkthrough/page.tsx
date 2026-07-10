@@ -24,8 +24,9 @@ export default function WalkthroughPage() {
   const { path, answers } = useSession();
   const [current, setCurrent] = useState(0);
 
-  // No path yet → send the user to triage first.
-  if (!path) {
+  // No form path → send the user to triage (counselor-routed students get the
+  // counselor screen from the triage result; the walkthrough is FAFSA/CADAA only).
+  if (!path || path === "counselor") {
     return (
       <>
         <SectionHeading eyebrow={t("eyebrow")} title={t("noPath.title")} />

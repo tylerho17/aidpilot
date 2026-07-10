@@ -10,7 +10,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
  * A refresh intentionally clears it — v1 stores zero personal data.
  */
 
-export type AidPath = "fafsa" | "cadaa" | null;
+export type AidPath = "fafsa" | "cadaa" | "counselor" | null;
 
 // A single worksheet answer. Kept deliberately loose: v1 never inspects the
 // meaning of an answer, it only carries it to the client-side worksheet.

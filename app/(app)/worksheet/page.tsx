@@ -21,8 +21,9 @@ export default function WorksheetPage() {
   const { path, answers } = useSession();
   const [busy, setBusy] = useState(false);
 
-  // No path → nothing to build yet.
-  if (!path) {
+  // No form path → nothing to build (counselor-routed students don't get a
+  // worksheet; their next step is the counselor).
+  if (!path || path === "counselor") {
     return (
       <>
         <SectionHeading eyebrow={t("eyebrow")} title={t("empty.title")} />

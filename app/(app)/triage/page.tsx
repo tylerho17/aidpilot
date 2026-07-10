@@ -58,7 +58,9 @@ export default function TriagePage() {
     const next = { ...answers, [step.key]: selection } as TriageAnswers;
     const resolved = nextTriageStep(next);
     if (resolved.kind === "outcome") {
-      setPath(resolved.outcome === "counselor" ? null : resolved.outcome);
+      // 'counselor' is a real session path (Part 1): screens downstream use it
+      // to point the student at the counselor referral instead of a form.
+      setPath(resolved.outcome);
     }
     setAnswers(next);
     setSelection(null);
