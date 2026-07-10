@@ -54,22 +54,16 @@ async function saveAidTaskRow(
       }
     : { ...payload };
 
-  console.error("FAFSA task payload", sendPayload);
-
   if (existing?.id) {
-    const result = await supabase
+    return supabase
       .from("aid_tasks")
       .update(sendPayload)
       .eq("id", existing.id)
       .select()
       .single();
-    console.error("FAFSA task save result", { action: "update", plan_key: payload.plan_key, ...result });
-    return result;
   }
 
-  const result = await supabase.from("aid_tasks").insert(sendPayload).select().single();
-  console.error("FAFSA task save result", { action: "insert", plan_key: payload.plan_key, ...result });
-  return result;
+  return supabase.from("aid_tasks").insert(sendPayload).select().single();
 }
 
 export async function persistFafsaPlan(
@@ -87,7 +81,7 @@ export async function persistFafsaPlan(
     .eq("task_source", FAFSA_TASK_SOURCE);
 
   if (existingError) {
-    logFafsaSupabaseError("FAFSA task save result (load existing failed)", existingError, { userId });
+    logFafsaSupabaseError("FAFSA task save result (load existing failed)", existingError);
     throw existingError;
   }
 
@@ -112,7 +106,11 @@ export async function persistFafsaPlan(
     }
 
     if (error) {
-      logFafsaSupabaseError("FAFSA task save result (failed)", error, payload);
+      logFafsaSupabaseError("FAFSA task save result (failed)", error, {
+        action: existing?.id ? "update" : "insert",
+        planKey: payload.plan_key,
+        requiredInfoAsText,
+      });
       throw error;
     }
 
@@ -127,7 +125,9 @@ export async function persistFafsaPlan(
   if (staleIds.length > 0) {
     const { error: deleteError } = await supabase.from("aid_tasks").delete().in("id", staleIds);
     if (deleteError) {
-      logFafsaSupabaseError("FAFSA task save result (delete stale failed)", deleteError, { staleIds });
+      logFafsaSupabaseError("FAFSA task save result (delete stale failed)", deleteError, {
+        staleCount: staleIds.length,
+      });
       throw deleteError;
     }
   }
@@ -143,8 +143,6 @@ async function upsertFafsaIntakeRow(
 ) {
   let schoolsAsText = false;
   let payload = buildIntakeDbPayload(userId, form, now, { schoolsAsText });
-
-  console.error("FAFSA intake payload", payload);
 
   const attemptSave = async (row: Record<string, unknown>) => {
     const { data: existing, error: selectError } = await supabase
@@ -170,24 +168,11 @@ async function upsertFafsaIntakeRow(
   };
 
   let result = await attemptSave(payload as Record<string, unknown>);
-  console.error("FAFSA intake save result", {
-    schoolsAsText,
-    error: result.error,
-    data: result.data,
-    message: result.error ? supabaseErrorMessage(result.error) : null,
-  });
 
   if (result.error && isSchoolsTypeMismatch(result.error) && !schoolsAsText) {
     schoolsAsText = true;
     payload = buildIntakeDbPayload(userId, form, now, { schoolsAsText: true });
-    console.error("FAFSA intake payload (retry schools as text)", payload);
     result = await attemptSave(payload as Record<string, unknown>);
-    console.error("FAFSA intake save result (retry)", {
-      schoolsAsText,
-      error: result.error,
-      data: result.data,
-      message: result.error ? supabaseErrorMessage(result.error) : null,
-    });
   }
 
   return result;
@@ -202,7 +187,9 @@ export async function saveFafsaIntakeAndPlan(
   const { data: intake, error: intakeError } = await upsertFafsaIntakeRow(supabase, userId, form, now);
 
   if (intakeError) {
-    logFafsaSupabaseError("FAFSA intake save result (failed)", intakeError, form);
+    logFafsaSupabaseError("FAFSA intake save result (failed)", intakeError, {
+      schoolsAsText: supabaseErrorMessage(intakeError).includes("schools"),
+    });
     throw intakeError;
   }
 
@@ -213,8 +200,7 @@ export async function saveFafsaIntakeAndPlan(
     return { intake: normalizedIntake, planTasks, planError: null };
   } catch (planError) {
     logFafsaSupabaseError("FAFSA task save result (plan generation failed)", planError, {
-      userId,
-      intakeId: normalizedIntake.id,
+      intakeSaved: true,
     });
     return {
       intake: normalizedIntake,

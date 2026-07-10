@@ -118,11 +118,13 @@ export function supabaseErrorMessage(error: unknown): string {
   return String(error);
 }
 
-export function logFafsaSupabaseError(label: string, error: unknown, payload?: unknown) {
+type SafeLogContext = Record<string, string | number | boolean | null | undefined>;
+
+// Keep FAFSA logs free of student-provided answers, schools, user IDs, and row payloads.
+export function logFafsaSupabaseError(label: string, error: unknown, context?: SafeLogContext) {
   console.error(label, {
-    error,
     message: supabaseErrorMessage(error),
-    payload,
+    context,
     supabase:
       error && typeof error === "object"
         ? {
