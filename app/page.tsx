@@ -9,6 +9,7 @@ import {
   Badge,
   FeatureCard,
   SectionHeading,
+  StatusPanel,
   Icon,
 } from "@/components/ui";
 import { LanguageSwitcher } from "@/components/v1/LanguageSwitcher";
@@ -17,6 +18,7 @@ import { TranslationPendingBanner } from "@/components/v1/TranslationPendingBann
 // F1 landing — flat (marketing) surface. All copy via i18n placeholder keys.
 export default function LandingPage() {
   const t = useTranslations("landing");
+  const trust = useTranslations("trust");
   const router = useRouter();
 
   const steps = [
@@ -136,6 +138,16 @@ export default function LandingPage() {
               </FeatureCard>
             ))}
           </div>
+        </section>
+
+        {/* Trust — sourced privacy line + CADAA trust line (docs/content-source.md) */}
+        <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <StatusPanel tone="green" icon="shield-check" title={trust("privacyTitle")}>
+            {trust("privacy")}
+          </StatusPanel>
+          <StatusPanel tone="blue" icon="shield" title={trust("cadaaTitle")}>
+            {trust("cadaa")}
+          </StatusPanel>
         </section>
 
         {/* Disclaimer */}

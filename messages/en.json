@@ -27,6 +27,12 @@
     "walkthrough": "Walkthrough",
     "worksheet": "Worksheet"
   },
+  "trust": {
+    "privacy": "AidPilot stores nothing about you. Everything you enter stays on your device. We never submit anything for you and never see your name, SSN, or finances.",
+    "cadaa": "Information you provide on the California Dream Act Application is used only to determine eligibility for state financial aid. It is never shared with the federal government or used for immigration enforcement.",
+    "privacyTitle": "Your privacy",
+    "cadaaTitle": "About the CA Dream Act Application"
+  },
   "landing": {
     "eyebrow": "Garden Grove financial aid",
     "title": "From “haven’t started” to a finished aid worksheet.",
