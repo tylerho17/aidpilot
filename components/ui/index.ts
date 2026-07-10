@@ -1,15 +1,23 @@
-export { AppPageShell } from "@/components/ui/AppPageShell";
-export { PageHeader, ProductFlowNav } from "@/components/ui/PageHeader";
-export { SectionCard, ProductCard } from "@/components/ui/SectionCard";
-export { MetricCard, StatCard } from "@/components/ui/MetricCard";
-export { DataRow, DataRowHeader, DataRowItem } from "@/components/ui/DataRow";
-export { StatusBadge, PillBadge } from "@/components/ui/StatusBadge";
-export { PrimaryButton, PrimaryButtonLink, primaryButtonStyle } from "@/components/ui/PrimaryButton";
-export { SecondaryButton, SecondaryButtonLink, secondaryButtonStyle } from "@/components/ui/SecondaryButton";
-export { SoftButton, SoftButtonLink, softButtonStyle } from "@/components/ui/SoftButton";
-export { TableWrapper, tableHeaderCell, tableBodyCell } from "@/components/ui/TableWrapper";
-export { EmptyState } from "@/components/ui/EmptyState";
-export { TabButtonLink, tabButtonStyle } from "@/components/ui/SecondaryButton";
-export { H1, H2, H3, Body, BodyMuted, BodyStrong, Label, MetricValue } from "@/components/ui/Typography";
-export { InsightRow } from "@/components/ui/InsightRow";
-export { CopyButton, CopyQuestionRow } from "@/components/ui/CopyButton";
+// AidPilot design-system UI kit - ported from the Claude Design handoff.
+// Import from "@/components/ui".
+export { Icon, ICON_NAMES } from "./Icon";
+export { Logo } from "./Logo";
+export { Button } from "./Button";
+export { IconButton } from "./IconButton";
+export { Badge, type BadgeProps } from "./Badge";
+export { Avatar, type AvatarProps } from "./Avatar";
+export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
+export { Card, type CardProps } from "./Card";
+export { IconTile, type IconTileProps } from "./IconTile";
+export { StatCard, type StatCardProps } from "./StatCard";
+export { StatusPanel } from "./StatusPanel";
+export { FeatureCard, type FeatureCardProps } from "./FeatureCard";
+export { TextField, type TextFieldProps } from "./TextField";
+export { Select } from "./Select";
+export { Checkbox, type CheckboxProps } from "./Checkbox";
+export { OptionCard, type OptionCardProps } from "./OptionCard";
+export { ChecklistItem, type ChecklistItemProps } from "./ChecklistItem";
+export { NavItem, type NavItemProps } from "./NavItem";
+export { SectionHeading, type SectionHeadingProps } from "./SectionHeading";
+export { SegmentedControl } from "./SegmentedControl";
+export { TabBar } from "./TabBar";
