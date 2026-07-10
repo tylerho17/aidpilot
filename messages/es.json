@@ -120,7 +120,107 @@
   "walkthrough": {
     "eyebrow": "TODO: Walkthrough",
     "title": "TODO: Go through your form section by section.",
-    "subtitle": "TODO: Placeholder — your progress stays on this device only."
+    "subtitle": "TODO: Placeholder — your progress stays on this device only.",
+    "overviewTitle": "TODO: Your sections",
+    "sectionProgress": "{done} of {total} sections done",
+    "explainerBadge": "Explainer",
+    "helper": {
+      "whatItMeans": "What it means",
+      "documentNeeded": "Document you’ll need",
+      "commonError": "Common mistake"
+    },
+    "showHelp": "Show help",
+    "hideHelp": "Hide help",
+    "toWorksheet": "TODO: Review & build worksheet",
+    "noPath": {
+      "title": "TODO: Let’s find your path first.",
+      "body": "TODO: Placeholder — answer a few quick questions so we can show the right sections.",
+      "cta": "Go to triage"
+    },
+    "fafsa": {
+      "sections": {
+        "account": {
+          "title": "TODO: FAFSA — create your account (FSA ID)",
+          "body": "TODO: Placeholder explainer about the contributor / FSA ID concept. Explainer only — no data is collected on this screen."
+        },
+        "about": {
+          "title": "TODO: FAFSA — about you",
+          "fields": {
+            "fullName": {
+              "label": "TODO: Field — full legal name",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "dob": {
+              "label": "TODO: Field — date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "money": {
+          "title": "TODO: FAFSA — household & money",
+          "fields": {
+            "householdSize": {
+              "label": "TODO: Field — household size",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentIncome": {
+              "label": "TODO: Field — parent income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        }
+      }
+    },
+    "cadaa": {
+      "sections": {
+        "account": {
+          "title": "TODO: CADAA — create your account",
+          "body": "TODO: Placeholder explainer about the CADAA account concept. Explainer only — no data is collected on this screen."
+        },
+        "about": {
+          "title": "TODO: CADAA — about you",
+          "fields": {
+            "fullName": {
+              "label": "TODO: Field — full legal name",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "dob": {
+              "label": "TODO: Field — date of birth",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        },
+        "money": {
+          "title": "TODO: CADAA — household & money",
+          "fields": {
+            "householdSize": {
+              "label": "TODO: Field — household size",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            },
+            "parentIncome": {
+              "label": "TODO: Field — parent income",
+              "whatItMeans": "TODO: what-it-means placeholder (human-sourced).",
+              "documentNeeded": "TODO: document-needed placeholder (human-sourced).",
+              "commonError": "TODO: common-mistake placeholder (human-sourced)."
+            }
+          }
+        }
+      }
+    }
   },
   "worksheet": {
     "eyebrow": "TODO: Your worksheet",
