@@ -90,3 +90,8 @@ result, and the CADAA walkthrough. ES/VI pending native review.
 Financials guidance, getting-started content, every remaining
 `whatItMeans/documentNeeded/commonError` slot, explainer details beyond the
 above, counselor screen explainer + "why" slot, triage notSenior note.
+
+**CADAA financials/consent — sourcing guardrail:** source from
+dream.csac.ca.gov only. The CADAA is a state form with **manual income entry**
+— do NOT reuse the FAFSA IRS-import/consent language for any
+`walkthrough.cadaa.sections.studentFinancials.*` or `…parentFinancials.*` slot.

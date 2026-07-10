@@ -26,10 +26,13 @@ export const CADAA_SECTIONS: WalkSection[] = [
 
   makeSection("cadaa", "studentColleges", ["caCollegeList"]),
 
+  // Financials stay TODO: source from dream.csac.ca.gov (state form, MANUAL
+  // income entry — do NOT reuse FAFSA IRS-import/consent language here).
   makeSection("cadaa", "studentFinancials", ["taxFilingStatus", "studentIncome", "studentAssets"]),
 
   makeSection("cadaa", "parentInformation", ["parentFullName", "parentDateOfBirth", "parentEmail"]),
 
+  // Same guardrail as studentFinancials: dream.csac.ca.gov only, manual entry.
   makeSection("cadaa", "parentFinancials", [
     "parentTaxFilingStatus",
     "parentIncome",
