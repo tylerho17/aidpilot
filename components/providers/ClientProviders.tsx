@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { UserDataProvider } from "@/hooks/useUserData";
 
+// Client-side provider host. F2 adds the in-memory SessionProvider here.
+// Kept intentionally thin: v1 has no auth/user context and stores nothing.
 export function ClientProviders({ children }: { children: ReactNode }) {
-  return <UserDataProvider>{children}</UserDataProvider>;
+  return <>{children}</>;
 }

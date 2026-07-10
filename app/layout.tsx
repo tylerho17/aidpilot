@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito, Hanken_Grotesk, Rubik } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { ClientProviders } from "@/components/providers/ClientProviders";
 import "./globals.css";
 
@@ -23,23 +25,28 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "AidPilot -- Protect your aid. Find more college money every week.",
+  title: "AidPilot — Finish your FAFSA or CADAA worksheet",
   description:
-    "AidPilot helps students protect financial aid, avoid FAFSA mistakes, track deadlines, and find scholarships every week.",
+    "A free, no-login bilingual guide (EN/ES/VI) that walks you through FAFSA or CADAA and prepares a worksheet you submit yourself. Nothing about you is stored.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${nunito.variable} ${hanken.variable} ${rubik.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ClientProviders>{children}</ClientProviders>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ClientProviders>{children}</ClientProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

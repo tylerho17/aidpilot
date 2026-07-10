@@ -1,0 +1,64 @@
+{
+  "_status": "NEEDS_NATIVE_REVIEW",
+  "common": {
+    "appName": "AidPilot",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "start": "Start",
+    "getStarted": "Get started",
+    "startNow": "Start now",
+    "skip": "Skip",
+    "print": "Print",
+    "download": "Download",
+    "loading": "Loading…"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español",
+    "vi": "Tiếng Việt"
+  },
+  "translationBanner": {
+    "text": "TODO: This translation is a placeholder pending native review (NEEDS_NATIVE_REVIEW)."
+  },
+  "nav": {
+    "triage": "Triage",
+    "walkthrough": "Walkthrough",
+    "worksheet": "Worksheet"
+  },
+  "landing": {
+    "eyebrow": "TODO: Garden Grove financial aid",
+    "title": "TODO: Landing headline — get from “haven’t started” to a finished FAFSA or CADAA worksheet.",
+    "subtitle": "TODO: Landing subheading placeholder copy. No account, and nothing about you is stored.",
+    "ctaPrimary": "Start now",
+    "ctaSecondary": "How it works",
+    "badgeNoLogin": "TODO: No login",
+    "badgeNoData": "TODO: Zero data stored",
+    "badgeBilingual": "EN · ES · VI",
+    "stepsEyebrow": "TODO: How it works",
+    "stepsTitle": "TODO: Three steps to a finished worksheet.",
+    "step1Title": "TODO: Step 1 — Triage",
+    "step1Body": "TODO: Placeholder — answer a few questions to find your path.",
+    "step2Title": "TODO: Step 2 — Walkthrough",
+    "step2Body": "TODO: Placeholder — go through the form section by section.",
+    "step3Title": "TODO: Step 3 — Worksheet",
+    "step3Body": "TODO: Placeholder — download a worksheet you submit yourself.",
+    "disclaimer": "TODO: AidPilot is not affiliated with the U.S. Department of Education or the California Student Aid Commission. It prepares a worksheet; you sign and submit on the official site yourself."
+  },
+  "triage": {
+    "eyebrow": "TODO: Find your path",
+    "title": "TODO: A few questions to point you to the right form.",
+    "subtitle": "TODO: Placeholder — nothing you enter here is saved or sent."
+  },
+  "walkthrough": {
+    "eyebrow": "TODO: Walkthrough",
+    "title": "TODO: Go through your form section by section.",
+    "subtitle": "TODO: Placeholder — your progress stays on this device only."
+  },
+  "worksheet": {
+    "eyebrow": "TODO: Your worksheet",
+    "title": "TODO: Download a worksheet to finish on the official site.",
+    "subtitle": "TODO: Placeholder — generated on your device; nothing is uploaded."
+  }
+}
