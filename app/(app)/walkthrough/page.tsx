@@ -27,15 +27,23 @@ export default function WalkthroughPage() {
   // No form path → send the user to triage (counselor-routed students get the
   // counselor screen from the triage result; the walkthrough is FAFSA/CADAA only).
   if (!path || path === "counselor") {
+    const counselor = path === "counselor";
     return (
       <>
         <SectionHeading eyebrow={t("eyebrow")} title={t("noPath.title")} />
-        <StatusPanel tone="blue" icon="clipboard" title={t("noPath.title")}>
+        <StatusPanel
+          tone={counselor ? "amber" : "blue"}
+          icon={counselor ? "letter" : "clipboard"}
+          title={t("noPath.title")}
+        >
           {t("noPath.body")}
         </StatusPanel>
         <div>
-          <Button iconRight="arrow-right" onClick={() => router.push("/triage")}>
-            {t("noPath.cta")}
+          <Button
+            iconRight="arrow-right"
+            onClick={() => router.push(counselor ? "/counselor" : "/triage")}
+          >
+            {counselor ? t("noPath.counselorCta") : t("noPath.cta")}
           </Button>
         </div>
       </>

@@ -96,17 +96,16 @@ export default function TriagePage() {
           icon={OUTCOME_ICON[outcome]}
           title={t(`paths.${outcome}`)}
         >
-          {outcome === "counselor" ? (
-            <>
-              {t("counselor.explainer")}
-              {info === "notSenior" && (
-                <span style={{ display: "block", marginTop: 8 }}>{t("counselor.notSeniorNote")}</span>
-              )}
-            </>
-          ) : null}
+          {outcome === "counselor" && info === "notSenior"
+            ? t("counselor.notSeniorNote")
+            : null}
         </StatusPanel>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {outcome !== "counselor" && (
+          {outcome === "counselor" ? (
+            <Button iconRight="arrow-right" onClick={() => router.push("/counselor")}>
+              {common("continue")}
+            </Button>
+          ) : (
             <Button iconRight="arrow-right" onClick={() => router.push("/walkthrough")}>
               {t("continueWalkthrough")}
             </Button>

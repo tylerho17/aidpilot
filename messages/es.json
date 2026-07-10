@@ -87,7 +87,6 @@
       }
     },
     "counselor": {
-      "explainer": "TODO: Placeholder explainer — your counselor can confirm the right application for your situation. (Human-sourced content pending.)",
       "notSeniorNote": "TODO: Placeholder note — this guide is designed for current California seniors and recent graduates. (Human-sourced content pending.)"
     }
   },
@@ -109,7 +108,8 @@
     "noPath": {
       "title": "TODO: Let’s find your path first.",
       "body": "TODO: Placeholder — answer a few quick questions so we can show the right sections.",
-      "cta": "Go to triage"
+      "cta": "Go to triage",
+      "counselorCta": "See your next step"
     },
     "fafsa": {
       "sections": {
@@ -216,8 +216,17 @@
     "empty": {
       "title": "TODO: Nothing to build yet.",
       "body": "TODO: Placeholder — start the walkthrough to fill in your worksheet.",
-      "cta": "Go to walkthrough"
+      "cta": "Go to walkthrough",
+      "counselorCta": "See your next step"
     }
+  },
+  "counselor": {
+    "eyebrow": "Your next step",
+    "title": "Talk to your counselor.",
+    "explainer": "TODO: Placeholder explainer — your counselor can confirm the right application for your situation. (Human-sourced content pending.)",
+    "why": "TODO: Placeholder 'why you were routed here' slot. (Human-sourced content pending.)",
+    "toTriage": "Retake the questions",
+    "backHome": "Back to home"
   },
   "report": {
     "prompt": "TODO: Did you finish your application on the official site?",

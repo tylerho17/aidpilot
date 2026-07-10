@@ -24,15 +24,23 @@ export default function WorksheetPage() {
   // No form path → nothing to build (counselor-routed students don't get a
   // worksheet; their next step is the counselor).
   if (!path || path === "counselor") {
+    const counselor = path === "counselor";
     return (
       <>
         <SectionHeading eyebrow={t("eyebrow")} title={t("empty.title")} />
-        <StatusPanel tone="blue" icon="file" title={t("empty.title")}>
+        <StatusPanel
+          tone={counselor ? "amber" : "blue"}
+          icon={counselor ? "letter" : "file"}
+          title={t("empty.title")}
+        >
           {t("empty.body")}
         </StatusPanel>
         <div>
-          <Button iconRight="arrow-right" onClick={() => router.push("/walkthrough")}>
-            {t("empty.cta")}
+          <Button
+            iconRight="arrow-right"
+            onClick={() => router.push(counselor ? "/counselor" : "/walkthrough")}
+          >
+            {counselor ? t("empty.counselorCta") : t("empty.cta")}
           </Button>
         </div>
       </>
