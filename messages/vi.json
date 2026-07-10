@@ -225,6 +225,24 @@
   "worksheet": {
     "eyebrow": "TODO: Your worksheet",
     "title": "TODO: Download a worksheet to finish on the official site.",
-    "subtitle": "TODO: Placeholder — generated on your device; nothing is uploaded."
+    "subtitle": "TODO: Placeholder — generated on your device; nothing is uploaded.",
+    "summaryTitle": "TODO: Worksheet preview",
+    "download": "Download worksheet (PDF)",
+    "print": "Print",
+    "generating": "Preparing…",
+    "generatedOn": "Generated on {date}",
+    "noValue": "—",
+    "docTitle": "TODO: {path} preparation worksheet",
+    "pathLabel": {
+      "fafsa": "FAFSA",
+      "cadaa": "CA Dream Act (CADAA)"
+    },
+    "disclaimerTitle": "TODO: This is not official advice.",
+    "disclaimerBody": "TODO: Placeholder — AidPilot is not affiliated with the U.S. Department of Education or the California Student Aid Commission. This worksheet is a preparation aid only. Verify everything with your counselor, and sign and submit on the official site yourself.",
+    "empty": {
+      "title": "TODO: Nothing to build yet.",
+      "body": "TODO: Placeholder — start the walkthrough to fill in your worksheet.",
+      "cta": "Go to walkthrough"
+    }
   }
 }
