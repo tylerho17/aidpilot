@@ -240,6 +240,13 @@ body {
 @keyframes driftY2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 @keyframes sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* The hero paper plane swoops in from off-canvas and parks. 100% is the
+   resting pose, so reduced-motion users (animation: none) see it parked. */
+@keyframes planeFlyIn {
+  0% { opacity: 0; transform: translate(-58vw, 22vh) rotate(-24deg) scale(0.82); }
+  35% { opacity: 1; }
+  100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+}
 
 /* ── Animation utilities ── */
 .animate-floaty { animation: floaty 7s ease-in-out infinite; }
@@ -253,6 +260,7 @@ body {
 .animate-drift { animation: driftY 6.5s ease-in-out infinite; }
 .animate-drift2 { animation: driftY2 8s ease-in-out infinite; }
 .animate-sway { animation: sway 3.6s ease-in-out infinite; transform-origin: top center; }
+.animate-plane-in { animation: planeFlyIn 1.05s var(--ease-spring) 0.15s both; }
 
 /* ── Page transitions - quick, subtle fade + rise on every route change.
    Fast enough to feel instant (240ms), soft enough to remove the "hard cut"

@@ -8,8 +8,8 @@ import {
   Sticky,
   Stamp,
   Pencil,
-  GradCap,
-  Books,
+  Notebook,
+  PaperPlane,
   Highlight,
   paperShadow,
   linedPaper,
@@ -65,18 +65,18 @@ function Hero() {
   const allDone = items.every((x) => x.d);
 
   return (
-    <header style={{ position: "relative", background: "radial-gradient(120% 90% at 15% 0%, #FBFAF6 0%, #F1EEE6 100%)", padding: "68px 44px 92px", overflow: "hidden" }}>
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1.06fr", gap: 48, alignItems: "center" }} className="hero-grid">
+    <header style={{ position: "relative", background: "radial-gradient(120% 90% at 15% 0%, #FCFBF8 0%, #F4F1EA 100%)", padding: "84px 44px 108px", overflow: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1.06fr", gap: 56, alignItems: "center" }} className="hero-grid">
         <div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", padding: "7px 14px 7px 8px", borderRadius: 4, boxShadow: paperShadow, transform: "rotate(-1.5deg)", marginBottom: 26 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", padding: "7px 14px 7px 8px", borderRadius: 4, boxShadow: paperShadow, transform: "rotate(-1.5deg)", marginBottom: 28 }}>
             <Logo variant="mark" size={20} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-800)", whiteSpace: "nowrap" }}>Early access is open</span>
           </div>
           <h1 className="font-display" style={{ fontSize: "clamp(46px, 6vw, 72px)", lineHeight: 1.0, fontWeight: 900, letterSpacing: "-2px", margin: "0 0 22px", color: "var(--ink-900)" }}>
             Financial aid,<br />minus the <Highlight tone="amber">mess.</Highlight>
           </h1>
-          <p style={{ fontSize: 20, fontWeight: 600, color: "var(--ink-600)", margin: "0 0 30px", maxWidth: 440, lineHeight: 1.45 }}>
-            We turn the forms, deadlines, and fine print into one simple weekly check.
+          <p style={{ fontSize: 19, fontWeight: 500, color: "var(--ink-600)", margin: "0 0 32px", maxWidth: 430, lineHeight: 1.5 }}>
+            The forms, deadlines, and fine print - handled in one simple weekly check.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <Button size="lg" shape="pill" onClick={scrollToWaitlist} iconRight="arrow-right">Get early access</Button>
@@ -85,13 +85,11 @@ function Hero() {
         </div>
 
         <div style={{ position: "relative", height: 470 }} className="hero-desk">
-          <div style={{ position: "absolute", left: "50%", top: 122, width: 410, height: 286, marginLeft: -205, background: "linear-gradient(#F3D48A,#EFC96E)", borderRadius: "18px 18px 14px 14px", boxShadow: "0 26px 50px -22px rgba(31,41,55,.45)", transform: "rotate(2deg)" }}>
+          {/* The desk: manila folder underneath, the checklist paper on top. */}
+          <div style={{ position: "absolute", left: "50%", top: 122, width: 410, height: 286, marginLeft: -205, background: "linear-gradient(#F3D48A,#EFC96E)", borderRadius: "18px 18px 14px 14px", boxShadow: "0 26px 50px -22px rgba(31,41,55,.4)", transform: "rotate(2deg)" }}>
             <div style={{ position: "absolute", top: -22, left: 26, width: 150, height: 30, background: "#EFC96E", borderRadius: "12px 12px 0 0" }} />
             <div style={{ position: "absolute", top: -13, left: 46, fontSize: 12, fontWeight: 800, color: "#8A6A22", letterSpacing: ".5px" }}>FINANCIAL AID</div>
           </div>
-
-          <div className="animate-drift" style={{ position: "absolute", left: -8, top: -18, zIndex: 3 }}><GradCap /></div>
-          <div className="animate-drift2" style={{ position: "absolute", left: -6, bottom: 8, zIndex: 3 }}><Books /></div>
 
           <div style={{ position: "absolute", left: "50%", top: 22, width: 300, marginLeft: -150, zIndex: 4 }}>
             <div style={{ position: "relative", background: linedPaper, borderRadius: 8, boxShadow: paperShadow, transform: "rotate(-2deg)", padding: "26px 22px 22px" }}>
@@ -107,18 +105,22 @@ function Hero() {
                   <span style={{ fontSize: 14, fontWeight: 600, color: it.d ? "var(--gray-400)" : "var(--ink-800)", textDecoration: it.d ? "line-through" : "none", whiteSpace: "nowrap" }}>{it.t}</span>
                 </div>
               ))}
-              <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
-                <Stamp tone={allDone ? "blue" : "green"} rotate={-7}>{allDone ? "All done!" : "On track"}</Stamp>
-              </div>
+              {allDone && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+                  <Stamp tone="blue" rotate={-7}>All done!</Stamp>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="animate-drift" style={{ position: "absolute", right: -4, top: -16, zIndex: 5 }}>
-            <Sticky tone="amber" rotate={6} style={{ width: 130, minHeight: 128 }}>
-              <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15, color: "#8A6A22", lineHeight: 1.3 }}>Cal Grant<br />due in 8 days!</div>
-            </Sticky>
+          {/* The paper plane swoops in on load and parks top-right. */}
+          <div className="animate-plane-in" style={{ position: "absolute", right: -12, top: -8, zIndex: 5 }}>
+            <div className="animate-drift" style={{ position: "relative" }}>
+              <PaperPlane size={148} style={{ transform: "rotate(9deg)" }} />
+            </div>
           </div>
-          <div className="animate-drift2" style={{ position: "absolute", right: 18, bottom: -8, zIndex: 5 }}>
+
+          <div className="animate-drift2" style={{ position: "absolute", right: 26, bottom: -4, zIndex: 5 }}>
             <Sticky tone="green" rotate={-6} style={{ width: 150, minHeight: 116 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green-600)", marginBottom: 4 }}>found for you</div>
               <div style={{ fontFamily: "var(--font-metric)", fontWeight: 700, fontSize: 30, color: "var(--green-600)", letterSpacing: "-.5px" }}>$24,500</div>
@@ -126,7 +128,11 @@ function Hero() {
             </Sticky>
           </div>
 
-          <div className="animate-drift" style={{ position: "absolute", left: 78, bottom: 0, zIndex: 6 }}>
+          {/* Notebook and pencil resting on the desk edge. */}
+          <div style={{ position: "absolute", left: -14, bottom: -12, zIndex: 3 }}>
+            <Notebook style={{ position: "relative", transform: "rotate(-4deg)" }} />
+          </div>
+          <div className="animate-drift" style={{ position: "absolute", left: 118, bottom: 4, zIndex: 6 }}>
             <Pencil style={{ position: "relative", transform: "rotate(-15deg)" }} />
           </div>
         </div>

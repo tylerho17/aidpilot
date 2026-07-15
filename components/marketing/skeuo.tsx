@@ -161,6 +161,61 @@ export function Books({ style }: { style?: CSSProperties }) {
   );
 }
 
+/* Spiral notebook - kraft cover peeking under lined pages, wire binding on
+   the left, a red margin rule. Same CSS-only idiom as Pencil/Books. */
+export function Notebook({ style }: { style?: CSSProperties }) {
+  const rings = Array.from({ length: 7 });
+  return (
+    <div style={{ position: "absolute", width: 150, height: 188, filter: "drop-shadow(0 14px 18px rgba(31,41,55,.24))", ...style }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(#C9A36B,#B98F55)", borderRadius: 6, transform: "rotate(1.5deg)" }} />
+      <div style={{ position: "absolute", inset: "0 4px 4px 0", background: linedPaper, borderRadius: 6, borderLeft: "3px solid #E8EDF4" }}>
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: 30, width: 1.5, background: "rgba(233,124,144,.55)" }} />
+        <div style={{ position: "absolute", top: 16, left: 42, right: 12 }}>
+          <div style={{ height: 8, width: "82%", borderRadius: 4, background: "#D9E2EE", marginBottom: 19 }} />
+          <div style={{ height: 8, width: "64%", borderRadius: 4, background: "#E2E9F2", marginBottom: 19 }} />
+          <div style={{ height: 8, width: "74%", borderRadius: 4, background: "#DDE5F0" }} />
+        </div>
+      </div>
+      {rings.map((_, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: -7,
+            top: 14 + i * 24,
+            width: 16,
+            height: 9,
+            borderRadius: 6,
+            border: "2.5px solid #9AA4B2",
+            borderRight: "none",
+            background: "transparent",
+            boxShadow: "0 1px 1px rgba(31,41,55,.18)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* A folded paper plane - white paper with a shaded underwing and a crease,
+   built from CSS triangles so it stays crisp at any size. */
+export function PaperPlane({ size = 150, style }: { size?: number; style?: CSSProperties }) {
+  const w = size;
+  const h = size * 0.52;
+  return (
+    <div style={{ position: "relative", width: w, height: h, filter: "drop-shadow(0 12px 14px rgba(31,41,55,.22))", ...style }}>
+      <svg width={w} height={h} viewBox="0 0 150 78" fill="none" aria-hidden>
+        {/* top wing */}
+        <path d="M148 2 L10 34 L58 48 Z" fill="#FDFDFB" stroke="#D8DEE8" strokeWidth="1.5" strokeLinejoin="round" />
+        {/* under wing (shaded) */}
+        <path d="M148 2 L58 48 L66 74 Z" fill="#E7ECF3" stroke="#C9D2DE" strokeWidth="1.5" strokeLinejoin="round" />
+        {/* body fold */}
+        <path d="M148 2 L58 48 L61 57 Z" fill="#D3DBE6" />
+      </svg>
+    </div>
+  );
+}
+
 type HighlightTone = "amber" | "blue" | "green";
 export function Highlight({ children, tone = "amber" }: { children?: ReactNode; tone?: HighlightTone }) {
   const c = { amber: "rgba(255,199,60,.5)", blue: "rgba(62,134,214,.28)", green: "rgba(21,136,90,.24)" }[tone];
