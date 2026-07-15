@@ -50,6 +50,19 @@ type OnboardingStrings = {
     languageSpanish: string;
     languageSpanishSub: string;
   };
+  summary: {
+    panelTitleFiled: string;
+    panelTitleNotFiled: string;
+    panelBody: string;
+    yourGoals: string;
+    nextSteps: string;
+    stepFafsaStart: string;
+    stepFafsaTrack: string;
+    stepProtect: string;
+    stepScholarships: string;
+    stepOffer: string;
+    goToDashboard: string;
+  };
   errors: {
     schoolRequired: string;
     goalRequired: string;
@@ -81,6 +94,7 @@ export const ONBOARDING_STRINGS: Record<Language, OnboardingStrings> = {
       { title: "What matters most", subtitle: "Your goals shape what AidPilot highlights first on your dashboard and weekly report." },
       { title: "Scholarship fit", subtitle: "Scholarship categories and effort preferences improve match quality. You can change these anytime in Settings." },
       { title: "A few optional details", subtitle: "Tell us only what helps matching. Never enter SSNs, bank info, or FAFSA passwords." },
+      { title: "Your aid plan is ready", subtitle: "Here's what AidPilot will watch for you, based on your answers." },
     ],
     fields: {
       firstName: "First name",
@@ -122,6 +136,19 @@ export const ONBOARDING_STRINGS: Record<Language, OnboardingStrings> = {
       languageSpanish: "Español",
       languageSpanishSub: "Continuar en español",
     },
+    summary: {
+      panelTitleFiled: "Your FAFSA is in - we'll watch what happens next.",
+      panelTitleNotFiled: "We'll walk you through your FAFSA, step by step.",
+      panelBody: "Your dashboard updates weekly with what needs attention.",
+      yourGoals: "Your goals",
+      nextSteps: "Your first steps",
+      stepFafsaStart: "Start your FAFSA plan - we break it into small steps.",
+      stepFafsaTrack: "Track school follow-ups and verification in your FAFSA plan.",
+      stepProtect: "Check your Protect tab - it watches for anything that could change your aid.",
+      stepScholarships: "Scholarship matching is coming soon - we'll flag it on your dashboard.",
+      stepOffer: "Add your aid offer so we can decode grants, loans, and the real cost.",
+      goToDashboard: "Go to my dashboard",
+    },
     errors: {
       schoolRequired: "Please select or enter your school.",
       goalRequired: "Select at least one goal.",
@@ -151,6 +178,7 @@ export const ONBOARDING_STRINGS: Record<Language, OnboardingStrings> = {
       { title: "Lo que más importa", subtitle: "Tus metas definen qué destaca AidPilot primero en tu panel y en tu reporte semanal." },
       { title: "Becas a tu medida", subtitle: "Las categorías de becas y tu preferencia de esfuerzo mejoran la calidad de las coincidencias. Puedes cambiarlas cuando quieras en Configuración." },
       { title: "Algunos detalles opcionales", subtitle: "Cuéntanos solo lo que ayude a encontrar becas. Nunca ingreses tu SSN, datos bancarios ni contraseñas de FAFSA." },
+      { title: "Tu plan de ayuda está listo", subtitle: "Esto es lo que AidPilot vigilará por ti, según tus respuestas." },
     ],
     fields: {
       firstName: "Nombre",
@@ -191,6 +219,19 @@ export const ONBOARDING_STRINGS: Record<Language, OnboardingStrings> = {
       languageEnglishSub: "Continue in English",
       languageSpanish: "Español",
       languageSpanishSub: "Continuar en español",
+    },
+    summary: {
+      panelTitleFiled: "Tu FAFSA ya está enviada - vigilaremos lo que sigue.",
+      panelTitleNotFiled: "Te guiaremos por tu FAFSA, paso a paso.",
+      panelBody: "Tu panel se actualiza cada semana con lo que necesita atención.",
+      yourGoals: "Tus metas",
+      nextSteps: "Tus primeros pasos",
+      stepFafsaStart: "Comienza tu plan FAFSA - lo dividimos en pasos pequeños.",
+      stepFafsaTrack: "Sigue las verificaciones y respuestas de tus escuelas en tu plan FAFSA.",
+      stepProtect: "Revisa tu pestaña Proteger - vigila cualquier cosa que pueda cambiar tu ayuda.",
+      stepScholarships: "La búsqueda de becas llega pronto - la marcaremos en tu panel.",
+      stepOffer: "Agrega tu oferta de ayuda para descifrar becas, préstamos y el costo real.",
+      goToDashboard: "Ir a mi panel",
     },
     errors: {
       schoolRequired: "Selecciona o escribe tu escuela.",

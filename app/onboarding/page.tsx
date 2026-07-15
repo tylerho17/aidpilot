@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
+  Badge,
   Button,
   Card,
   Checkbox,
@@ -14,6 +15,7 @@ import {
   ProgressBar,
   Select,
   SegmentedControl,
+  StatusPanel,
   TextField,
 } from "@/components/ui";
 import {
@@ -92,8 +94,9 @@ export default function OnboardingPage() {
     profile_essay_preference: "any",
   });
 
-  const totalSteps = 7; // language first, then the six profile steps
-  const pct = Math.round((step / totalSteps) * 100);
+  const totalSteps = 8; // language, six profile steps, then the aid-plan summary
+  const summaryStep = totalSteps - 1;
+  const pct = Math.round((step / (totalSteps - 1)) * 100);
 
   useEffect(() => {
     async function init() {
@@ -201,8 +204,6 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     setError("");
 
-    let redirected = false;
-
     try {
       const {
         data: { user },
@@ -231,15 +232,13 @@ export default function OnboardingPage() {
         sessionStorage.setItem(PROFILE_OPTIONAL_SAVE_NOTICE_KEY, PROFILE_OPTIONAL_SAVE_NOTICE_MESSAGE);
       }
 
-      redirected = true;
-      router.replace("/dashboard");
+      // Profile is saved - show the "your aid plan" output before the dashboard.
+      setStep(summaryStep);
     } catch (err) {
       console.error("Onboarding submit failed:", err);
       setError(err instanceof Error ? err.message : L.errors.generic);
     } finally {
-      if (!redirected) {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   }
 
@@ -542,6 +541,77 @@ export default function OnboardingPage() {
               </div>
             </>
           )}
+
+          {step === summaryStep && (
+            <>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[form.first_name, resolvedSchool, optionLabel(L.labels.year, form.year), form.state]
+                  .map((v) => v?.trim())
+                  .filter(Boolean)
+                  .map((chip) => (
+                    <Badge key={chip} tone="blue">
+                      {chip}
+                    </Badge>
+                  ))}
+              </div>
+
+              <StatusPanel
+                tone={form.fafsa_status === "Yes" ? "green" : "blue"}
+                icon={form.fafsa_status === "Yes" ? "shield-check" : "clipboard"}
+                title={form.fafsa_status === "Yes" ? L.summary.panelTitleFiled : L.summary.panelTitleNotFiled}
+              >
+                {L.summary.panelBody}
+              </StatusPanel>
+
+              {form.main_goals.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)" }}>{L.summary.yourGoals}</span>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {form.main_goals.map((goal) => (
+                      <Badge key={goal} tone="green" dot>
+                        {optionLabel(L.labels.goal, goal)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)" }}>{L.summary.nextSteps}</span>
+                <ol style={{ margin: 0, padding: "0 0 0 4px", listStyle: "none", display: "grid", gap: 10 }}>
+                  {[
+                    form.fafsa_status === "Yes" ? L.summary.stepFafsaTrack : L.summary.stepFafsaStart,
+                    L.summary.stepProtect,
+                    form.main_goals.includes("Find scholarships") ? L.summary.stepScholarships : L.summary.stepOffer,
+                  ].map((line, i) => (
+                    <li key={line} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          background: "var(--blue-100)",
+                          color: "var(--blue-700)",
+                          fontFamily: "var(--font-metric)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span style={{ fontSize: 14.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.55 }}>
+                        {line}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </>
+          )}
         </Card>
 
         {error && (
@@ -550,17 +620,28 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        {step < totalSteps - 1 ? (
+        {step < summaryStep - 1 ? (
           <Button type="button" variant="clay" fullWidth size="lg" onClick={() => setStep((s) => s + 1)}>
             {L.ui.continue}
           </Button>
-        ) : (
+        ) : step === summaryStep - 1 ? (
           <Button type="submit" variant="clay" fullWidth size="lg" disabled={isSubmitting}>
             {isSubmitting ? L.ui.settingUp : L.ui.continueToDashboard}
           </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="clay"
+            fullWidth
+            size="lg"
+            iconRight="arrow-right"
+            onClick={() => router.replace("/dashboard")}
+          >
+            {L.summary.goToDashboard}
+          </Button>
         )}
 
-        {step > 0 && (
+        {step > 0 && step < summaryStep && (
           <div style={{ textAlign: "center", marginTop: 12 }}>
             <Button type="button" variant="ghost" iconLeft="chevron-left" onClick={() => setStep((s) => s - 1)}>
               {L.ui.back}
