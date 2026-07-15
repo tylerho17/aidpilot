@@ -8,7 +8,6 @@ const PROTECTED_ROUTES = [
   "/documents",
   "/deadlines",
   "/fafsa",
-  "/scholarships",
   "/aid-letter",
   "/aid-money",
   "/docs-dates",
@@ -17,19 +16,18 @@ const PROTECTED_ROUTES = [
   "/report/scholarships",
 ];
 
-// Design IA consolidates 9 destinations into 4 tabs. Old top-level routes
-// redirect to their merged tab (sub-routes like /aid-letter/compare stay).
+// Design IA: three tabs (Dashboard · Protect · FAFSA Plan). Old top-level
+// routes redirect to their merged home (sub-routes like /aid-letter/compare
+// stay). /protect and /scholarships are real destinations now - /protect is
+// a tab, /scholarships shows the coming-soon screen (public, demo-friendly).
 const MERGED_REDIRECTS: Record<string, string> = {
-  "/scholarships": "/aid-money",
   "/aid-letter": "/aid-money",
   "/documents": "/docs-dates",
   "/deadlines": "/docs-dates",
-  "/protect": "/dashboard",
-  // Old standalone destinations the design's 4-tab IA folds into a tab:
   "/checklist": "/dashboard",
-  "/actions": "/dashboard",
+  "/actions": "/protect",
   "/report": "/dashboard",
-  "/report/scholarships": "/aid-money",
+  "/report/scholarships": "/scholarships",
 };
 
 export async function middleware(request: NextRequest) {
