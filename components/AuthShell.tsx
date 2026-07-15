@@ -1,6 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { Button, Logo, TextField } from "@/components/ui";
+import { useLanguage } from "@/lib/i18n";
+
+const SHELL_STRINGS = {
+  en: {
+    disclaimer: "AidPilot does not collect FAFSA login credentials, Social Security numbers, or tax documents.",
+  },
+  es: {
+    disclaimer: "AidPilot no recopila credenciales de FAFSA, números de Seguro Social ni documentos de impuestos.",
+  },
+};
 
 export function AuthShell({
   title,
@@ -13,6 +25,7 @@ export function AuthShell({
   children: ReactNode;
   footer: ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       style={{
@@ -87,7 +100,7 @@ export function AuthShell({
             textAlign: "center",
           }}
         >
-          AidPilot does not collect FAFSA login credentials, Social Security numbers, or tax documents.
+          {t(SHELL_STRINGS).disclaimer}
         </p>
       </div>
     </div>

@@ -5,9 +5,35 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthButton, AuthInput, AuthShell } from "@/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
+
+const STRINGS = {
+  en: {
+    title: "Welcome back",
+    subtitle: "Log in to your weekly aid check-in.",
+    email: "Email",
+    password: "Password",
+    submit: "Log in",
+    genericError: "Could not sign in. Please try again.",
+    footerLead: "New to AidPilot?",
+    footerLink: "Create an account",
+  },
+  es: {
+    title: "Bienvenido de nuevo",
+    subtitle: "Inicia sesión para revisar tu ayuda semanal.",
+    email: "Correo electrónico",
+    password: "Contraseña",
+    submit: "Iniciar sesión",
+    genericError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    footerLead: "¿Nuevo en AidPilot?",
+    footerLink: "Crear una cuenta",
+  },
+};
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const s = t(STRINGS);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +54,7 @@ export default function LoginPage() {
     }
 
     if (!data.user) {
-      setError("Could not sign in. Please try again.");
+      setError(s.genericError);
       setLoading(false);
       return;
     }
@@ -49,13 +75,13 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Welcome back"
-      subtitle="Log in to your weekly aid check-in."
+      title={s.title}
+      subtitle={s.subtitle}
       footer={
         <>
-          New to AidPilot?{" "}
+          {s.footerLead}{" "}
           <Link href="/signup" style={{ color: "var(--color-link)", fontWeight: 700, textDecoration: "none" }}>
-            Create an account
+            {s.footerLink}
           </Link>
         </>
       }
@@ -64,14 +90,14 @@ export default function LoginPage() {
         <AuthInput
           required
           type="email"
-          placeholder="Email"
+          placeholder={s.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <AuthInput
           required
           type="password"
-          placeholder="Password"
+          placeholder={s.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -80,7 +106,7 @@ export default function LoginPage() {
             {error}
           </p>
         )}
-        <AuthButton loading={loading}>Log in</AuthButton>
+        <AuthButton loading={loading}>{s.submit}</AuthButton>
       </form>
     </AuthShell>
   );

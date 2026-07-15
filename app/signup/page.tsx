@@ -5,9 +5,35 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthButton, AuthInput, AuthShell } from "@/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
+
+const STRINGS = {
+  en: {
+    title: "Create your account",
+    subtitle: "Start protecting your aid and finding scholarships matched to you.",
+    firstName: "First name",
+    email: "Email",
+    password: "Password (6+ characters)",
+    submit: "Create account",
+    footerLead: "Already have an account?",
+    footerLink: "Log in",
+  },
+  es: {
+    title: "Crea tu cuenta",
+    subtitle: "Empieza a proteger tu ayuda y a encontrar becas hechas para ti.",
+    firstName: "Nombre",
+    email: "Correo electrónico",
+    password: "Contraseña (6+ caracteres)",
+    submit: "Crear cuenta",
+    footerLead: "¿Ya tienes una cuenta?",
+    footerLink: "Iniciar sesión",
+  },
+};
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const s = t(STRINGS);
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,13 +67,13 @@ export default function SignupPage() {
 
   return (
     <AuthShell
-      title="Create your AidPilot account"
-      subtitle="Start protecting your aid and finding scholarships matched to you."
+      title={s.title}
+      subtitle={s.subtitle}
       footer={
         <>
-          Already have an account?{" "}
+          {s.footerLead}{" "}
           <Link href="/login" style={{ color: "var(--color-link)", fontWeight: 700, textDecoration: "none" }}>
-            Log in
+            {s.footerLink}
           </Link>
         </>
       }
@@ -56,21 +82,21 @@ export default function SignupPage() {
         <AuthInput
           required
           type="text"
-          placeholder="First name"
+          placeholder={s.firstName}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
         <AuthInput
           required
           type="email"
-          placeholder="Email"
+          placeholder={s.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <AuthInput
           required
           type="password"
-          placeholder="Password (6+ characters)"
+          placeholder={s.password}
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -80,7 +106,7 @@ export default function SignupPage() {
             {error}
           </p>
         )}
-        <AuthButton loading={loading}>Create account</AuthButton>
+        <AuthButton loading={loading}>{s.submit}</AuthButton>
       </form>
     </AuthShell>
   );
