@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Card, Badge, Icon } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -46,7 +46,14 @@ const HELPER_ROWS: { key: "whatItMeans" | "documentNeeded" | "commonError"; icon
 
 const STORAGE_KEY = "aidpilot-fafsa-guide-reviewed";
 
-function loadReviewed(): Set<string> {
+/* Reviewed marks live in a tiny module store backed by localStorage (same
+   pattern as lib/i18n): the server renders none, the client adopts the stored
+   set at hydration without a mismatch. */
+const EMPTY_REVIEWED: ReadonlySet<string> = new Set();
+let reviewedCache: ReadonlySet<string> | null = null;
+const reviewedListeners = new Set<() => void>();
+
+function loadReviewed(): ReadonlySet<string> {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
@@ -54,6 +61,31 @@ function loadReviewed(): Set<string> {
   } catch {
     return new Set();
   }
+}
+
+function getReviewedSnapshot(): ReadonlySet<string> {
+  if (!reviewedCache) reviewedCache = loadReviewed();
+  return reviewedCache;
+}
+
+function subscribeReviewed(listener: () => void): () => void {
+  reviewedListeners.add(listener);
+  return () => {
+    reviewedListeners.delete(listener);
+  };
+}
+
+function toggleReviewedKey(key: string): void {
+  const next = new Set(getReviewedSnapshot());
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  reviewedCache = next;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+  } catch {
+    // Storage unavailable - the in-memory toggle still applies this session.
+  }
+  reviewedListeners.forEach((notify) => notify());
 }
 
 function FieldRow({
@@ -170,7 +202,7 @@ function GuideSectionCard({
 }: {
   section: GuideSection;
   path: string;
-  reviewed: Set<string>;
+  reviewed: ReadonlySet<string>;
   onToggleReviewed: (key: string) => void;
 }) {
   const { t } = useLanguage();
@@ -249,27 +281,7 @@ export function FafsaGuide({ path = "fafsa" }: { path?: "fafsa" | "cadaa" }) {
   const s = t(STRINGS);
   const sections = path === "cadaa" ? CADAA_GUIDE : FAFSA_GUIDE;
 
-  const [reviewed, setReviewed] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    setReviewed(loadReviewed());
-  }, []);
-
-  const toggleReviewed = useMemo(
-    () => (key: string) => {
-      setReviewed((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) next.delete(key);
-        else next.add(key);
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
-        } catch {
-          // Storage unavailable - the in-memory toggle still applies.
-        }
-        return next;
-      });
-    },
-    []
-  );
+  const reviewed = useSyncExternalStore(subscribeReviewed, getReviewedSnapshot, () => EMPTY_REVIEWED);
 
   return (
     <div>
@@ -284,7 +296,7 @@ export function FafsaGuide({ path = "fafsa" }: { path?: "fafsa" | "cadaa" }) {
             section={section}
             path={path}
             reviewed={reviewed}
-            onToggleReviewed={toggleReviewed}
+            onToggleReviewed={toggleReviewedKey}
           />
         ))}
       </div>
