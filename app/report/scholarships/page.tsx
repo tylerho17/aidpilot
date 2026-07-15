@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import ScholarshipReportClient from "@/components/product/ScholarshipReportClient";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Weekly Scholarship Report | AidPilot",
-  description: "Your top 7 scholarship matches for this week.",
-};
-
+// The scholarship report retires with the tracker (coming soon).
 export default function ScholarshipReportPage() {
-  return <ScholarshipReportClient />;
+  redirect("/scholarships");
 }

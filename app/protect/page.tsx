@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import ProtectHubClient from "@/components/protect/ProtectHubClient";
+import { AppChrome } from "@/components/app/AppChrome";
+import { ProtectScreen } from "@/components/app/screens/ProtectScreen";
 
 export const metadata: Metadata = {
   title: "Protect Your Aid | AidPilot",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ProtectPage() {
-  return <ProtectHubClient />;
+  return (
+    <AppChrome>
+      <ProtectScreen />
+    </AppChrome>
+  );
 }

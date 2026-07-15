@@ -1,5 +1,6 @@
-import DocumentsClient from "@/components/product/DocumentsClient";
+import { redirect } from "next/navigation";
 
+// Documents now live in the Docs & Dates surface (reached from the Dashboard).
 export default function DocumentsPage() {
-  return <DocumentsClient />;
+  redirect("/docs-dates");
 }

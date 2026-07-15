@@ -1,5 +1,6 @@
-import DeadlinesClient from "@/components/product/DeadlinesClient";
+import { redirect } from "next/navigation";
 
+// Deadlines now live in the Docs & Dates surface (reached from the Dashboard).
 export default function DeadlinesPage() {
-  return <DeadlinesClient />;
+  redirect("/docs-dates");
 }

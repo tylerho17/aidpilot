@@ -11,6 +11,7 @@ export {
   makeDemoScholarships,
   makeDemoOffers,
   makeDemoFafsaSteps,
+  makeDemoProtectSnapshot,
   DEMO_PROTECT_PANEL,
 } from "./fixtures";
 

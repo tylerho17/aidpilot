@@ -1,5 +1,6 @@
-import ChecklistClient from "@/components/product/ChecklistClient";
+import { redirect } from "next/navigation";
 
+// The weekly check-in folded into the Dashboard.
 export default function ChecklistPage() {
-  return <ChecklistClient />;
+  redirect("/dashboard");
 }

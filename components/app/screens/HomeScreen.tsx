@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { CSSProperties } from "react";
-import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge } from "@/components/ui";
+import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge, IconTile, Icon } from "@/components/ui";
 import { Greeting, SectionTitle } from "@/components/app/screens/shared";
+import { ComingSoonCard } from "@/components/app/ComingSoonCard";
 import { useUserData } from "@/hooks/useUserData";
 import { useProtectHub } from "@/hooks/useProtectHub";
 import { useAidOffers } from "@/hooks/useAidOffers";
@@ -345,6 +347,63 @@ export function HomeScreen() {
           </div>
         )}
       </Card>
+
+      <div style={{ marginTop: 28 }}>
+        <SectionTitle>More tools</SectionTitle>
+        <div
+          className="stagger-children"
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 28 }}
+        >
+          <ToolLinkCard
+            href="/aid-money"
+            icon="star"
+            tone="blue"
+            title="Aid & Money"
+            sub="Offers, scholarships, and your money picture"
+          />
+          <ToolLinkCard
+            href="/docs-dates"
+            icon="calendar"
+            tone="amber"
+            title="Docs & Dates"
+            sub="Every document and deadline in one place"
+          />
+        </div>
+
+        <SectionTitle>Coming soon</SectionTitle>
+        <ComingSoonCard />
+      </div>
     </div>
+  );
+}
+
+function ToolLinkCard({
+  href,
+  icon,
+  tone,
+  title,
+  sub,
+}: {
+  href: string;
+  icon: string;
+  tone: "blue" | "amber" | "green" | "coral";
+  title: string;
+  sub: string;
+}) {
+  return (
+    <Link href={href} style={{ textDecoration: "none" }}>
+      <Card variant="clay" padding={18} lift style={{ display: "flex", alignItems: "center", gap: 14, height: "100%" }}>
+        <IconTile icon={icon} tone={tone} size={44} />
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="font-display" style={{ display: "block", fontSize: 15.5, fontWeight: 800, color: "var(--ink-900)" }}>
+            {title}
+          </span>
+          <span style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--gray-500)", marginTop: 2 }}>
+            {sub}
+          </span>
+        </span>
+        <Icon name="arrow-right" size={17} color="var(--gray-400)" />
+      </Card>
+    </Link>
   );
 }

@@ -3,42 +3,34 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo, TabBar, Avatar, IconButton, Icon } from "@/components/ui";
+import { Logo, TabBar, Avatar, Icon } from "@/components/ui";
 import { useUserData } from "@/hooks/useUserData";
+import { useLanguage } from "@/lib/i18n";
 import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
 import { getInitials } from "@/lib/data-helpers";
 
 /**
  * AidPilot signed-in app chrome - the Claymorphism × Material top bar that
- * replaces the old blue sidebar. Logo (left) · centered 4-tab TabBar · profile
- * menu (right). The four tabs consolidate the product per the design IA:
- * Home, FAFSA, Aid & Money, Docs & Dates.
+ * replaces the old blue sidebar. Logo (left) · centered 3-tab TabBar · profile
+ * menu (right). The three tabs consolidate the product per the design IA:
+ * Dashboard, Protect, FAFSA Plan. Aid & Money and Docs & Dates surfaces stay
+ * reachable from the Dashboard and light up the Dashboard tab.
  */
 
-type TabKey = "home" | "fafsa" | "money" | "tasks";
+type TabKey = "home" | "protect" | "fafsa";
 
-const TABS: { key: TabKey; label: string; icon: string; route: string }[] = [
-  { key: "home", label: "Home", icon: "grid", route: "/dashboard" },
-  { key: "fafsa", label: "FAFSA", icon: "clipboard", route: "/fafsa" },
-  { key: "money", label: "Aid & Money", icon: "star", route: "/aid-money" },
-  { key: "tasks", label: "Docs & Dates", icon: "calendar", route: "/docs-dates" },
+const TABS: { key: TabKey; label: { en: string; es: string }; icon: string; route: string }[] = [
+  { key: "home", label: { en: "Dashboard", es: "Panel" }, icon: "grid", route: "/dashboard" },
+  { key: "protect", label: { en: "Protect", es: "Proteger" }, icon: "shield", route: "/protect" },
+  { key: "fafsa", label: { en: "FAFSA Plan", es: "Plan FAFSA" }, icon: "clipboard", route: "/fafsa" },
 ];
 
 // Old routes that were merged into a tab still light up their new home.
 function activeTab(pathname: string): TabKey {
+  if (pathname.startsWith("/protect")) return "protect";
   if (pathname.startsWith("/fafsa")) return "fafsa";
-  if (
-    pathname.startsWith("/aid-money") ||
-    pathname.startsWith("/aid-letter") ||
-    pathname.startsWith("/scholarships")
-  )
-    return "money";
-  if (
-    pathname.startsWith("/docs-dates") ||
-    pathname.startsWith("/documents") ||
-    pathname.startsWith("/deadlines")
-  )
-    return "tasks";
+  // Everything else - /aid-money, /docs-dates, /aid-letter, /scholarships,
+  // /documents, /deadlines, /schools - rolls up to the Dashboard tab.
   return "home";
 }
 
@@ -170,6 +162,7 @@ function ProfileMenu() {
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
   const active = activeTab(pathname || "/dashboard");
 
   return (
@@ -196,15 +189,14 @@ export function AppChrome({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <TabBar
-          tabs={TABS.map(({ key, label, icon }) => ({ key, label, icon }))}
+          tabs={TABS.map(({ key, label, icon }) => ({ key, label: t(label), icon }))}
           active={active}
           onChange={(key) => {
-            const tab = TABS.find((t) => t.key === key);
+            const tab = TABS.find((entry) => entry.key === key);
             if (tab) router.push(tab.route);
           }}
         />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flexShrink: 0 }}>
-          <IconButton icon="shield" variant="soft" aria-label="Help & protection" />
           <ProfileMenu />
         </div>
       </header>

@@ -6,6 +6,7 @@ import type {
   UserAidOffer,
   UserFafsaStep,
 } from "@/lib/types";
+import type { ProtectStatusSnapshot } from "@/lib/protect/getProtectStatus";
 import { DEMO_ID_PREFIX } from "./config";
 
 /**
@@ -315,6 +316,59 @@ export function makeDemoFafsaSteps(): UserFafsaStep[] {
       source_url: null,
     },
   }));
+}
+
+/* ── Protect tab snapshot - the same coherent story, mid-flight ── */
+export function makeDemoProtectSnapshot(): ProtectStatusSnapshot {
+  return {
+    overallStatus: "in_progress",
+    headline: "Your aid protection is in progress",
+    description:
+      "You are tracking the right things. Keep checking for school portal, verification, and offer updates.",
+    topAction: null,
+    categories: [
+      {
+        key: "fafsa",
+        title: "FAFSA Guide",
+        status: "in_progress",
+        href: "/fafsa",
+        ctaLabel: "Continue FAFSA",
+        summaryLines: ["3 of 8 steps complete", "Next: Consent to the IRS data transfer"],
+      },
+      {
+        key: "school_follow_up",
+        title: "School Follow-Up",
+        status: "in_progress",
+        href: "/fafsa/follow-up",
+        ctaLabel: "Open Follow-Up Tracker",
+        summaryLines: ["2 schools tracked", "1 portal not checked", "0 document requests"],
+      },
+      {
+        key: "verification",
+        title: "Verification",
+        status: "needs_attention",
+        href: "/fafsa/follow-up",
+        ctaLabel: "Track Verification",
+        summaryLines: [
+          "1 verification request",
+          "1 verification task needing action",
+          "Aid may not be final until verification is complete.",
+        ],
+      },
+      {
+        key: "aid_offers",
+        title: "Aid Offers",
+        status: "needs_attention",
+        href: "/aid-letter",
+        ctaLabel: "Open Aid Offer Decoder",
+        summaryLines: [
+          "1 aid offer added",
+          "1 unreviewed offer",
+          "Highest remaining gap: $16,300 (Stanford University)",
+        ],
+      },
+    ],
+  };
 }
 
 /* ── Home status-panel narrative when demo data is active ── */
