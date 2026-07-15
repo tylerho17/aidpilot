@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, StatusPanel, ProgressBar, ChecklistItem, Button } from "@/components/ui";
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
+import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { useUserData } from "@/hooks/useUserData";
 import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
 import type { UserFafsaStep } from "@/lib/types";
@@ -190,6 +191,11 @@ export default function FafsaScreen() {
             "Take it one step at a time. We never ask for your login or documents."}
         </StatusPanel>
       )}
+
+      {/* Sourced, read-only guide to the real FAFSA structure (see lib/fafsa-guide). */}
+      <div style={{ marginTop: 32 }}>
+        <FafsaGuide path="fafsa" />
+      </div>
     </div>
   );
 }

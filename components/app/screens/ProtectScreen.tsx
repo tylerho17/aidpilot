@@ -106,7 +106,7 @@ function NextActionCard({ action, heading }: { action: AidAction; heading: strin
       <SectionTitle>{heading}</SectionTitle>
       <Card variant="clay" padding={20} style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <IconTile icon="flag" tone={action.priority === "urgent" ? "coral" : "amber"} size={46} />
+          <IconTile icon="calendar-check" tone={action.priority === "urgent" ? "coral" : "amber"} size={46} />
           <div style={{ flex: 1, minWidth: 220 }}>
             <div className="font-display" style={{ fontSize: 16.5, fontWeight: 800, color: "var(--ink-900)" }}>
               {action.title}
