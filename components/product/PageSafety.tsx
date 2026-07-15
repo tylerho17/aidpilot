@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { PageContentSkeleton, ProductCard } from "@/components/ProductUI";
 import { toFriendlyError } from "@/lib/friendly-errors";
 
 export function PageLoading({ message }: { message: string }) {
   return (
-    <AppShell>
+    <div style={{ minHeight: "60vh", maxWidth: "var(--content-max)", margin: "0 auto", padding: "var(--pad-page)" }}>
       <PageContentSkeleton message={message} />
-    </AppShell>
+    </div>
   );
 }
 

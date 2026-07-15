@@ -1,11 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
 
-export const PlaneSVG = ({ size = 18, color = "#fff", strokeWidth = 2 }: { size?: number; color?: string; strokeWidth?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 11.5 21 3l-7 18-3.2-7.3L3 11.5Z" />
-  </svg>
-);
-
 export const CheckSVG = ({ size = 13, color = "#fff", strokeWidth = 3 }: { size?: number; color?: string; strokeWidth?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
     <polyline points="5 13 10 18 19 6" />
