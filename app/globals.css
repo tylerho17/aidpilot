@@ -297,6 +297,26 @@ body {
 /* Progress bars ease their width */
 .progress-fill { transition: width var(--duration-slow) var(--ease-spring); }
 
+/* ── Marketing responsiveness - the landing hero/steps are inline-styled
+   grids, so these overrides collapse them on small screens. The desk scene
+   scales as one unit to keep its absolutely-positioned props composed. ── */
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr !important; gap: 44px !important; }
+  .hero-desk {
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    transform: scale(0.88);
+    transform-origin: top center;
+    height: 430px !important;
+  }
+  .steps-grid { grid-template-columns: 1fr !important; }
+  .steps-grid > div:first-child { display: none; } /* dashed connector line */
+}
+@media (max-width: 600px) {
+  .hero-desk { transform: scale(0.64); height: 330px !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
   .card-lift:hover { transform: none; }

@@ -33,6 +33,22 @@ function syncStatusForError(error: unknown): FafsaProgressSyncStatus {
   return isRecoverableWithLocalFallback(error) ? "local-only" : "sync-error";
 }
 
+/* A missing table/network blip is an expected, locally-recoverable state
+   (e.g. supabase/020_fafsa_step_progress.sql not applied yet) - warn once per
+   session instead of erroring on every mount. Real failures still error. */
+let warnedRecoverableSync = false;
+
+function logSyncFailure(error: unknown): void {
+  if (isRecoverableWithLocalFallback(error)) {
+    if (!warnedRecoverableSync) {
+      warnedRecoverableSync = true;
+      console.warn("FAFSA progress cloud sync unavailable - using device-local progress.", error);
+    }
+    return;
+  }
+  console.error("FAFSA progress cloud sync failed:", error);
+}
+
 export function useFafsaProgress() {
   const [completedPlanKeys, setCompletedPlanKeys] = useState<string[]>(readInitialCompletedKeys);
   const [syncStatus, setSyncStatus] = useState<FafsaProgressSyncStatus>("idle");
@@ -40,7 +56,7 @@ export function useFafsaProgress() {
   const userIdRef = useRef<string | null>(null);
 
   const applySyncFailure = useCallback((error: unknown) => {
-    console.error("FAFSA progress cloud sync failed:", error);
+    logSyncFailure(error);
     setSyncStatus(syncStatusForError(error));
     setSyncMessage(FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE);
   }, []);

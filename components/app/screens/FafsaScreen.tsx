@@ -5,8 +5,48 @@ import { Card, StatusPanel, ProgressBar, ChecklistItem, Button } from "@/compone
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { useUserData } from "@/hooks/useUserData";
+import { useLanguage } from "@/lib/i18n";
 import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
 import type { UserFafsaStep } from "@/lib/types";
+
+const STRINGS = {
+  en: {
+    title: "FAFSA Plan",
+    subtitle: "Your step-by-step path to a submitted FAFSA - no jargon.",
+    followUp: "Follow-up questions",
+    ready: (pct: number) => `You're ${pct}% ready`,
+    progress: (done: number, total: number) => `${done} of ${total} steps done`,
+    minutesLeft: (m: number) => ` · about ${m} minutes left`,
+    allSet: " · you're all set",
+    yourSteps: "Your steps",
+    next: "Next",
+    allDoneEyebrow: "All done",
+    allDoneTitle: "Every step done - your FAFSA is ready.",
+    allDoneBody: "Nice work. We'll let you know if anything new needs your attention.",
+    doNext: "Do this next",
+    nextStepFallback: "Your next step",
+    start: "Start",
+    nextBodyFallback: "Take it one step at a time. We never ask for your login or documents.",
+  },
+  es: {
+    title: "Plan FAFSA",
+    subtitle: "Tu camino paso a paso hacia una FAFSA enviada - sin jerga.",
+    followUp: "Preguntas de seguimiento",
+    ready: (pct: number) => `Estás ${pct}% listo`,
+    progress: (done: number, total: number) => `${done} de ${total} pasos completados`,
+    minutesLeft: (m: number) => ` · unos ${m} minutos restantes`,
+    allSet: " · todo listo",
+    yourSteps: "Tus pasos",
+    next: "Siguiente",
+    allDoneEyebrow: "Todo listo",
+    allDoneTitle: "Todos los pasos completados - tu FAFSA está lista.",
+    allDoneBody: "Buen trabajo. Te avisaremos si algo nuevo necesita tu atención.",
+    doNext: "Haz esto ahora",
+    nextStepFallback: "Tu siguiente paso",
+    start: "Comenzar",
+    nextBodyFallback: "Ve paso a paso. Nunca pedimos tu contraseña ni tus documentos.",
+  },
+};
 
 /** A FAFSA step counts as done when its status reads complete/completed/done. */
 function isStepDone(step: UserFafsaStep): boolean {
@@ -56,6 +96,8 @@ function FafsaSkeleton() {
 export default function FafsaScreen() {
   const { authReady, loading, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
     useUserData();
+  const { t } = useLanguage();
+  const s = t(STRINGS);
   const demo = useDemoMutations();
   const [poppingId, setPoppingId] = useState<string | null>(null);
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,11 +162,11 @@ export default function FafsaScreen() {
   return (
     <div>
       <Greeting
-        title="FAFSA Plan"
-        subtitle="Your step-by-step path to a submitted FAFSA - no jargon."
+        title={s.title}
+        subtitle={s.subtitle}
         action={
           <Button variant="secondary" size="sm">
-            Follow-up questions
+            {s.followUp}
           </Button>
         }
       />
@@ -132,10 +174,10 @@ export default function FafsaScreen() {
       <Card variant="clay" padding={24} style={{ marginBottom: 20, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--blue-50) 150%)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <div className="font-display" style={{ fontSize: 21, fontWeight: 900, color: "var(--ink-900)" }}>You&apos;re {pct}% ready</div>
+            <div className="font-display" style={{ fontSize: 21, fontWeight: 900, color: "var(--ink-900)" }}>{s.ready(pct)}</div>
             <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", marginTop: 3 }}>
-              {done} of {total} steps done
-              {remaining > 0 ? ` · about ${minutesLeft} minutes left` : " · you're all set"}
+              {s.progress(done, total)}
+              {remaining > 0 ? s.minutesLeft(minutesLeft) : s.allSet}
             </div>
           </div>
           <span style={{ ...money, fontSize: 46, color: "var(--blue-700)" }}>{pct}%</span>
@@ -143,7 +185,7 @@ export default function FafsaScreen() {
         <ProgressBar pct={pct} height={12} />
       </Card>
 
-      <SectionTitle>Your steps</SectionTitle>
+      <SectionTitle>{s.yourSteps}</SectionTitle>
       <Card variant="clay" padding={8} className="stagger-children" style={{ marginBottom: 20 }}>
         {steps.map((step, index) => {
           const stepDone = isEffectivelyDone(step);
@@ -154,7 +196,7 @@ export default function FafsaScreen() {
               divider={index < steps.length - 1}
               title={step.workflow_step?.title ?? `Step ${index + 1}`}
               sub={step.workflow_step?.description ?? undefined}
-              badge={isNext ? "Next" : undefined}
+              badge={isNext ? s.next : undefined}
               badgeTone="amber"
               done={stepDone}
               popping={step.id === poppingId}
@@ -168,27 +210,26 @@ export default function FafsaScreen() {
         <StatusPanel
           tone="green"
           icon="shield-check"
-          eyebrow="All done"
-          title="Every step done - your FAFSA is ready."
+          eyebrow={s.allDoneEyebrow}
+          title={s.allDoneTitle}
           style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
         >
-          Nice work. We&apos;ll let you know if anything new needs your attention.
+          {s.allDoneBody}
         </StatusPanel>
       ) : (
         <StatusPanel
           tone="amber"
           icon="clipboard"
-          eyebrow="Do this next"
-          title={nextStep?.workflow_step?.title ?? "Your next step"}
+          eyebrow={s.doNext}
+          title={nextStep?.workflow_step?.title ?? s.nextStepFallback}
           trailing={
             <Button variant="clay" size="sm" iconRight="arrow-right">
-              Start
+              {s.start}
             </Button>
           }
           style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
         >
-          {nextStep?.workflow_step?.description ??
-            "Take it one step at a time. We never ask for your login or documents."}
+          {nextStep?.workflow_step?.description ?? s.nextBodyFallback}
         </StatusPanel>
       )}
 
