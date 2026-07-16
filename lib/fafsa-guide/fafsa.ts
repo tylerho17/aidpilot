@@ -201,9 +201,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Marital status",
           "es": "Marital status"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Report whether you’re married as of the day you complete the FAFSA. Answer “No” if you’re separated but not yet divorced. If you are married, your spouse is usually a contributor who provides their own information.",
+          "es": "Report whether you’re married as of the day you complete the FAFSA. Answer “No” if you’re separated but not yet divorced. If you are married, your spouse is usually a contributor who provides their own information."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Being separated (but not divorced) counts as “not married” on the FAFSA.",
+          "es": "Being separated (but not divorced) counts as “not married” on the FAFSA."
+        }
       },
       {
         "fieldKey": "dependencyStatus",
@@ -211,9 +217,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Dependency questions",
           "es": "Dependency questions"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Your dependency status decides whose information goes on the FAFSA. A dependent student reports their own and their parents’ information; an independent student reports their own (and a spouse’s, if married). The form asks a set of yes/no questions — whether you were born before Jan. 1, 2003, are married, are a graduate or professional student, are a veteran or on active duty, support your own children, were an orphan / ward of the court / in foster care since age 13, are an emancipated minor or in legal guardianship, or are unaccompanied and homeless. Answer “Yes” to any and you’re independent; “No” to all and you’re dependent.",
+          "es": "Your dependency status decides whose information goes on the FAFSA. A dependent student reports their own and their parents’ information; an independent student reports their own (and a spouse’s, if married). The form asks a set of yes/no questions — whether you were born before Jan. 1, 2003, are married, are a graduate or professional student, are a veteran or on active duty, support your own children, were an orphan / ward of the court / in foster care since age 13, are an emancipated minor or in legal guardianship, or are unaccompanied and homeless. Answer “Yes” to any and you’re independent; “No” to all and you’re dependent."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Living apart from your parents — or not being claimed on their tax return — does not make you independent. And if your parents refuse to provide their information, your form can be rejected and you may qualify only for an unsubsidized loan.",
+          "es": "Living apart from your parents — or not being claimed on their tax return — does not make you independent. And if your parents refuse to provide their information, your form can be rejected and you may qualify only for an unsubsidized loan."
+        }
       },
       {
         "fieldKey": "unusualCircumstances",
@@ -221,9 +233,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Unusual circumstances",
           "es": "Unusual circumstances"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "If you can’t provide parent information — for example, you have no contact with your parents, don’t know where they live, or left home because of an abusive situation — answer “Yes” to the FAFSA’s unusual-circumstances question. The system treats you as provisionally independent, and you finish by giving your college’s financial aid office the documentation they ask for.",
+          "es": "If you can’t provide parent information — for example, you have no contact with your parents, don’t know where they live, or left home because of an abusive situation — answer “Yes” to the FAFSA’s unusual-circumstances question. The system treats you as provisionally independent, and you finish by giving your college’s financial aid office the documentation they ask for."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "This is different from parents who simply refuse to help: unusual circumstances (no contact, safety risk) let you file as provisionally independent, while a parent who just won’t provide information can cause your form to be rejected.",
+          "es": "This is different from parents who simply refuse to help: unusual circumstances (no contact, safety risk) let you file as provisionally independent, while a parent who just won’t provide information can cause your form to be rejected."
+        }
       }
     ]
   },

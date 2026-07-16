@@ -87,6 +87,35 @@ benefit and the affidavit.
 
 ---
 
+## Sourced 2026-07-16 (this branch) — FAFSA student circumstances
+
+Sourced from studentaid.gov's Dependency Status page (read for the 2026-27
+award year). English only — `es` is English fallback.
+
+### Marital status
+- Report marital status as of the day you complete the FAFSA; "No" if separated
+  but not divorced. A spouse is usually a contributor.
+
+### Dependency status
+- Dependent → report your + parents' info; independent → your own (+ spouse's).
+  Determined by yes/no questions (born before Jan. 1 2003; married; grad/professional
+  student; veteran/active duty; supporting own children; orphan/ward/foster since 13;
+  emancipated minor/legal guardianship; unaccompanied homeless). Any "Yes" → independent.
+  Living apart or not being claimed on a tax return does NOT make you independent;
+  parents refusing to provide info can get the form rejected (possibly unsubsidized loan only).
+
+### Unusual circumstances
+- No contact / unknown location / abuse → answer "Yes" to the unusual-circumstances
+  question → provisionally independent, then submit documentation to the school's
+  financial aid office. Distinct from parents who simply refuse to help.
+
+- **Source:** <https://studentaid.gov/apply-for-aid/fafsa/filling-out/dependency>
+
+**Placed in:** `walkthrough.fafsa.sections.studentCircumstances.fields.{maritalStatus,
+dependencyStatus, unusualCircumstances}.*`.
+
+---
+
 ## NOT yet sourced (stays `null` — next human pass)
 
 FAFSA circumstances (marital/dependency/unusual), demographics (gender,
