@@ -7,6 +7,7 @@ import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge, IconTile, Ic
 import { Greeting, SectionTitle } from "@/components/app/screens/shared";
 import { ComingSoonCard } from "@/components/app/ComingSoonCard";
 import { StreakBadge } from "@/components/app/StreakBadge";
+import { GetStartedSpotlight } from "@/components/app/GetStartedSpotlight";
 import { useUserData } from "@/hooks/useUserData";
 import { useProtectHub } from "@/hooks/useProtectHub";
 import { useAidOffers } from "@/hooks/useAidOffers";
@@ -238,6 +239,8 @@ export function HomeScreen() {
           </div>
         }
       />
+
+      <GetStartedSpotlight />
 
       <StatusPanel
         tone={panel.tone}
