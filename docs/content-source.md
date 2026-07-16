@@ -106,6 +106,30 @@ reuse FAFSA IRS-import language (standing guardrail). English only.
 
 ---
 
+## Sourced 2026-07-16 (this branch) — FAFSA parent income + CADAA dependency/household/identity
+
+**FAFSA parent income:** parent gives consent to import 2024 federal tax info
+(required even if they didn't file; imports automatically). Grounded in the
+existing consent + 2024-tax ledger content. Placed in
+`…fafsa.parentFinancials.parentIncome.whatItMeans`.
+
+**CADAA dependency/household** (CSAC <https://csac.ca.gov/cadaa-and-eligibility>,
+2026-27 CADAA form): dependent students report parent household info regardless
+of living/support; household = student + parent(s) (+ spouse/partner) + siblings
+and other dependents the parents support. **Stale age cutoffs from older CADAA
+forms were deliberately omitted** - dependency mirrors the FAFSA questions for
+the current year. Placed in `…cadaa.studentCircumstances.{maritalStatus,
+dependencyStatus}.whatItMeans`, `…parentFinancials.familySize.whatItMeans`.
+
+**CADAA identity** (portal/entry guidance anchored to the CSAC facts already in
+the ledger - account at dream.csac.ca.gov; Dream ID emailed after submit ->
+WebGrants 4 Students; parent signs with a reusable Parent PIN). Placed in
+`…cadaa.studentIdentity.{fullName, dateOfBirth, email, phone,
+mailingAddress}.whatItMeans`, `…parentInformation.{parentDateOfBirth,
+parentEmail}.whatItMeans`.
+
+---
+
 ## Sourced 2026-07-16 (this branch) — FAFSA student circumstances
 
 Sourced from studentaid.gov's Dependency Status page (read for the 2026-27

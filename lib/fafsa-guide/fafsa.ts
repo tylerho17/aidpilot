@@ -517,7 +517,10 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Parent income",
           "es": "Parent income"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Your parent gives consent to import their federal tax information from the IRS — required for federal aid even if they didn’t file a return. The 2026–27 form uses 2024 tax information, which imports automatically once they consent.",
+          "es": "Your parent gives consent to import their federal tax information from the IRS — required for federal aid even if they didn’t file a return. The 2026–27 form uses 2024 tax information, which imports automatically once they consent."
+        },
         "documentNeeded": null,
         "commonError": {
           "en": "If income dropped since 2024 (a job loss, for example), complete the form as instructed, then contact the school’s financial aid office to request an aid adjustment — you can’t update a processed FAFSA with new tax information yourself.",

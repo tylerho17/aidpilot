@@ -39,7 +39,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Full legal name",
           "es": "Full legal name"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Create your login at dream.csac.ca.gov and enter your full legal name accurately — the CADAA is filed through CSAC, not StudentAid.gov.",
+          "es": "Create your login at dream.csac.ca.gov and enter your full legal name accurately — the CADAA is filed through CSAC, not StudentAid.gov."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -49,7 +52,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Date of birth",
           "es": "Date of birth"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your date of birth accurately so it matches your dream.csac.ca.gov account.",
+          "es": "Enter your date of birth accurately so it matches your dream.csac.ca.gov account."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -88,7 +94,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Email address",
           "es": "Email address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your own email. After you submit, CSAC emails your nine-digit Dream ID here — you’ll use it to create a WebGrants 4 Students account and check your status.",
+          "es": "Use your own email. After you submit, CSAC emails your nine-digit Dream ID here — you’ll use it to create a WebGrants 4 Students account and check your status."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -98,7 +107,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Phone number",
           "es": "Phone number"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your own phone number for account access and updates.",
+          "es": "Use your own phone number for account access and updates."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -108,7 +120,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Mailing address",
           "es": "Mailing address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your current mailing address.",
+          "es": "Enter your current mailing address."
+        },
         "documentNeeded": null,
         "commonError": null
       }
@@ -170,7 +185,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Marital status",
           "es": "Marital status"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Report your marital status as of the day you complete the CADAA. If you’re married, your spouse’s information is included.",
+          "es": "Report your marital status as of the day you complete the CADAA. If you’re married, your spouse’s information is included."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -180,7 +198,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Dependency questions",
           "es": "Dependency questions"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "If you’re a dependent student, you provide your own and your parents’ household information — even if you don’t live with them or don’t receive their financial support. Whether you’re dependent or independent depends on questions like your age, marriage, whether you support your own children, or whether you’re a veteran, an orphan or ward of the court, or at risk of homelessness. Some exceptions apply — ask your school.",
+          "es": "If you’re a dependent student, you provide your own and your parents’ household information — even if you don’t live with them or don’t receive their financial support. Whether you’re dependent or independent depends on questions like your age, marriage, whether you support your own children, or whether you’re a veteran, an orphan or ward of the court, or at risk of homelessness. Some exceptions apply — ask your school."
+        },
         "documentNeeded": null,
         "commonError": null
       }
@@ -287,7 +308,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Parent full legal name",
           "es": "Parent full legal name"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your parent’s full legal name accurately for their part of the CADAA.",
+          "es": "Enter your parent’s full legal name accurately for their part of the CADAA."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -297,7 +321,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Parent date of birth",
           "es": "Parent date of birth"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your parent’s date of birth accurately for their part of the application.",
+          "es": "Enter your parent’s date of birth accurately for their part of the application."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -307,7 +334,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Parent email address",
           "es": "Parent email address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your parent’s own email so they can sign their section. On the CADAA, a dependent student’s parent signs with a Parent PIN — save it, since it’s reused each year.",
+          "es": "Use your parent’s own email so they can sign their section. On the CADAA, a dependent student’s parent signs with a Parent PIN — save it, since it’s reused each year."
+        },
         "documentNeeded": null,
         "commonError": null
       }
@@ -372,7 +402,10 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Family size",
           "es": "Family size"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Household size generally includes you, your parent(s) — and a parent’s spouse or partner if married — and the siblings and other dependents your parents financially support.",
+          "es": "Household size generally includes you, your parent(s) — and a parent’s spouse or partner if married — and the siblings and other dependents your parents financially support."
+        },
         "documentNeeded": null,
         "commonError": null
       }
