@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito, Hanken_Grotesk, Rubik } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ClientProviders } from "@/components/providers/ClientProviders";
 import "./globals.css";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ClientProviders>{children}</ClientProviders>
+        <Analytics />
       </body>
     </html>
   );
