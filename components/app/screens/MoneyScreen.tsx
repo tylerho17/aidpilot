@@ -161,7 +161,9 @@ function ScholarshipCard({
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 2 }}>
         <Badge tone={due.tone} dot>{due.text}</Badge>
-        <Button variant="clay" size="sm" iconRight="arrow-right">Apply</Button>
+        <Link href="/scholarships" style={{ textDecoration: "none" }}>
+          <Button variant="clay" size="sm" iconRight="arrow-right">Apply</Button>
+        </Link>
       </div>
     </Card>
   );
@@ -194,7 +196,26 @@ function LoadingSkeleton() {
   );
 }
 
-function OfferSection({ offer }: { offer: UserAidOffer | null }) {
+/** Plain-language meaning of each aid category - shown inline (no navigation)
+ * so the decode story is self-contained on this screen, demo included. */
+const CATEGORY_MEANINGS: { dot: string; label: string; body: string }[] = [
+  { dot: "var(--green-600)", label: "Grants & scholarships", body: "Free money - you never pay it back. The more of your cost this covers, the better the offer." },
+  { dot: "var(--blue-500)", label: "Work-study", body: "Money you earn from a part-time job the school helps arrange. It is not handed to you up front." },
+  { dot: "var(--amber-600)", label: "Loans offered", body: "Borrowed money you repay with interest. Loans are optional - you can accept part, all, or none." },
+  { dot: "var(--coral-600)", label: "Out-of-pocket", body: "What is left after grants, work-study, and any loans you accept. This is the real number to plan around." },
+];
+
+function OfferSection({
+  offer,
+  isDemo,
+  offerCount,
+}: {
+  offer: UserAidOffer | null;
+  isDemo: boolean;
+  offerCount: number;
+}) {
+  const [showExplainer, setShowExplainer] = useState(false);
+
   if (!offer) {
     return (
       <>
@@ -226,7 +247,18 @@ function OfferSection({ offer }: { offer: UserAidOffer | null }) {
 
   return (
     <>
-      <SectionTitle action={<Button variant="ghost" size="sm">Compare offers</Button>}>Your aid offer</SectionTitle>
+      <SectionTitle
+        action={
+          // Compare only makes sense with more than one real offer.
+          !isDemo && offerCount >= 2 ? (
+            <Link href="/aid-letter/compare" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">Compare offers</Button>
+            </Link>
+          ) : undefined
+        }
+      >
+        Your aid offer
+      </SectionTitle>
       <Card variant="clay" padding={24} style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}>
           <div>
@@ -250,12 +282,37 @@ function OfferSection({ offer }: { offer: UserAidOffer | null }) {
           <OfferRow dot="var(--amber-600)" label="Loans offered" note="optional - you can decline" value={usd(loans)} valueColor="var(--amber-600)" />
           <OfferRow dot="var(--coral-600)" label="Out-of-pocket" value={usd(outOfPocket)} valueColor="var(--coral-600)" />
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-card)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-card)", flexWrap: "wrap", gap: 10 }}>
           <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gray-500)" }}>Grants cover most of your cost - loans are optional.</span>
-          <Link href="/aid-letter" style={{ textDecoration: "none" }}>
-            <Button variant="clay" size="sm" iconRight="arrow-right">Full breakdown</Button>
-          </Link>
+          {isDemo ? (
+            <Button
+              variant="clay"
+              size="sm"
+              iconRight={showExplainer ? undefined : "chevron-down"}
+              onClick={() => setShowExplainer((v) => !v)}
+            >
+              {showExplainer ? "Hide breakdown" : "What each part means"}
+            </Button>
+          ) : (
+            <Link href="/aid-letter" style={{ textDecoration: "none" }}>
+              <Button variant="clay" size="sm" iconRight="arrow-right">Full breakdown</Button>
+            </Link>
+          )}
         </div>
+
+        {isDemo && showExplainer && (
+          <div className="animate-slide-in" style={{ marginTop: 14, display: "grid", gap: 12 }}>
+            {CATEGORY_MEANINGS.map((m) => (
+              <div key={m.label} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: m.dot, flexShrink: 0, marginTop: 5 }} />
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-800)" }}>{m.label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.55, marginTop: 1 }}>{m.body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </>
   );
@@ -272,7 +329,7 @@ function ScholarshipSection({
 
   return (
     <>
-      <SectionTitle action={<Button variant="ghost" size="sm" iconLeft="star">Refresh</Button>}>
+      <SectionTitle action={<Badge tone="blue" dot>Coming soon</Badge>}>
         Scholarship matches · <span style={{ color: "var(--blue-700)" }}>{usd(total)}</span>
       </SectionTitle>
       {matches.length === 0 ? (
@@ -281,7 +338,7 @@ function ScholarshipSection({
             No matches yet
           </div>
           <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", margin: 0, lineHeight: 1.5 }}>
-            Fresh scholarship matches will appear here each week.
+            Scholarship matching is coming soon - here&apos;s a preview of how your matches will look.
           </p>
         </Card>
       ) : (
@@ -329,6 +386,7 @@ export default function MoneyScreen() {
   }
 
   const offer = effectiveOffers[0] ?? null;
+  const offerIsDemo = offer ? isDemo(offer.id) : false;
 
   const handleSave = (id: string) => {
     if (isDemo(id)) {
@@ -341,7 +399,7 @@ export default function MoneyScreen() {
   return (
     <div>
       <Greeting title="Aid & Money" subtitle="Your aid offer, decoded - plus scholarships matched to you." />
-      <OfferSection offer={offer} />
+      <OfferSection offer={offer} isDemo={offerIsDemo} offerCount={effectiveOffers.length} />
       <ScholarshipSection matches={matches} onSave={handleSave} />
       {savingError && (
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-500)", marginTop: 16 }}>

@@ -123,9 +123,9 @@ function DocRow({
         <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gray-400)", marginTop: 2 }}>{sub}</div>
       </div>
       <Badge tone={tone}>{status}</Badge>
-      {needsUpload
-        ? <Button variant="clay" size="sm" onClick={onUpload} loading={uploading}>Upload</Button>
-        : <Button variant="ghost" size="sm" iconRight="arrow-right">View</Button>}
+      {needsUpload && (
+        <Button variant="clay" size="sm" onClick={onUpload} loading={uploading}>Upload</Button>
+      )}
     </Card>
   );
 }
@@ -213,18 +213,15 @@ export function TasksScreen() {
         title="Docs & Dates"
         subtitle="Every deadline and document in one place - caught early."
         action={
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <SegmentedControl
-              size="sm"
-              options={[
-                { value: "list", label: "List" },
-                { value: "calendar", label: "Calendar" },
-              ]}
-              value={datesView}
-              onChange={(v) => setDatesView(v === "calendar" ? "calendar" : "list")}
-            />
-            <Button variant="clay" size="sm" iconLeft="plus">Add</Button>
-          </div>
+          <SegmentedControl
+            size="sm"
+            options={[
+              { value: "list", label: "List" },
+              { value: "calendar", label: "Calendar" },
+            ]}
+            value={datesView}
+            onChange={(v) => setDatesView(v === "calendar" ? "calendar" : "list")}
+          />
         }
       />
 
