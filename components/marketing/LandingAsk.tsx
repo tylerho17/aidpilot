@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Button, Icon } from "@/components/ui";
+import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { SourceBadge } from "@/components/app/SourceBadge";
 import { Tape, paperShadow, linedPaper } from "./skeuo";
 
 /**
@@ -24,13 +26,6 @@ export function LandingAsk() {
   const [answer, setAnswer] = useState("");
   const [shown, setShown] = useState(0); // typewriter cursor
   const [errorMsg, setErrorMsg] = useState("");
-  const typer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (typer.current) clearInterval(typer.current);
-    };
-  }, []);
 
   async function ask(q: string) {
     const trimmed = q.trim();
@@ -40,46 +35,30 @@ export function LandingAsk() {
     setAnswer("");
     setShown(0);
     setErrorMsg("");
-    if (typer.current) clearInterval(typer.current);
 
-    try {
-      const res = await fetch("/api/fafsa-guide/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, lang: "en" }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { answer?: string; error?: string };
-      if (!res.ok || !body.answer) {
-        setStatus("error");
-        setErrorMsg(
-          res.status === 503
-            ? "The copilot is warming up - try the full demo instead."
-            : body.error ?? "Something went wrong. Please try again."
-        );
-        return;
+    // Real streaming - the answer is "written" onto the paper as it arrives.
+    const result = await streamAiAnswer(
+      "/api/fafsa-guide/ask",
+      { question: trimmed, lang: "en" },
+      (partial) => {
+        setStatus("done");
+        setAnswer(partial);
+        setShown(partial.length);
       }
-      setStatus("done");
-      const full = body.answer;
-      setAnswer(full);
-      // Typewriter reveal - respects reduced motion by jumping to full text.
-      const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      if (reduce) {
-        setShown(full.length);
-      } else {
-        typer.current = setInterval(() => {
-          setShown((n) => {
-            if (n >= full.length) {
-              if (typer.current) clearInterval(typer.current);
-              return n;
-            }
-            return Math.min(full.length, n + 2);
-          });
-        }, 14);
-      }
-    } catch {
+    );
+
+    if (!result.ok) {
       setStatus("error");
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsg(
+        result.warming
+          ? "The copilot is warming up - try the full demo instead."
+          : result.error
+      );
+      return;
     }
+    setStatus("done");
+    setAnswer(result.text);
+    setShown(result.text.length);
   }
 
   function onSubmit(e: FormEvent) {
@@ -170,10 +149,13 @@ export function LandingAsk() {
                   <span style={{ fontSize: 15, fontWeight: 600, color: "var(--amber-700)" }}>{errorMsg}</span>
                 )}
                 {status === "done" && (
-                  <p style={{ fontSize: 15.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
-                    {answer.slice(0, shown)}
-                    {shown < answer.length && <span style={{ opacity: 0.5 }}>▍</span>}
-                  </p>
+                  <>
+                    <p style={{ fontSize: 15.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
+                      {answer.slice(0, shown)}
+                      {shown < answer.length && <span style={{ opacity: 0.5 }}>▍</span>}
+                    </p>
+                    {answer && <SourceBadge />}
+                  </>
                 )}
               </div>
             </div>

@@ -3,6 +3,7 @@
 import { Card, Button, Icon } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n";
 import { useAiAsk } from "@/components/app/screens/useAiAsk";
+import { SourceBadge } from "@/components/app/SourceBadge";
 
 /**
  * AI FAFSA coach - for the step you're currently on, asks the grounded guide
@@ -78,6 +79,7 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
                     {text.slice(0, shown)}
                     {shown < text.length && <span style={{ opacity: 0.5 }}>▍</span>}
                   </p>
+                  {text && <SourceBadge />}
                   <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>
                 </>
               )}

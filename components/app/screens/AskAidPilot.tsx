@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Card, IconTile, Button, TextField } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
+import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { SourceBadge } from "@/components/app/SourceBadge";
 
 /**
  * Ask AidPilot - a question box over the sourced FAFSA guide. Calls the
@@ -48,23 +50,17 @@ export function AskAidPilot() {
     setLoading(true);
     setError("");
     setAnswer("");
-    try {
-      const res = await fetch("/api/fafsa-guide/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, lang }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { answer?: string; error?: string };
-      if (!res.ok || !body.answer) {
-        setError(body.error ?? s.genericError);
-        return;
-      }
-      setAnswer(body.answer);
-    } catch {
-      setError(s.genericError);
-    } finally {
-      setLoading(false);
+
+    const result = await streamAiAnswer(
+      "/api/fafsa-guide/ask",
+      { question: trimmed, lang },
+      (partial) => setAnswer(partial)
+    );
+
+    if (!result.ok) {
+      setError(result.warming ? s.genericError : result.error);
     }
+    setLoading(false);
   }
 
   return (
@@ -115,6 +111,8 @@ export function AskAidPilot() {
                 {answer}
               </div>
             )}
+
+            {answer && <SourceBadge />}
 
             <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", lineHeight: 1.5, margin: "12px 0 0" }}>
               {s.disclaimer}

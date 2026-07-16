@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Card, Button, Badge, IconButton, Icon } from "@/components/ui";
@@ -9,6 +9,7 @@ import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { demoFallback, makeDemoOffers, makeDemoScholarships, useDemoMutations } from "@/lib/demo";
+import { streamAiAnswer } from "@/lib/ai/stream-answer";
 import type { ScholarshipMatch, UserAidOffer } from "@/lib/types";
 
 /* ── AID & MONEY - real-data port of the app UI kit (AppScreens2.jsx) ── */
@@ -206,9 +207,6 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
   const [text, setText] = useState("");
   const [shown, setShown] = useState(0);
   const [err, setErr] = useState("");
-  const typer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => () => { if (typer.current) clearInterval(typer.current); }, []);
 
   const s = t({
     en: { cta: "Explain this offer with AI", again: "Explain again", thinking: "AidPilot is reading your offer…", warming: "AidPilot's AI isn't available right now.", note: "AI summary from your numbers - not official financial-aid advice." },
@@ -221,41 +219,33 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
     setText("");
     setShown(0);
     setErr("");
-    if (typer.current) clearInterval(typer.current);
-    try {
-      const res = await fetch("/api/aid-letter/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schoolName: offer.school_name,
-          costOfAttendance: offer.cost_of_attendance,
-          grants: offer.grants_and_scholarships,
-          workStudy: offer.work_study,
-          loans: offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans,
-          lang,
-        }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { explanation?: string; error?: string };
-      if (!res.ok || !body.explanation) {
-        setStatus("error");
-        setErr(res.status === 503 ? s.warming : body.error ?? "Something went wrong. Please try again.");
-        return;
+
+    // Stream the decoded explanation onto the card as it's written.
+    const result = await streamAiAnswer(
+      "/api/aid-letter/explain",
+      {
+        schoolName: offer.school_name,
+        costOfAttendance: offer.cost_of_attendance,
+        grants: offer.grants_and_scholarships,
+        workStudy: offer.work_study,
+        loans: offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans,
+        lang,
+      },
+      (partial) => {
+        setStatus("done");
+        setText(partial);
+        setShown(partial.length);
       }
-      setStatus("done");
-      const full = body.explanation;
-      setText(full);
-      const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      if (reduce) setShown(full.length);
-      else typer.current = setInterval(() => {
-        setShown((n) => {
-          if (n >= full.length) { if (typer.current) clearInterval(typer.current); return n; }
-          return Math.min(full.length, n + 2);
-        });
-      }, 14);
-    } catch {
+    );
+
+    if (!result.ok) {
       setStatus("error");
-      setErr("Something went wrong. Please try again.");
+      setErr(result.warming ? s.warming : result.error);
+      return;
     }
+    setStatus("done");
+    setText(result.text);
+    setShown(result.text.length);
   }
 
   return (

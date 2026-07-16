@@ -112,7 +112,11 @@ export async function POST(request: Request) {
   const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
   try {
-    const response = await client.messages.create({
+    // Stream so the student sees words appear immediately instead of waiting
+    // several seconds for the full answer. Thinking runs adaptively (display
+    // defaults to "omitted", so thinking blocks stream empty - we only forward
+    // the visible text deltas).
+    const messageStream = client.messages.stream({
       model: "claude-opus-4-8",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
@@ -133,20 +137,36 @@ export async function POST(request: Request) {
       ],
     });
 
-    const answer = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("\n")
-      .trim();
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const event of messageStream) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+          controller.close();
+        } catch (streamError) {
+          // Headers are already sent, so we can't switch to a JSON error - log
+          // and close the stream with whatever text made it through.
+          console.error("Ask AidPilot stream failed mid-answer:", streamError);
+          controller.error(streamError);
+        }
+      },
+      cancel() {
+        messageStream.abort();
+      },
+    });
 
-    if (!answer) {
-      return NextResponse.json(
-        { error: "Couldn't generate an answer for that - try rephrasing." },
-        { status: 502 }
-      );
-    }
-
-    return NextResponse.json({ answer });
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        // Disable proxy buffering so deltas flush to the client immediately.
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     if (error instanceof Anthropic.RateLimitError) {
       return NextResponse.json(

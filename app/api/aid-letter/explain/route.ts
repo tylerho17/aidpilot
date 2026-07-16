@@ -92,7 +92,8 @@ export async function POST(request: Request) {
   const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
   try {
-    const response = await client.messages.create({
+    // Stream the explanation so it renders as it's written instead of a wait.
+    const messageStream = client.messages.stream({
       model: "claude-opus-4-8",
       max_tokens: 600,
       thinking: { type: "adaptive" },
@@ -106,16 +107,33 @@ export async function POST(request: Request) {
       ],
     });
 
-    const explanation = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const event of messageStream) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+          controller.close();
+        } catch (streamError) {
+          console.error("Aid-letter explain stream failed mid-answer:", streamError);
+          controller.error(streamError);
+        }
+      },
+      cancel() {
+        messageStream.abort();
+      },
+    });
 
-    if (!explanation) {
-      return NextResponse.json({ error: "Couldn't generate an explanation - try again." }, { status: 502 });
-    }
-    return NextResponse.json({ explanation });
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     if (error instanceof Anthropic.RateLimitError) {
       return NextResponse.json({ error: "The AI is busy right now - try again in a moment." }, { status: 429 });
