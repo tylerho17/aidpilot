@@ -262,6 +262,22 @@ body {
 .animate-sway { animation: sway 3.6s ease-in-out infinite; transform-origin: top center; }
 .animate-plane-in { animation: planeFlyIn 1.05s var(--ease-spring) 0.15s both; }
 
+/* ── Duolingo-style FAFSA journey path ──
+   Chunky tactile nodes: a hard bottom "edge" (var(--duo-shade)) that
+   compresses on press. The current node bobs and pulses to pull the eye. ── */
+@keyframes duoBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes duoRing {
+  0% { box-shadow: 0 0 0 0 rgba(11, 92, 173, 0.42); }
+  70%, 100% { box-shadow: 0 0 0 15px rgba(11, 92, 173, 0); }
+}
+.duo-node {
+  box-shadow: 0 6px 0 var(--duo-shade);
+  transition: transform 0.09s ease, box-shadow 0.09s ease;
+}
+.duo-node:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--duo-shade); }
+.duo-bob { animation: duoBob 1.9s ease-in-out infinite; }
+.duo-ring { animation: duoRing 1.9s ease-in-out infinite; }
+
 /* ── Page transitions - quick, subtle fade + rise on every route change.
    Fast enough to feel instant (240ms), soft enough to remove the "hard cut"
    between tabs. The app chrome stays put; only page content animates. ── */

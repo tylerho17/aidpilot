@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Card, StatusPanel, ProgressBar, ChecklistItem, Button } from "@/components/ui";
+import { Card, StatusPanel, ProgressBar, Button } from "@/components/ui";
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { AskAidPilot } from "@/components/app/screens/AskAidPilot";
+import { FafsaJourney } from "@/components/app/screens/FafsaJourney";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
 import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
@@ -20,8 +21,10 @@ const STRINGS = {
     progress: (done: number, total: number) => `${done} of ${total} steps done`,
     minutesLeft: (m: number) => ` · about ${m} minutes left`,
     allSet: " · you're all set",
-    yourSteps: "Your steps",
+    yourSteps: "Your journey",
     next: "Next",
+    continueStep: "Continue",
+    tapHint: "Tap a step to check it off.",
     allDoneEyebrow: "All done",
     allDoneTitle: "Every step done - your FAFSA is ready.",
     allDoneBody: "Nice work. We'll let you know if anything new needs your attention.",
@@ -38,8 +41,10 @@ const STRINGS = {
     progress: (done: number, total: number) => `${done} de ${total} pasos completados`,
     minutesLeft: (m: number) => ` · unos ${m} minutos restantes`,
     allSet: " · todo listo",
-    yourSteps: "Tus pasos",
+    yourSteps: "Tu recorrido",
     next: "Siguiente",
+    continueStep: "Continuar",
+    tapHint: "Toca un paso para marcarlo.",
     allDoneEyebrow: "Todo listo",
     allDoneTitle: "Todos los pasos completados - tu FAFSA está lista.",
     allDoneBody: "Buen trabajo. Te avisaremos si algo nuevo necesita tu atención.",
@@ -189,28 +194,33 @@ export default function FafsaScreen() {
         <ProgressBar pct={pct} height={12} />
       </Card>
 
-      <SectionTitle>{s.yourSteps}</SectionTitle>
-      <Card variant="clay" padding={8} className="stagger-children" style={{ marginBottom: 20 }}>
-        {steps.map((step, index) => {
-          const stepDone = isEffectivelyDone(step);
-          const isNext = !allDone && step.id === nextStep?.id;
-          return (
-            <ChecklistItem
-              key={step.id}
-              divider={index < steps.length - 1}
-              title={step.workflow_step?.title ?? `Step ${index + 1}`}
-              sub={step.workflow_step?.description ?? undefined}
-              badge={isNext ? s.next : undefined}
-              badgeTone="amber"
-              done={stepDone}
-              popping={step.id === poppingId}
-              onToggle={() => toggleStep(step)}
-            />
-          );
-        })}
+      <SectionTitle
+        action={
+          !allDone ? (
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--gray-400)" }}>{s.tapHint}</span>
+          ) : undefined
+        }
+      >
+        {s.yourSteps}
+      </SectionTitle>
+      <Card variant="clay" padding="24px 12px" style={{ marginBottom: 20 }}>
+        <FafsaJourney
+          steps={steps.map((step, index) => ({
+            id: step.id,
+            title: step.workflow_step?.title ?? `Step ${index + 1}`,
+            done: isEffectivelyDone(step),
+          }))}
+          currentId={allDone ? null : nextStep?.id ?? null}
+          poppingId={poppingId}
+          onToggle={(id) => {
+            const step = steps.find((entry) => entry.id === id);
+            if (step) toggleStep(step);
+          }}
+          bubbleLabel={done > 0 ? s.continueStep : s.start}
+        />
       </Card>
 
-      {allDone ? (
+      {allDone && (
         <StatusPanel
           tone="green"
           icon="shield-check"
@@ -219,26 +229,6 @@ export default function FafsaScreen() {
           style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
         >
           {s.allDoneBody}
-        </StatusPanel>
-      ) : (
-        <StatusPanel
-          tone="amber"
-          icon="clipboard"
-          eyebrow={s.doNext}
-          title={nextStep?.workflow_step?.title ?? s.nextStepFallback}
-          trailing={
-            <Button
-              variant="clay"
-              size="sm"
-              iconRight="arrow-right"
-              onClick={() => document.getElementById("fafsa-guide")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            >
-              {s.start}
-            </Button>
-          }
-          style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
-        >
-          {nextStep?.workflow_step?.description ?? s.nextBodyFallback}
         </StatusPanel>
       )}
 
