@@ -8,6 +8,11 @@ import type { GuideSection } from "./schema";
 // were dropped at port time and render as null - never edit this content by
 // paraphrasing; source new text the same way the originals were sourced.
 //
+// Provenance for every filled helper slot is recorded in docs/content-source.md
+// (this branch's content ledger). The studentIdentity + studentCitizenship
+// helpers were sourced from official StudentAid.gov help pages (2026-07-16);
+// es values are English fallback until native review - never machine-translate.
+//
 // VERIFY this section/field structure against the current award-year form
 // before real-user launch.
 
@@ -39,9 +44,18 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Full legal name",
           "es": "Full legal name"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "Enter your full legal name exactly as it appears on your Social Security card or legal ID. It must match the name on your StudentAid.gov account, or your form can be delayed.",
+          "es": "Enter your full legal name exactly as it appears on your Social Security card or legal ID. It must match the name on your StudentAid.gov account, or your form can be delayed."
+        },
+        "documentNeeded": {
+          "en": "Your Social Security card and/or a legal photo ID (driver’s license, passport, or birth certificate).",
+          "es": "Your Social Security card and/or a legal photo ID (driver’s license, passport, or birth certificate)."
+        },
+        "commonError": {
+          "en": "Nicknames, a missing middle name, or a name that doesn’t match your Social Security record — enter it exactly as on your official documents.",
+          "es": "Nicknames, a missing middle name, or a name that doesn’t match your Social Security record — enter it exactly as on your official documents."
+        }
       },
       {
         "fieldKey": "dateOfBirth",
@@ -49,9 +63,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Date of birth",
           "es": "Date of birth"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your date of birth exactly as it appears on your legal ID. It must match the date of birth on your StudentAid.gov account.",
+          "es": "Enter your date of birth exactly as it appears on your legal ID. It must match the date of birth on your StudentAid.gov account."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "A date of birth that doesn’t match your Social Security or StudentAid.gov account records can hold up your form.",
+          "es": "A date of birth that doesn’t match your Social Security or StudentAid.gov account records can hold up your form."
+        }
       },
       {
         "fieldKey": "ssn",
@@ -59,9 +79,18 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Social Security Number",
           "es": "Social Security Number"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "Enter your nine-digit Social Security number if you have one. If you don’t have an SSN, check the box indicating so and leave the field blank.",
+          "es": "Enter your nine-digit Social Security number if you have one. If you don’t have an SSN, check the box indicating so and leave the field blank."
+        },
+        "documentNeeded": {
+          "en": "Your Social Security card, to confirm the exact number.",
+          "es": "Your Social Security card, to confirm the exact number."
+        },
+        "commonError": {
+          "en": "Don’t enter an Individual Taxpayer Identification Number (ITIN) in the SSN field — check the “no SSN” box and leave it blank instead.",
+          "es": "Don’t enter an Individual Taxpayer Identification Number (ITIN) in the SSN field — check the “no SSN” box and leave it blank instead."
+        }
       },
       {
         "fieldKey": "email",
@@ -69,9 +98,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Email address",
           "es": "Email address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your own email address — not a parent’s or counselor’s. An email address can be linked to only one StudentAid.gov account, and your confirmation and updates are sent here.",
+          "es": "Use your own email address — not a parent’s or counselor’s. An email address can be linked to only one StudentAid.gov account, and your confirmation and updates are sent here."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Sharing one email between a student and a parent — each person needs their own email for their own account.",
+          "es": "Sharing one email between a student and a parent — each person needs their own email for their own account."
+        }
       },
       {
         "fieldKey": "phone",
@@ -79,7 +114,10 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Phone number",
           "es": "Phone number"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your own mobile number. A mobile number can be linked to only one StudentAid.gov account and helps you log in and recover access.",
+          "es": "Use your own mobile number. A mobile number can be linked to only one StudentAid.gov account and helps you log in and recover access."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -89,9 +127,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Mailing address",
           "es": "Mailing address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your current mailing address. If you have a StudentAid.gov account, enter it here the same way it appears on that account.",
+          "es": "Enter your current mailing address. If you have a StudentAid.gov account, enter it here the same way it appears on that account."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Small formatting differences from your StudentAid.gov account — like “Rd” versus “Road” — can cause errors. Enter your address the same way in both places.",
+          "es": "Small formatting differences from your StudentAid.gov account — like “Rd” versus “Road” — can cause errors. Enter your address the same way in both places."
+        }
       }
     ]
   },
@@ -109,9 +153,18 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Citizenship status",
           "es": "Citizenship status"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "Select the option that matches your status. “U.S. citizen or national” — a citizen by birth or naturalization. “Eligible noncitizen” — for example, a permanent resident with a Green Card (I-551), or someone with an I-94 showing Refugee, Asylum Granted, Parolee, a T-Visa, or Cuban-Haitian Entrant status. “Neither U.S. citizen nor eligible noncitizen” — includes students granted DACA and those on F, M, or J visas; this group isn’t eligible for federal aid, but with a Social Security number you can still file to be considered for state or college aid.",
+          "es": "Select the option that matches your status. “U.S. citizen or national” — a citizen by birth or naturalization. “Eligible noncitizen” — for example, a permanent resident with a Green Card (I-551), or someone with an I-94 showing Refugee, Asylum Granted, Parolee, a T-Visa, or Cuban-Haitian Entrant status. “Neither U.S. citizen nor eligible noncitizen” — includes students granted DACA and those on F, M, or J visas; this group isn’t eligible for federal aid, but with a Social Security number you can still file to be considered for state or college aid."
+        },
+        "documentNeeded": {
+          "en": "If you’re an eligible noncitizen: your Permanent Resident Card (I-551), Arrival-Departure Record (I-94), or other immigration documents.",
+          "es": "If you’re an eligible noncitizen: your Permanent Resident Card (I-551), Arrival-Departure Record (I-94), or other immigration documents."
+        },
+        "commonError": {
+          "en": "DACA recipients should select “Neither U.S. citizen nor eligible noncitizen,” not “Eligible noncitizen.” California students in this situation should also look at the CADAA for state aid.",
+          "es": "DACA recipients should select “Neither U.S. citizen nor eligible noncitizen,” not “Eligible noncitizen.” California students in this situation should also look at the CADAA for state aid."
+        }
       },
       {
         "fieldKey": "alienRegistrationNumber",
@@ -119,9 +172,18 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "A-Number (Alien Registration Number)",
           "es": "A-Number (Alien Registration Number)"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "If you’re an eligible noncitizen, enter your eight- or nine-digit Alien Registration Number (A-Number). If it has eight digits, type a zero before it, and don’t enter the “A.” If you don’t have an A-Number, leave this field blank.",
+          "es": "If you’re an eligible noncitizen, enter your eight- or nine-digit Alien Registration Number (A-Number). If it has eight digits, type a zero before it, and don’t enter the “A.” If you don’t have an A-Number, leave this field blank."
+        },
+        "documentNeeded": {
+          "en": "Your Green Card (Permanent Resident Card, I-551) or other USCIS immigration document, where the A-Number appears.",
+          "es": "Your Green Card (Permanent Resident Card, I-551) or other USCIS immigration document, where the A-Number appears."
+        },
+        "commonError": {
+          "en": "Typing the “A” prefix, or forgetting the leading zero on an eight-digit number. An answer isn’t required for citizens of the Freely Associated States (Micronesia, the Marshall Islands, or Palau).",
+          "es": "Typing the “A” prefix, or forgetting the leading zero on an eight-digit number. An answer isn’t required for citizens of the Freely Associated States (Micronesia, the Marshall Islands, or Palau)."
+        }
       }
     ]
   },

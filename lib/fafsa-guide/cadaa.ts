@@ -128,9 +128,18 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "California residency",
           "es": "California residency"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "AB 540 (the California Nonresident Tuition Exemption) lets eligible students pay in-state tuition instead of the much higher nonresident tuition, and apply for state aid, at California public and private colleges. You generally qualify with 3 or more years of full-time attendance (or equivalent credits) at California high schools, adult schools, or community colleges, plus graduating from a California high school — or a California GED/HiSET/TASC, or a California community college associate degree or transfer requirements.",
+          "es": "AB 540 (the California Nonresident Tuition Exemption) lets eligible students pay in-state tuition instead of the much higher nonresident tuition, and apply for state aid, at California public and private colleges. You generally qualify with 3 or more years of full-time attendance (or equivalent credits) at California high schools, adult schools, or community colleges, plus graduating from a California high school — or a California GED/HiSET/TASC, or a California community college associate degree or transfer requirements."
+        },
+        "documentNeeded": {
+          "en": "Records of your California school attendance and graduation — a high school transcript or diploma, a California GED/HiSET/TASC certificate, or community college records.",
+          "es": "Records of your California school attendance and graduation — a high school transcript or diploma, a California GED/HiSET/TASC certificate, or community college records."
+        },
+        "commonError": {
+          "en": "Thinking you file a separate AB 540 form. The AB 540 affidavit is built into the CADAA — you sign it to affirm you’ll legalize your immigration status as soon as you’re eligible. Still check with your college in case it needs additional steps.",
+          "es": "Thinking you file a separate AB 540 form. The AB 540 affidavit is built into the CADAA — you sign it to affirm you’ll legalize your immigration status as soon as you’re eligible. Still check with your college in case it needs additional steps."
+        }
       },
       {
         "fieldKey": "ab540Eligibility",
