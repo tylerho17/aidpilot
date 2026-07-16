@@ -414,9 +414,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Parent full legal name",
           "es": "Parent full legal name"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your parent’s full legal name exactly as it appears on their legal ID and their StudentAid.gov account. When you invite a parent as a contributor, the details you enter must match what they entered, or the invitation can fail.",
+          "es": "Enter your parent’s full legal name exactly as it appears on their legal ID and their StudentAid.gov account. When you invite a parent as a contributor, the details you enter must match what they entered, or the invitation can fail."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Even a small mismatch — a missing middle name, or “Rd” vs. “Road” — between your invitation and your parent’s account can stop them from joining your form.",
+          "es": "Even a small mismatch — a missing middle name, or “Rd” vs. “Road” — between your invitation and your parent’s account can stop them from joining your form."
+        }
       },
       {
         "fieldKey": "parentDateOfBirth",
@@ -424,7 +430,10 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Parent date of birth",
           "es": "Parent date of birth"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Enter your parent’s date of birth exactly as it appears on their StudentAid.gov account — it has to match for them to be added to your form as a contributor.",
+          "es": "Enter your parent’s date of birth exactly as it appears on their StudentAid.gov account — it has to match for them to be added to your form as a contributor."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -453,9 +462,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Parent email address",
           "es": "Parent email address"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Use your parent’s own email — not yours. Each contributor needs their own StudentAid.gov account, and their invitation to join your form is sent to this address.",
+          "es": "Use your parent’s own email — not yours. Each contributor needs their own StudentAid.gov account, and their invitation to join your form is sent to this address."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Don’t reuse your own email for your parent — they need a separate account and email, since an email can be linked to only one StudentAid.gov account.",
+          "es": "Don’t reuse your own email for your parent — they need a separate account and email, since an email can be linked to only one StudentAid.gov account."
+        }
       }
     ]
   },
@@ -554,9 +569,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Student signature",
           "es": "Student signature"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "You sign your section with your StudentAid.gov account username and password (your FSA ID) — a legally binding signature, so never share it. You sign after reviewing your answers and adding your schools.",
+          "es": "You sign your section with your StudentAid.gov account username and password (your FSA ID) — a legally binding signature, so never share it. You sign after reviewing your answers and adding your schools."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Signing your section doesn’t finish the FAFSA — every required contributor must also sign their own section before it’s submitted.",
+          "es": "Signing your section doesn’t finish the FAFSA — every required contributor must also sign their own section before it’s submitted."
+        }
       },
       {
         "fieldKey": "parentSignature",
@@ -564,9 +585,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Parent signature",
           "es": "Parent signature"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Each required parent contributor signs their own section with their own StudentAid.gov account — you can’t sign for them. They also give consent to import their tax information, which is required even if they didn’t file.",
+          "es": "Each required parent contributor signs their own section with their own StudentAid.gov account — you can’t sign for them. They also give consent to import their tax information, which is required even if they didn’t file."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "The form isn’t submitted until all required contributors have signed. If a contributor refuses consent, you won’t receive federal aid.",
+          "es": "The form isn’t submitted until all required contributors have signed. If a contributor refuses consent, you won’t receive federal aid."
+        }
       }
     ]
   }

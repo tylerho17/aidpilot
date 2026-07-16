@@ -158,6 +158,33 @@ English only — `es` is English fallback.
 
 ---
 
+## Sourced 2026-07-16 (this branch) — FAFSA signatures + parent identity
+
+Grounded in studentaid.gov pages already read this session (help/fsa-id, the
+contributor/FSA-ID explainer, and the contributor-without-SSN support page):
+the FSA ID is a legally binding signature; every required contributor signs
+their own section with their own account; the form isn't submitted until all
+sign; consent is required; contributor details must exactly match the account
+(the "Rd" vs "Road" example). English only.
+
+### Signatures
+- Student signs their section with their FSA ID (legally binding; never share);
+  each required contributor signs their own section with their own account; the
+  form isn't submitted until all sign; refusing consent = no federal aid.
+- **Source:** <https://studentaid.gov/help/fsa-id>, <https://studentaid.gov/announcements-events/fafsa-support/contributor-social-security-number>
+
+### Parent identity (name, DOB, email)
+- Enter the parent's name/DOB exactly as on their StudentAid.gov account or the
+  invitation can fail (small mismatches like "Rd" vs "Road"); use the parent's
+  own email (an email links to only one account).
+- **Source:** <https://studentaid.gov/announcements-events/fafsa-support/contributor-social-security-number>
+
+**Placed in:** `walkthrough.fafsa.sections.reviewAndSign.fields.{studentSignature,
+parentSignature}.*`, `…parentContributor.fields.{parentFullName, parentDateOfBirth,
+parentEmail}.*`.
+
+---
+
 ## NOT yet sourced (stays `null` — next human pass)
 
 FAFSA circumstances (marital/dependency/unusual), demographics (gender,
