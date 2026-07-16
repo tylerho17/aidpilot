@@ -259,7 +259,10 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Gender",
           "es": "Gender"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "The FAFSA asks for your sex. Your answer won’t affect your eligibility for federal student aid, be used in any calculation, or be shared with the schools you apply to — it’s used for research purposes only.",
+          "es": "The FAFSA asks for your sex. Your answer won’t affect your eligibility for federal student aid, be used in any calculation, or be shared with the schools you apply to — it’s used for research purposes only."
+        },
         "documentNeeded": null,
         "commonError": null
       },
@@ -269,7 +272,10 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Race and ethnicity",
           "es": "Race and ethnicity"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "The FAFSA asks about your ethnicity and race, and you can select “Prefer not to answer.” Your answer won’t affect your eligibility for federal student aid, be used in any calculation, or be shared with the schools you apply to — it’s used for research purposes only.",
+          "es": "The FAFSA asks about your ethnicity and race, and you can select “Prefer not to answer.” Your answer won’t affect your eligibility for federal student aid, be used in any calculation, or be shared with the schools you apply to — it’s used for research purposes only."
+        },
         "documentNeeded": null,
         "commonError": null
       }
@@ -522,9 +528,15 @@ export const FAFSA_GUIDE: GuideSection[] = [
           "en": "Family size",
           "es": "Family size"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Family size is how many people your family supports. It generally includes the parent(s), their spouse, and any dependent children or other dependents who live with them now and get more than half of their support from them between July 1, 2026, and June 30, 2027. A child away at college still counts.",
+          "es": "Family size is how many people your family supports. It generally includes the parent(s), their spouse, and any dependent children or other dependents who live with them now and get more than half of their support from them between July 1, 2026, and June 30, 2027. A child away at college still counts."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "Don’t count people your family doesn’t support more than half of, and don’t include an unborn child. Family size aligns with who can be claimed as a dependent on the federal tax return.",
+          "es": "Don’t count people your family doesn’t support more than half of, and don’t include an unborn child. Family size aligns with who can be claimed as a dependent on the federal tax return."
+        }
       }
     ]
   },

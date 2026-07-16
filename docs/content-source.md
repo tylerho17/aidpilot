@@ -116,6 +116,29 @@ dependencyStatus, unusualCircumstances}.*`.
 
 ---
 
+## Sourced 2026-07-16 (this branch) — FAFSA family size + demographics
+
+English only — `es` is English fallback.
+
+### Family size
+- Includes the parent(s)/individual, spouse, and dependent children/other
+  dependents who live with them now and get more than half their support between
+  July 1, 2026 and June 30, 2027; a child away at college still counts. Aligns
+  with who can be claimed as a dependent on the federal tax return; unborn
+  children are not included.
+- **Source:** <https://studentaid.gov/help/family-size>
+
+### Demographics (sex, race/ethnicity)
+- Optional ("Prefer not to answer" for race/ethnicity). Answers do NOT affect
+  eligibility, are not used in any calculation, and are not shared with schools —
+  research purposes only.
+- **Source:** <https://studentaid.gov/help/student-ethnicity-race>, <https://studentaid.gov/help/student-gender>
+
+**Placed in:** `walkthrough.fafsa.sections.parentFinancials.fields.familySize.*`,
+`…studentDemographics.fields.{gender, raceEthnicity}.whatItMeans`.
+
+---
+
 ## NOT yet sourced (stays `null` — next human pass)
 
 FAFSA circumstances (marital/dependency/unusual), demographics (gender,
