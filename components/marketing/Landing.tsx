@@ -14,6 +14,7 @@ import {
   paperShadow,
   linedPaper,
 } from "./skeuo";
+import { LandingAsk } from "./LandingAsk";
 
 function scrollToWaitlist() {
   document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -272,6 +273,7 @@ export function Landing() {
     <div style={{ background: "var(--surface-page)" }}>
       <MarketingNav />
       <Hero />
+      <LandingAsk />
       <HowItWorks />
       <Closer />
       <MarketingFooter />
