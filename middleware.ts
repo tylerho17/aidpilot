@@ -84,6 +84,14 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
+    // Demo mode (set by /demo): signed-out visitors may tour the read-only
+    // demo surfaces. Settings, admin, and sub-flows stay login-gated.
+    const DEMO_VIEWABLE = ["/dashboard", "/fafsa", "/aid-money", "/docs-dates"];
+    const demoCookie = request.cookies.get("aidpilot-demo")?.value === "on";
+    if (demoCookie && !isAdminRoute && DEMO_VIEWABLE.includes(pathname)) {
+      return response;
+    }
+
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);

@@ -78,8 +78,11 @@ function Hero() {
           <p style={{ fontSize: 19, fontWeight: 500, color: "var(--ink-600)", margin: "0 0 32px", maxWidth: 430, lineHeight: 1.5 }}>
             The forms, deadlines, and fine print - handled in one simple weekly check.
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
             <Button size="lg" shape="pill" onClick={scrollToWaitlist} iconRight="arrow-right">Get early access</Button>
+            <Link href="/demo" style={{ textDecoration: "none" }}>
+              <Button size="lg" shape="pill" variant="secondary">See the demo</Button>
+            </Link>
             <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gray-500)" }}>Free · 2-min setup</span>
           </div>
         </div>
@@ -172,7 +175,7 @@ function HowItWorks() {
           <div style={{ position: "absolute", top: 60, left: "12%", right: "12%", borderTop: "2px dashed var(--blue-300)", zIndex: 0 }} />
           <StepCard n="1" icon="shield" tone="blue" title="Protect" line="We watch your aid, eligibility, and requirements - 24/7." rot={-1.5} />
           <StepCard n="2" icon="calendar" tone="amber" title="Track" line="Every FAFSA, grant, and document deadline, caught early." rot={1.5} />
-          <StepCard n="3" icon="star" tone="green" title="Find" line="Fresh scholarships matched to you, every single week." rot={-1} />
+          <StepCard n="3" icon="letter" tone="green" title="Decode" line="Know exactly what every aid offer really costs." rot={-1} />
         </div>
       </div>
     </section>

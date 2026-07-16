@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Card, StatusPanel, ProgressBar, ChecklistItem, Button } from "@/components/ui";
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
+import { AskAidPilot } from "@/components/app/screens/AskAidPilot";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
 import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
@@ -165,9 +167,11 @@ export default function FafsaScreen() {
         title={s.title}
         subtitle={s.subtitle}
         action={
-          <Button variant="secondary" size="sm">
-            {s.followUp}
-          </Button>
+          <Link href="/fafsa/follow-up" style={{ textDecoration: "none" }}>
+            <Button variant="secondary" size="sm">
+              {s.followUp}
+            </Button>
+          </Link>
         }
       />
 
@@ -223,7 +227,12 @@ export default function FafsaScreen() {
           eyebrow={s.doNext}
           title={nextStep?.workflow_step?.title ?? s.nextStepFallback}
           trailing={
-            <Button variant="clay" size="sm" iconRight="arrow-right">
+            <Button
+              variant="clay"
+              size="sm"
+              iconRight="arrow-right"
+              onClick={() => document.getElementById("fafsa-guide")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            >
               {s.start}
             </Button>
           }
@@ -233,8 +242,13 @@ export default function FafsaScreen() {
         </StatusPanel>
       )}
 
-      {/* Sourced, read-only guide to the real FAFSA structure (see lib/fafsa-guide). */}
+      {/* AI Q&A grounded strictly in the sourced guide content. */}
       <div style={{ marginTop: 32 }}>
+        <AskAidPilot />
+      </div>
+
+      {/* Sourced, read-only guide to the real FAFSA structure (see lib/fafsa-guide). */}
+      <div id="fafsa-guide" style={{ marginTop: 32, scrollMarginTop: 90 }}>
         <FafsaGuide path="fafsa" />
       </div>
     </div>

@@ -227,9 +227,11 @@ export function HomeScreen() {
         title={`Good ${timeOfDay(now.getHours())}, ${greetingName}`}
         subtitle={`${todayLabel} · here's your weekly check-in.`}
         action={
-          <Button variant="clay" size="sm" iconLeft="shield">
-            Weekly report
-          </Button>
+          <Link href="/protect" style={{ textDecoration: "none" }}>
+            <Button variant="clay" size="sm" iconLeft="shield">
+              Protection status
+            </Button>
+          </Link>
         }
       />
 

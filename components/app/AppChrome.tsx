@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo, TabBar, Avatar, Icon } from "@/components/ui";
+import { Logo, TabBar, Avatar, Badge, Button, Icon } from "@/components/ui";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
 import { getProfileFullName, getProfileSchoolName, getProfileEducationLevel } from "@/lib/profile-fields";
@@ -36,6 +36,7 @@ function activeTab(pathname: string): TabKey {
 
 function ProfileMenu() {
   const { authReady, profile, user, logout, isScholarshipAdmin } = useUserData();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -67,6 +68,22 @@ function ProfileMenu() {
         style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--blue-100)", display: "inline-block" }}
         aria-hidden
       />
+    );
+  }
+
+  // Signed-out demo tour: no fake profile - a demo badge and a real way in.
+  if (!user) {
+    return (
+      <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Badge tone="blue" dot>
+          {t({ en: "Demo data", es: "Datos de demo" })}
+        </Badge>
+        <Link href="/signup" style={{ textDecoration: "none" }}>
+          <Button size="sm" shape="pill">
+            {t({ en: "Create account", es: "Crear cuenta" })}
+          </Button>
+        </Link>
+      </span>
     );
   }
 
