@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Card, Badge, Icon } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
+import { CurrencyChip, WhatsNewNote } from "@/components/app/AidCurrency";
 import { useLanguage } from "@/lib/i18n";
 import { FAFSA_GUIDE } from "@/lib/fafsa-guide/fafsa";
 import { CADAA_GUIDE } from "@/lib/fafsa-guide/cadaa";
@@ -285,10 +286,12 @@ export function FafsaGuide({ path = "fafsa" }: { path?: "fafsa" | "cadaa" }) {
 
   return (
     <div>
-      <SectionTitle>{s.heading}</SectionTitle>
-      <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.6, margin: "-6px 2px 14px" }}>
+      <SectionTitle action={<CurrencyChip />}>{s.heading}</SectionTitle>
+      <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.6, margin: "-6px 2px 6px" }}>
         {s.sub}
       </p>
+      <WhatsNewNote />
+      <div style={{ height: 14 }} />
       <div className="stagger-children" style={{ display: "grid", gap: 12 }}>
         {sections.map((section) => (
           <GuideSectionCard
