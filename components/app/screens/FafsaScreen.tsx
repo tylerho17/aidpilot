@@ -7,6 +7,8 @@ import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { AskAidPilot } from "@/components/app/screens/AskAidPilot";
 import { FafsaJourney } from "@/components/app/screens/FafsaJourney";
+import { FafsaCoach } from "@/components/app/screens/FafsaCoach";
+import { Confetti } from "@/components/app/screens/Confetti";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
 import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
@@ -108,6 +110,8 @@ export default function FafsaScreen() {
   const demo = useDemoMutations();
   const [poppingId, setPoppingId] = useState<string | null>(null);
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
+  const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ready = authReady && !loading;
   const hasSteps = userFafsaSteps.length > 0;
@@ -135,6 +139,7 @@ export default function FafsaScreen() {
   useEffect(() => {
     return () => {
       if (popTimer.current) clearTimeout(popTimer.current);
+      if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
     };
   }, []);
 
@@ -156,6 +161,8 @@ export default function FafsaScreen() {
   const allDone = !nextStep;
 
   const toggleStep = (step: UserFafsaStep) => {
+    // Completing the last remaining step finishes the journey - celebrate.
+    const willComplete = remaining === 1 && !isEffectivelyDone(step);
     if (demo.isDemo(step.id)) {
       demo.toggle(step.id);
     } else {
@@ -164,10 +171,16 @@ export default function FafsaScreen() {
     setPoppingId(step.id);
     if (popTimer.current) clearTimeout(popTimer.current);
     popTimer.current = setTimeout(() => setPoppingId(null), 460);
+    if (willComplete) {
+      setCelebrate(true);
+      if (celebrateTimer.current) clearTimeout(celebrateTimer.current);
+      celebrateTimer.current = setTimeout(() => setCelebrate(false), 3800);
+    }
   };
 
   return (
     <div>
+      {celebrate && <Confetti />}
       <Greeting
         title={s.title}
         subtitle={s.subtitle}
@@ -219,6 +232,10 @@ export default function FafsaScreen() {
           bubbleLabel={done > 0 ? s.continueStep : s.start}
         />
       </Card>
+
+      {!allDone && nextStep?.workflow_step?.title && (
+        <FafsaCoach stepTitle={nextStep.workflow_step.title} />
+      )}
 
       {allDone && (
         <StatusPanel
