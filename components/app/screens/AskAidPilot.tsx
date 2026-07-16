@@ -5,6 +5,7 @@ import { Card, IconTile, Button, TextField } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { useAidPathContext } from "@/hooks/useAidPath";
 import { SourceBadge } from "@/components/app/SourceBadge";
 
 /**
@@ -37,6 +38,7 @@ const STRINGS = {
 export function AskAidPilot() {
   const { lang, t } = useLanguage();
   const s = t(STRINGS);
+  const aiContext = useAidPathContext();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
@@ -53,7 +55,7 @@ export function AskAidPilot() {
 
     const result = await streamAiAnswer(
       "/api/fafsa-guide/ask",
-      { question: trimmed, lang },
+      { question: trimmed, lang, context: aiContext },
       (partial) => setAnswer(partial)
     );
 

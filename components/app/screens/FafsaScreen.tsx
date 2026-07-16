@@ -8,6 +8,7 @@ import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { AskAidPilot } from "@/components/app/screens/AskAidPilot";
 import { FafsaJourney } from "@/components/app/screens/FafsaJourney";
 import { FafsaCoach } from "@/components/app/screens/FafsaCoach";
+import { AidPathIntake } from "@/components/app/AidPathIntake";
 import { Confetti } from "@/components/app/screens/Confetti";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
@@ -192,6 +193,8 @@ export default function FafsaScreen() {
           </Link>
         }
       />
+
+      <AidPathIntake />
 
       <Card variant="clay" padding={24} style={{ marginBottom: 20, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--blue-50) 150%)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>

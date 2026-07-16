@@ -3,6 +3,7 @@
 import { Card, Button, Icon } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n";
 import { useAiAsk } from "@/components/app/screens/useAiAsk";
+import { useAidPathContext } from "@/hooks/useAidPath";
 import { SourceBadge } from "@/components/app/SourceBadge";
 
 /**
@@ -13,6 +14,7 @@ import { SourceBadge } from "@/components/app/SourceBadge";
 export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
   const { lang, t } = useLanguage();
   const { status, text, shown, error, ask } = useAiAsk();
+  const aiContext = useAidPathContext();
 
   const s = t({
     en: {
@@ -59,7 +61,7 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
             {s.sub}
           </p>
 
-          <Button variant="clay" size="sm" iconLeft="plane" loading={status === "loading"} onClick={() => void ask(question, lang)}>
+          <Button variant="clay" size="sm" iconLeft="plane" loading={status === "loading"} onClick={() => void ask(question, lang, aiContext)}>
             {status === "done" ? s.again : s.cta}
           </Button>
 

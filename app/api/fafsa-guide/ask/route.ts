@@ -94,10 +94,14 @@ export async function POST(request: Request) {
 
   let question: string;
   let lang: "en" | "es";
+  // Optional non-PII personalization context (which form, parent situation,
+  // timeline) so answers are tailored. Length-capped; never contains names/SSNs.
+  let context = "";
   try {
-    const body = (await request.json()) as { question?: unknown; lang?: unknown };
+    const body = (await request.json()) as { question?: unknown; lang?: unknown; context?: unknown };
     question = typeof body.question === "string" ? body.question.trim() : "";
     lang = body.lang === "es" ? "es" : "en";
+    context = typeof body.context === "string" ? body.context.trim().slice(0, 300) : "";
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
@@ -132,7 +136,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Answer in ${lang === "es" ? "Spanish" : "English"}.\n\nQuestion: ${question}`,
+          content: `${context ? `${context}\n\n` : ""}Answer in ${lang === "es" ? "Spanish" : "English"}.\n\nQuestion: ${question}`,
         },
       ],
     });

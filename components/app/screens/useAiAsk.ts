@@ -21,7 +21,7 @@ export function useAiAsk() {
   const [error, setError] = useState("");
   const runRef = useRef(0);
 
-  async function ask(question: string, lang: Language) {
+  async function ask(question: string, lang: Language, context?: string) {
     if (status === "loading") return;
     const runId = ++runRef.current;
     setStatus("loading");
@@ -29,7 +29,7 @@ export function useAiAsk() {
     setShown(0);
     setError("");
 
-    const result = await streamAiAnswer("/api/fafsa-guide/ask", { question, lang }, (partial) => {
+    const result = await streamAiAnswer("/api/fafsa-guide/ask", { question, lang, context }, (partial) => {
       if (runRef.current !== runId) return;
       setStatus("done");
       setText(partial);
