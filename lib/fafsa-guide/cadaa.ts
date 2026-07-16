@@ -258,9 +258,18 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Student assets",
           "es": "Student assets"
         },
-        "whatItMeans": null,
-        "documentNeeded": null,
-        "commonError": null
+        "whatItMeans": {
+          "en": "Report the current total of your cash, savings, and checking accounts — but not the student aid you’ve received, retirement accounts, or investments (those are asked separately). For investments, report net worth (value minus any debt owed on them): things like rental property, land, and second or vacation homes — never the home you live in.",
+          "es": "Report the current total of your cash, savings, and checking accounts — but not the student aid you’ve received, retirement accounts, or investments (those are asked separately). For investments, report net worth (value minus any debt owed on them): things like rental property, land, and second or vacation homes — never the home you live in."
+        },
+        "documentNeeded": {
+          "en": "Current balances of your cash, savings, and checking, plus the value and any debt of investments like rental property or land.",
+          "es": "Current balances of your cash, savings, and checking, plus the value and any debt of investments like rental property or land."
+        },
+        "commonError": {
+          "en": "Don’t count the home you live in, your retirement accounts, or student aid you’ve received. For a business or farm, you don’t report a family business with 100 or fewer full-time employees, a farm your family lives on, or a commercial fishing business.",
+          "es": "Don’t count the home you live in, your retirement accounts, or student aid you’ve received. For a business or farm, you don’t report a family business with 100 or fewer full-time employees, a farm your family lives on, or a commercial fishing business."
+        }
       }
     ]
   },
@@ -347,9 +356,15 @@ export const CADAA_GUIDE: GuideSection[] = [
           "en": "Parent assets",
           "es": "Parent assets"
         },
-        "whatItMeans": null,
+        "whatItMeans": {
+          "en": "Your parent reports the current total of their cash, savings, and checking — not retirement accounts or investments (asked separately). For investments, they report net worth (value minus any debt): rental property, land, and second or vacation homes, but never the home the family lives in.",
+          "es": "Your parent reports the current total of their cash, savings, and checking — not retirement accounts or investments (asked separately). For investments, they report net worth (value minus any debt): rental property, land, and second or vacation homes, but never the home the family lives in."
+        },
         "documentNeeded": null,
-        "commonError": null
+        "commonError": {
+          "en": "A family business with 100 or fewer full-time employees, a farm the family lives on, and a commercial fishing business are not reported as assets.",
+          "es": "A family business with 100 or fewer full-time employees, a farm the family lives on, and a commercial fishing business are not reported as assets."
+        }
       },
       {
         "fieldKey": "familySize",

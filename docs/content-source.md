@@ -87,6 +87,25 @@ benefit and the affidavit.
 
 ---
 
+## Sourced 2026-07-16 (this branch) — CADAA assets
+
+Sourced from the California Student Aid Commission (2026-27 CADAA form /
+csac.ca.gov CADAA instructions). CADAA assets are entered manually - do NOT
+reuse FAFSA IRS-import language (standing guardrail). English only.
+
+### Student / parent assets
+- Cash/savings/checking: report the current total; exclude student aid received,
+  retirement accounts, and investments (asked separately). Investments: net worth
+  (value minus debt) - rental property, land, second/vacation homes; never the
+  primary residence. Business/farm: exclude a family business with 100 or fewer
+  full-time employees, a farm the family lives on, and a commercial fishing business.
+- **Source:** <https://csac.ca.gov/cadaa-and-eligibility> and the 2026-27 CADAA form (csac.ca.gov)
+
+**Placed in:** `walkthrough.cadaa.sections.studentFinancials.fields.studentAssets.*`,
+`…parentFinancials.fields.parentAssets.{whatItMeans, commonError}`.
+
+---
+
 ## Sourced 2026-07-16 (this branch) — FAFSA student circumstances
 
 Sourced from studentaid.gov's Dependency Status page (read for the 2026-27
