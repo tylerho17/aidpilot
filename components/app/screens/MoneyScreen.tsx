@@ -211,8 +211,8 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
   useEffect(() => () => { if (typer.current) clearInterval(typer.current); }, []);
 
   const s = t({
-    en: { cta: "Explain this offer with AI", again: "Explain again", thinking: "AidPilot is reading your offer…", warming: "The AI copilot isn't set up on this deployment yet.", note: "AI summary from your numbers - not official financial-aid advice." },
-    es: { cta: "Explica esta oferta con IA", again: "Explicar de nuevo", thinking: "AidPilot está leyendo tu oferta…", warming: "El copiloto de IA aún no está configurado en este despliegue.", note: "Resumen de IA a partir de tus cifras - no es asesoría oficial de ayuda financiera." },
+    en: { cta: "Explain this offer with AI", again: "Explain again", thinking: "AidPilot is reading your offer…", warming: "AidPilot's AI isn't available right now.", note: "AI summary from your numbers - not official financial-aid advice." },
+    es: { cta: "Explica esta oferta con IA", again: "Explicar de nuevo", thinking: "AidPilot está leyendo tu oferta…", warming: "El AI de AidPilot no está disponible ahora.", note: "Resumen de IA a partir de tus cifras - no es asesoría oficial de ayuda financiera." },
   });
 
   async function explain() {

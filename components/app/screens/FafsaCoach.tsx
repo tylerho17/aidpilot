@@ -21,7 +21,7 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
       cta: "Help me with this step",
       again: "Ask again",
       thinking: "AidPilot is checking the guide…",
-      warming: "The AI coach isn't set up on this deployment yet.",
+      warming: "AidPilot's AI isn't available right now.",
       note: "Educational guidance from sourced material - not official financial-aid advice.",
     },
     es: {
@@ -31,7 +31,7 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
       cta: "Ayúdame con este paso",
       again: "Preguntar de nuevo",
       thinking: "AidPilot está revisando la guía…",
-      warming: "La guía con IA aún no está configurada en este despliegue.",
+      warming: "El AI de AidPilot no está disponible ahora.",
       note: "Guía educativa de material verificado - no es asesoría oficial de ayuda financiera.",
     },
   });

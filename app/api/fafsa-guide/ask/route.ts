@@ -79,7 +79,7 @@ const ANTHROPIC_KEY =
 export async function POST(request: Request) {
   if (!ANTHROPIC_KEY) {
     return NextResponse.json(
-      { error: "AI answers aren't configured on this deployment yet." },
+      { error: "AidPilot's AI isn't available right now." },
       { status: 503 }
     );
   }
