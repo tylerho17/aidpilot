@@ -70,8 +70,14 @@ Ground rules:
 ${GROUNDING}
 </guide>`;
 
+// Resolve the Anthropic key from the standard name first, then this
+// deployment's custom var name. Add more fallbacks here if the env var is
+// ever renamed - the code doesn't care what it's called.
+const ANTHROPIC_KEY =
+  process.env.ANTHROPIC_API_KEY || process.env.Anthropic_API_Key_AidPilot || "";
+
 export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!ANTHROPIC_KEY) {
     return NextResponse.json(
       { error: "AI answers aren't configured on this deployment yet." },
       { status: 503 }
@@ -103,7 +109,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
   try {
     const response = await client.messages.create({
