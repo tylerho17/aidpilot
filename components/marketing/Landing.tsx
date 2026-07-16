@@ -15,6 +15,7 @@ import {
   linedPaper,
 } from "./skeuo";
 import { LandingAsk } from "./LandingAsk";
+import { ScrollPlane } from "./ScrollPlane";
 
 function scrollToWaitlist() {
   document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -271,6 +272,7 @@ function MarketingFooter() {
 export function Landing() {
   return (
     <div style={{ background: "var(--surface-page)" }}>
+      <ScrollPlane />
       <MarketingNav />
       <Hero />
       <LandingAsk />

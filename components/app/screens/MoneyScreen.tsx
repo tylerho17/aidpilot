@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Card, Button, Badge, IconButton } from "@/components/ui";
+import { Card, Button, Badge, IconButton, Icon } from "@/components/ui";
+import { useLanguage } from "@/lib/i18n";
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
@@ -196,6 +197,96 @@ function LoadingSkeleton() {
   );
 }
 
+/** AI plain-language readout of the decoded offer. Sends amounts only to the
+ * grounded /api/aid-letter/explain route and reveals the answer with a
+ * typewriter. Self-contained; degrades gracefully without a key. */
+function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
+  const { lang, t } = useLanguage();
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [text, setText] = useState("");
+  const [shown, setShown] = useState(0);
+  const [err, setErr] = useState("");
+  const typer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (typer.current) clearInterval(typer.current); }, []);
+
+  const s = t({
+    en: { cta: "Explain this offer with AI", again: "Explain again", thinking: "AidPilot is reading your offer…", warming: "The AI copilot isn't set up on this deployment yet.", note: "AI summary from your numbers - not official financial-aid advice." },
+    es: { cta: "Explica esta oferta con IA", again: "Explicar de nuevo", thinking: "AidPilot está leyendo tu oferta…", warming: "El copiloto de IA aún no está configurado en este despliegue.", note: "Resumen de IA a partir de tus cifras - no es asesoría oficial de ayuda financiera." },
+  });
+
+  async function explain() {
+    if (status === "loading") return;
+    setStatus("loading");
+    setText("");
+    setShown(0);
+    setErr("");
+    if (typer.current) clearInterval(typer.current);
+    try {
+      const res = await fetch("/api/aid-letter/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          schoolName: offer.school_name,
+          costOfAttendance: offer.cost_of_attendance,
+          grants: offer.grants_and_scholarships,
+          workStudy: offer.work_study,
+          loans: offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans,
+          lang,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { explanation?: string; error?: string };
+      if (!res.ok || !body.explanation) {
+        setStatus("error");
+        setErr(res.status === 503 ? s.warming : body.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+      setStatus("done");
+      const full = body.explanation;
+      setText(full);
+      const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) setShown(full.length);
+      else typer.current = setInterval(() => {
+        setShown((n) => {
+          if (n >= full.length) { if (typer.current) clearInterval(typer.current); return n; }
+          return Math.min(full.length, n + 2);
+        });
+      }, 14);
+    } catch {
+      setStatus("error");
+      setErr("Something went wrong. Please try again.");
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-card)" }}>
+      <Button variant="secondary" size="sm" iconLeft="plane" onClick={() => void explain()} loading={status === "loading"}>
+        {status === "done" ? s.again : s.cta}
+      </Button>
+      {status !== "idle" && (
+        <div style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <span style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", background: "var(--blue-700)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="plane" size={16} color="#fff" strokeWidth={2} />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {status === "loading" && <span style={{ fontSize: 14, fontWeight: 600, color: "var(--gray-400)" }}>{s.thinking}</span>}
+            {status === "error" && <span style={{ fontSize: 14, fontWeight: 600, color: "var(--amber-700)" }}>{err}</span>}
+            {status === "done" && (
+              <>
+                <p style={{ fontSize: 14.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
+                  {text.slice(0, shown)}
+                  {shown < text.length && <span style={{ opacity: 0.5 }}>▍</span>}
+                </p>
+                <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Plain-language meaning of each aid category - shown inline (no navigation)
  * so the decode story is self-contained on this screen, demo included. */
 const CATEGORY_MEANINGS: { dot: string; label: string; body: string }[] = [
@@ -313,6 +404,8 @@ function OfferSection({
             ))}
           </div>
         )}
+
+        <AiExplainBlock offer={offer} />
       </Card>
     </>
   );
