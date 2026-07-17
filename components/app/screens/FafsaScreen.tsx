@@ -8,10 +8,12 @@ import { FafsaGuide } from "@/components/app/screens/FafsaGuide";
 import { AskAidPilot } from "@/components/app/screens/AskAidPilot";
 import { FafsaJourney } from "@/components/app/screens/FafsaJourney";
 import { FafsaCoach } from "@/components/app/screens/FafsaCoach";
+import { FafsaSyncBanner } from "@/components/fafsa/FafsaSyncBanner";
 import { Confetti } from "@/components/app/screens/Confetti";
+import { useFafsaProgress } from "@/hooks/useFafsaProgress";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/lib/i18n";
-import { demoFallback, makeDemoFafsaSteps, useDemoMutations } from "@/lib/demo";
+import { FAFSA_STEPS } from "@/lib/fafsa/steps";
 import type { UserFafsaStep } from "@/lib/types";
 
 const STRINGS = {
@@ -57,23 +59,27 @@ const STRINGS = {
   },
 };
 
+const LEGACY_WORKFLOW_TITLE_TO_PLAN_KEYS: Record<string, string[]> = {
+  "create studentaid.gov account": ["create-account"],
+  "gather student and contributor information": ["gather-records"],
+  "invite contributor if needed": ["invite-contributors"],
+  "complete fafsa": ["start-fafsa"],
+  "submit fafsa": ["review-submit"],
+  "watch for school verification request": ["respond-verification"],
+  "submit requested verification documents": ["respond-verification"],
+  "check school financial aid portal": ["check-school-portals"],
+  "compare aid offers": ["understand-aid-offers"],
+};
+
+function legacyPlanKeysFor(step: UserFafsaStep, workflowTitleById: Map<string, string>): string[] {
+  const title = step.workflow_step?.title ?? workflowTitleById.get(step.workflow_step_id) ?? "";
+  return LEGACY_WORKFLOW_TITLE_TO_PLAN_KEYS[title.trim().toLowerCase()] ?? [];
+}
+
 /** A FAFSA step counts as done when its status reads complete/completed/done. */
 function isStepDone(step: UserFafsaStep): boolean {
   const status = (step.status ?? "").trim().toLowerCase();
   return status === "complete" || status === "completed" || status === "done";
-}
-
-/** Order steps by their workflow step_order, falling back to load order. */
-function orderSteps(steps: UserFafsaStep[]): UserFafsaStep[] {
-  return steps
-    .map((step, index) => ({ step, index }))
-    .sort((a, b) => {
-      const orderA = a.step.workflow_step?.step_order ?? Number.MAX_SAFE_INTEGER;
-      const orderB = b.step.workflow_step?.step_order ?? Number.MAX_SAFE_INTEGER;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.index - b.index;
-    })
-    .map(({ step }) => step);
 }
 
 function FafsaSkeleton() {
@@ -103,38 +109,35 @@ function FafsaSkeleton() {
 }
 
 export default function FafsaScreen() {
-  const { authReady, loading, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
-    useUserData();
+  const { authReady, loading, userFafsaSteps, workflowSteps } = useUserData();
+  const { completedPlanKeys, markComplete, markIncomplete, syncMessage } = useFafsaProgress();
   const { t } = useLanguage();
   const s = t(STRINGS);
-  const demo = useDemoMutations();
   const [poppingId, setPoppingId] = useState<string | null>(null);
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ready = authReady && !loading;
-  const hasSteps = userFafsaSteps.length > 0;
+  const completedKeySet = useMemo(() => new Set(completedPlanKeys), [completedPlanKeys]);
+  const legacyCompletedPlanKeys = useMemo(() => {
+    const workflowTitleById = new Map(workflowSteps.map((step) => [step.id, step.title]));
+    const migrated = new Set<string>();
+    userFafsaSteps.forEach((step) => {
+      if (!isStepDone(step)) return;
+      legacyPlanKeysFor(step, workflowTitleById).forEach((planKey) => {
+        if (!completedKeySet.has(planKey)) migrated.add(planKey);
+      });
+    });
+    return [...migrated];
+  }, [completedKeySet, userFafsaSteps, workflowSteps]);
 
-  // If we're signed in with data loaded but no real steps yet, seed them.
+  // Older FAFSA screens wrote completion to user_fafsa_steps. Keep that
+  // progress by copying clear title matches into the canonical plan-key store.
   useEffect(() => {
-    if (ready && !hasSteps) {
-      void ensureUserFafsaSteps();
-    }
-  }, [ready, hasSteps, ensureUserFafsaSteps]);
-
-  // Real rows win; fixtures fill in only when demo mode is on and Supabase is empty.
-  const effectiveSteps = useMemo(() => demoFallback(userFafsaSteps, makeDemoFafsaSteps), [userFafsaSteps]);
-
-  // user_fafsa_steps rows are loaded WITHOUT a join - hydrate each row's
-  // workflow_step (title/description/order) from the global catalog so real
-  // accounts see the actual step names, never a generic fallback.
-  const hydratedSteps = useMemo(() => {
-    const catalog = new Map(workflowSteps.map((ws) => [ws.id, ws]));
-    return effectiveSteps.map((step) =>
-      step.workflow_step ? step : { ...step, workflow_step: catalog.get(step.workflow_step_id) ?? null }
-    );
-  }, [effectiveSteps, workflowSteps]);
+    if (!ready || legacyCompletedPlanKeys.length === 0) return;
+    legacyCompletedPlanKeys.forEach((planKey) => markComplete(planKey));
+  }, [legacyCompletedPlanKeys, markComplete, ready]);
 
   useEffect(() => {
     return () => {
@@ -143,32 +146,30 @@ export default function FafsaScreen() {
     };
   }, []);
 
-  if (!ready || hydratedSteps.length === 0) {
+  if (!ready) {
     return <FafsaSkeleton />;
   }
 
-  // Effective done-state: fixture/row status XOR a local demo toggle.
-  const isEffectivelyDone = (step: UserFafsaStep) => (demo.has(step.id) ? !isStepDone(step) : isStepDone(step));
-
-  const steps = orderSteps(hydratedSteps);
+  const steps = FAFSA_STEPS;
   const total = steps.length;
-  const done = steps.filter(isEffectivelyDone).length;
+  const done = steps.filter((step) => completedKeySet.has(step.planKey)).length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const remaining = total - done;
   const minutesLeft = remaining * 5;
 
-  const nextStep = steps.find((step) => !isEffectivelyDone(step));
+  const nextStep = steps.find((step) => !completedKeySet.has(step.planKey));
   const allDone = !nextStep;
 
-  const toggleStep = (step: UserFafsaStep) => {
+  const toggleStep = (planKey: string) => {
+    const isDone = completedKeySet.has(planKey);
     // Completing the last remaining step finishes the journey - celebrate.
-    const willComplete = remaining === 1 && !isEffectivelyDone(step);
-    if (demo.isDemo(step.id)) {
-      demo.toggle(step.id);
+    const willComplete = remaining === 1 && !isDone;
+    if (isDone) {
+      markIncomplete(planKey);
     } else {
-      void updateFafsaStepStatus(step.id, isEffectivelyDone(step) ? "incomplete" : "complete");
+      markComplete(planKey);
     }
-    setPoppingId(step.id);
+    setPoppingId(planKey);
     if (popTimer.current) clearTimeout(popTimer.current);
     popTimer.current = setTimeout(() => setPoppingId(null), 460);
     if (willComplete) {
@@ -192,6 +193,8 @@ export default function FafsaScreen() {
           </Link>
         }
       />
+
+      {syncMessage && <FafsaSyncBanner message={syncMessage} />}
 
       <Card variant="clay" padding={24} style={{ marginBottom: 20, backgroundImage: "linear-gradient(150deg, #fff 55%, var(--blue-50) 150%)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -219,22 +222,19 @@ export default function FafsaScreen() {
       <Card variant="clay" padding="24px 12px" style={{ marginBottom: 20 }}>
         <FafsaJourney
           steps={steps.map((step, index) => ({
-            id: step.id,
-            title: step.workflow_step?.title ?? `Step ${index + 1}`,
-            done: isEffectivelyDone(step),
+            id: step.planKey,
+            title: step.title ?? `Step ${index + 1}`,
+            done: completedKeySet.has(step.planKey),
           }))}
-          currentId={allDone ? null : nextStep?.id ?? null}
+          currentId={allDone ? null : nextStep?.planKey ?? null}
           poppingId={poppingId}
-          onToggle={(id) => {
-            const step = steps.find((entry) => entry.id === id);
-            if (step) toggleStep(step);
-          }}
+          onToggle={toggleStep}
           bubbleLabel={done > 0 ? s.continueStep : s.start}
         />
       </Card>
 
-      {!allDone && nextStep?.workflow_step?.title && (
-        <FafsaCoach stepTitle={nextStep.workflow_step.title} />
+      {!allDone && nextStep && (
+        <FafsaCoach key={nextStep.planKey} stepTitle={nextStep.title} />
       )}
 
       {allDone && (
