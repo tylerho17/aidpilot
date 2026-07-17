@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge, IconTile, Icon } from "@/components/ui";
 import { Greeting, SectionTitle } from "@/components/app/screens/shared";
 import { ComingSoonCard } from "@/components/app/ComingSoonCard";
-import { StreakBadge } from "@/components/app/StreakBadge";
+import { NextDeadlineBadge } from "@/components/app/NextDeadlineBadge";
 import { GetStartedSpotlight } from "@/components/app/GetStartedSpotlight";
 import { useUserData } from "@/hooks/useUserData";
 import { useProtectHub } from "@/hooks/useProtectHub";
@@ -230,7 +230,7 @@ export function HomeScreen() {
         subtitle={`${todayLabel} · here's your weekly check-in.`}
         action={
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <StreakBadge />
+            <NextDeadlineBadge />
             <Link href="/protect" style={{ textDecoration: "none" }}>
               <Button variant="clay" size="sm" iconLeft="shield">
                 Protection status

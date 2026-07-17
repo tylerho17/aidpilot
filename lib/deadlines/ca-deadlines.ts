@@ -28,6 +28,8 @@ export interface AidDeadline {
   approx?: boolean;
   awardYear: string;
   title: Record<Language, string>;
+  /** Compact name for chips/pills (e.g. the dashboard "next date" pill). */
+  short: Record<Language, string>;
   who: Record<Language, string>;
   action: Record<Language, string>;
   href: string;
@@ -43,6 +45,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "Cal Grant community college deadline",
       es: "Fecha límite de Cal Grant para colegio comunitario",
     },
+    short: { en: "Cal Grant (community college)", es: "Cal Grant (colegio comunitario)" },
     who: {
       en: "California Community College students who missed the March 2 deadline",
       es: "Estudiantes de colegios comunitarios de California que no cumplieron la fecha del 2 de marzo",
@@ -61,6 +64,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "2027–28 FAFSA & CA Dream Act Application open",
       es: "Se abren la FAFSA y la Solicitud de la Ley Dream 2027–28",
     },
+    short: { en: "2027–28 FAFSA opens", es: "Se abre la FAFSA 2027–28" },
     who: {
       en: "Everyone applying for aid for the 2027–28 school year",
       es: "Todos los que solicitan ayuda para el año escolar 2027–28",
@@ -79,6 +83,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "March 2 Cal Grant deadline (priority + final)",
       es: "Fecha límite de Cal Grant del 2 de marzo (prioritaria y final)",
     },
+    short: { en: "March 2 Cal Grant deadline", es: "Fecha límite Cal Grant 2 de marzo" },
     who: {
       en: "Every California student applying for a Cal Grant for 2027–28",
       es: "Todo estudiante de California que solicita un Cal Grant para 2027–28",
@@ -97,6 +102,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "Federal FAFSA deadline (2026–27)",
       es: "Fecha límite federal de la FAFSA (2026–27)",
     },
+    short: { en: "2026–27 FAFSA closes", es: "Cierra la FAFSA 2026–27" },
     who: {
       en: "Anyone who still needs to file the 2026–27 FAFSA for federal aid",
       es: "Cualquiera que aún necesite presentar la FAFSA 2026–27 para ayuda federal",
@@ -115,6 +121,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "Chafee Grant deadline for foster youth",
       es: "Fecha límite de la Beca Chafee para jóvenes de crianza",
     },
+    short: { en: "Chafee Grant", es: "Beca Chafee" },
     who: {
       en: "Current or former foster youth (up to $5,000/year)",
       es: "Jóvenes de crianza actuales o anteriores (hasta $5,000 por año)",
@@ -134,6 +141,7 @@ export const CA_DEADLINES: AidDeadline[] = [
       en: "FAFSA verification deadline",
       es: "Fecha límite de verificación de la FAFSA",
     },
+    short: { en: "FAFSA verification", es: "Verificación de FAFSA" },
     who: {
       en: "Students selected for verification for 2026–27",
       es: "Estudiantes seleccionados para verificación para 2026–27",
