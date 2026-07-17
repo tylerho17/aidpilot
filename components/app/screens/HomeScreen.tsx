@@ -7,6 +7,7 @@ import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge, IconTile, Ic
 import { Greeting, SectionTitle } from "@/components/app/screens/shared";
 import { ComingSoonCard } from "@/components/app/ComingSoonCard";
 import { NextDeadlineBadge } from "@/components/app/NextDeadlineBadge";
+import type { AidDeadline } from "@/lib/deadlines/ca-deadlines";
 import { GetStartedSpotlight } from "@/components/app/GetStartedSpotlight";
 import { useUserData } from "@/hooks/useUserData";
 import { useProtectHub } from "@/hooks/useProtectHub";
@@ -126,7 +127,7 @@ function HomeSkeleton() {
   );
 }
 
-export function HomeScreen() {
+export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   const {
     profile,
     tasks,
@@ -230,7 +231,7 @@ export function HomeScreen() {
         subtitle={`${todayLabel} · here's your weekly check-in.`}
         action={
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <NextDeadlineBadge />
+            <NextDeadlineBadge deadlines={aidDeadlines} />
             <Link href="/protect" style={{ textDecoration: "none" }}>
               <Button variant="clay" size="sm" iconLeft="shield">
                 Protection status

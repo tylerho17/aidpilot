@@ -3,11 +3,16 @@ import type { Language } from "@/lib/i18n";
 /**
  * Proactive California aid deadline engine.
  *
- * A static, human-sourced set of the CA + federal financial-aid deadlines every
+ * A human-sourced set of the CA + federal financial-aid deadlines every
  * California student needs, plus a computation layer that turns them into "what
  * to do next, and when" relative to today. Unlike a chatbot that answers only
  * when asked, this surfaces the single most-urgent deadline proactively and
- * counts every date down. No PII, no database - just dates and math.
+ * counts every date down.
+ *
+ * The rows now live in the `aid_deadlines` DB catalog (migration 026, editable
+ * via admin, loaded by lib/deadlines/queries.ts). CA_DEADLINES below is the
+ * offline/pre-seed FALLBACK and the seed's source of record — keep the two in
+ * sync. The compute functions take whatever rows they're given.
  *
  * Sourced 2026-07-17 from the California Student Aid Commission (csac.ca.gov -
  * Cal Grant, Chafee, apply/important-dates) and StudentAid.gov FAFSA deadlines.
@@ -217,21 +222,31 @@ export interface ComputedDeadline extends AidDeadline {
 /**
  * The engine: annotate every deadline with days/status/tone and sort so the
  * soonest still-upcoming deadline comes first and past ones sink to the bottom.
+ * Operates on whatever rows it's given — the live `aid_deadlines` catalog when
+ * available, or CA_DEADLINES as the offline/pre-seed fallback.
  */
-export function computeDeadlines(today: Date = new Date()): ComputedDeadline[] {
-  return CA_DEADLINES.map((d) => {
-    const days = daysUntil(d.date, today);
-    const status = statusFor(days);
-    return { ...d, days, status, tone: toneFor(status) };
-  }).sort((a, b) => {
-    const aPast = a.status === "past";
-    const bPast = b.status === "past";
-    if (aPast !== bPast) return aPast ? 1 : -1; // past to the bottom
-    return a.date.localeCompare(b.date);
-  });
+export function computeDeadlines(
+  deadlines: AidDeadline[] = CA_DEADLINES,
+  today: Date = new Date()
+): ComputedDeadline[] {
+  return deadlines
+    .map((d) => {
+      const days = daysUntil(d.date, today);
+      const status = statusFor(days);
+      return { ...d, days, status, tone: toneFor(status) };
+    })
+    .sort((a, b) => {
+      const aPast = a.status === "past";
+      const bPast = b.status === "past";
+      if (aPast !== bPast) return aPast ? 1 : -1; // past to the bottom
+      return a.date.localeCompare(b.date);
+    });
 }
 
 /** The single most-urgent upcoming deadline (what to surface proactively). */
-export function nextDeadline(today: Date = new Date()): ComputedDeadline | null {
-  return computeDeadlines(today).find((d) => d.status !== "past") ?? null;
+export function nextDeadline(
+  deadlines: AidDeadline[] = CA_DEADLINES,
+  today: Date = new Date()
+): ComputedDeadline | null {
+  return computeDeadlines(deadlines, today).find((d) => d.status !== "past") ?? null;
 }

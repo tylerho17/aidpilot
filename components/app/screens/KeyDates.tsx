@@ -9,6 +9,7 @@ import {
   computeDeadlines,
   countdownLabel,
   formatDeadlineDate,
+  type AidDeadline,
   type ComputedDeadline,
   type DeadlineTone,
 } from "@/lib/deadlines/ca-deadlines";
@@ -40,9 +41,9 @@ function dayNum(dateKey: string): number {
   return new Date(`${dateKey}T12:00:00`).getDate();
 }
 
-export function KeyDates() {
+export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
   const { lang, t } = useLanguage();
-  const deadlines = useMemo(() => computeDeadlines(new Date()), []);
+  const deadlines = useMemo(() => computeDeadlines(rows, new Date()), [rows]);
   const next = deadlines.find((d) => d.status !== "past") ?? null;
 
   const s = t({

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n";
-import { nextDeadline, type DeadlineTone } from "@/lib/deadlines/ca-deadlines";
+import { nextDeadline, CA_DEADLINES, type AidDeadline, type DeadlineTone } from "@/lib/deadlines/ca-deadlines";
 
 /**
  * The dashboard's "next deadline" pill - replaces the old habit-streak badge.
@@ -21,9 +21,9 @@ const PILL: Record<DeadlineTone, { bg: string; fg: string; icon: string }> = {
   gray:  { bg: "var(--blue-100)",  fg: "var(--blue-700)",  icon: "var(--blue-700)" },
 };
 
-export function NextDeadlineBadge() {
+export function NextDeadlineBadge({ deadlines = CA_DEADLINES }: { deadlines?: AidDeadline[] }) {
   const { lang, t } = useLanguage();
-  const next = useMemo(() => nextDeadline(new Date()), []);
+  const next = useMemo(() => nextDeadline(deadlines), [deadlines]);
   if (!next) return null;
 
   const p = PILL[next.tone];
