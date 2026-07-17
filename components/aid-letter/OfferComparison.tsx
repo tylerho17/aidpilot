@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Card, Button, Icon } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -28,6 +29,11 @@ export function OfferComparison({ offers }: { offers: UserAidOffer[] }) {
 
   const comparison = useMemo(() => buildAidOfferComparison(offers), [offers]);
   const bestPick = comparison.lowestGap?.offer.school_name ?? null;
+  // Rows are sorted ascending by gap, so the last is the biggest gap - the
+  // offer most worth appealing. Only surface the CTA if that gap is real.
+  const topGap = comparison.rows[comparison.rows.length - 1] ?? null;
+  const appealSchool =
+    topGap && topGap.calculation.remainingGapAfterAllAid > 1000 ? topGap.offer.school_name : "";
 
   const s = t({
     en: {
@@ -40,6 +46,8 @@ export function OfferComparison({ offers }: { offers: UserAidOffer[] }) {
       warming: "AidPilot's AI isn't available right now.",
       genericError: "Something went wrong. Please try again.",
       note: "AI summary from your numbers — not official financial-aid advice. Loans are optional.",
+      appealCta: "Gap too big to cover? If your family's situation changed, you can ask a school to review your aid.",
+      appealLink: "Draft an appeal",
     },
     es: {
       heading: "Compara tus ofertas",
@@ -51,6 +59,8 @@ export function OfferComparison({ offers }: { offers: UserAidOffer[] }) {
       warming: "El AI de AidPilot no está disponible ahora.",
       genericError: "Algo salió mal. Inténtalo de nuevo.",
       note: "Resumen de IA a partir de tus cifras — no es asesoría oficial. Los préstamos son opcionales.",
+      appealCta: "¿La diferencia es demasiado grande? Si la situación de tu familia cambió, puedes pedirle a una escuela que revise tu ayuda.",
+      appealLink: "Redactar una apelación",
     },
   });
 
@@ -143,6 +153,17 @@ export function OfferComparison({ offers }: { offers: UserAidOffer[] }) {
           </div>
         )}
       </Card>
+
+      {appealSchool && (
+        <Card variant="clay" padding={16} style={{ marginTop: 14, background: "var(--amber-100)", border: "1px solid var(--amber-200)" }}>
+          <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.55, margin: "0 0 10px" }}>{s.appealCta}</p>
+          <Link href={`/appeal?school=${encodeURIComponent(appealSchool)}&reason=income_loss`} style={{ textDecoration: "none" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 700, color: "var(--blue-700)" }}>
+              {s.appealLink} <Icon name="arrow-right" size={14} />
+            </span>
+          </Link>
+        </Card>
+      )}
     </div>
   );
 }

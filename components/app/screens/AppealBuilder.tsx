@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Button, Icon, TextField } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -29,6 +29,30 @@ export function AppealBuilder() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  // Prefill from a deep link (e.g. the offer comparison sends ?school=…&reason=…)
+  // after mount, so SSR and the first client render match.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sc = params.get("school");
+    if (sc) setSchoolName(sc.slice(0, 120));
+    const rs = params.get("reason");
+    if (rs && ["income_loss", "medical", "family_change", "other"].includes(rs)) setReason(rs);
+  }, []);
+
+  function printLetter() {
+    const win = window.open("", "_blank", "width=800,height=900");
+    if (!win) return; // popup blocked - the Copy button is the fallback
+    const escaped = letter.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
+    win.document.write(
+      `<!doctype html><html><head><meta charset="utf-8"><title>Aid appeal letter</title>` +
+        `<style>body{font-family:Georgia,'Times New Roman',serif;max-width:640px;margin:48px auto;padding:0 24px;line-height:1.6;color:#111;white-space:pre-wrap;font-size:14px}</style>` +
+        `</head><body>${escaped}</body></html>`
+    );
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  }
+
   const s = t({
     en: {
       heading: "Build an aid appeal",
@@ -53,6 +77,7 @@ export function AppealBuilder() {
       yourLetter: "Your draft letter",
       copy: "Copy",
       copied: "Copied",
+      print: "Print / Save PDF",
       note: "This is a draft to review, not official advice — fill in the bracketed details, attach any documents your school asks for, and check your school's own appeal process and deadline.",
     },
     es: {
@@ -78,6 +103,7 @@ export function AppealBuilder() {
       yourLetter: "Tu borrador de carta",
       copy: "Copiar",
       copied: "Copiado",
+      print: "Imprimir / Guardar PDF",
       note: "Este es un borrador para revisar, no asesoría oficial — completa los datos entre corchetes, adjunta los documentos que pida tu escuela y revisa el proceso y la fecha límite de apelación de tu escuela.",
     },
   });
@@ -211,13 +237,22 @@ export function AppealBuilder() {
               {status === "loading" && !letter ? s.thinking : s.yourLetter}
             </span>
             {status === "done" && letter && (
-              <button
-                onClick={() => void copy()}
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)" }}
-              >
-                <Icon name={copied ? "check" : "file"} size={14} />
-                {copied ? s.copied : s.copy}
-              </button>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+                <button
+                  onClick={printLetter}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)" }}
+                >
+                  <Icon name="letter" size={14} />
+                  {s.print}
+                </button>
+                <button
+                  onClick={() => void copy()}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)" }}
+                >
+                  <Icon name={copied ? "check" : "file"} size={14} />
+                  {copied ? s.copied : s.copy}
+                </button>
+              </span>
             )}
           </div>
           <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0, padding: "16px 18px" }}>
