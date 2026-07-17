@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, Button, Icon, TextField } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -18,26 +18,29 @@ import { useAidPathContext } from "@/hooks/useAidPath";
 
 type Status = "idle" | "loading" | "done" | "error";
 
+/** Read a query param on the client (empty on the server). */
+function urlParam(key: string): string {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get(key) ?? "";
+}
+
 export function AppealBuilder() {
   const { lang, t } = useLanguage();
   const aiContext = useAidPathContext();
-  const [reason, setReason] = useState("income_loss");
+  // Prefill from a deep link (the offer comparison sends ?school=…&reason=…).
+  // AppChrome renders this client-side only (it gates on authReady), so reading
+  // the URL in the lazy initializer is safe - no SSR value to mismatch, and no
+  // setState in an effect.
+  const [reason, setReason] = useState(() => {
+    const r = urlParam("reason");
+    return ["income_loss", "medical", "family_change", "other"].includes(r) ? r : "income_loss";
+  });
   const [details, setDetails] = useState("");
-  const [schoolName, setSchoolName] = useState("");
+  const [schoolName, setSchoolName] = useState(() => urlParam("school").slice(0, 120));
   const [status, setStatus] = useState<Status>("idle");
   const [letter, setLetter] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-
-  // Prefill from a deep link (e.g. the offer comparison sends ?school=…&reason=…)
-  // after mount, so SSR and the first client render match.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sc = params.get("school");
-    if (sc) setSchoolName(sc.slice(0, 120));
-    const rs = params.get("reason");
-    if (rs && ["income_loss", "medical", "family_change", "other"].includes(rs)) setReason(rs);
-  }, []);
 
   function printLetter() {
     const win = window.open("", "_blank", "width=800,height=900");
