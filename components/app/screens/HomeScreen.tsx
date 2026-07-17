@@ -384,6 +384,27 @@ export function HomeScreen() {
             title="Appeal your aid"
             sub="Circumstances changed? Draft a letter to your school"
           />
+          <ToolLinkCard
+            href="/verification"
+            icon="shield-check"
+            tone="green"
+            title="Selected for verification?"
+            sub="Get the exact checklist of what to submit"
+          />
+          <ToolLinkCard
+            href="/key-dates"
+            icon="calendar"
+            tone="amber"
+            title="California aid deadlines"
+            sub="What's next, counted down and sourced"
+          />
+          <ToolLinkCard
+            href="/ca-aid"
+            icon="star"
+            tone="blue"
+            title="California aid & scholarships"
+            sub="Cal Grant, Chafee, Dream Act aid and more"
+          />
         </div>
 
         <SectionTitle>Coming soon</SectionTitle>

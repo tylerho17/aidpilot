@@ -214,3 +214,54 @@ parentEmail}.*`.
 FAFSA circumstances (marital/dependency/unusual), demographics (gender,
 race/ethnicity), family size, remaining CADAA residency/AB540 document details,
 and all Spanish/Vietnamese native review. Do not fill without an official source.
+
+---
+
+## Sourced 2026-07-17 (this branch) — 3 new "get it done" jobs
+
+Three new artifact-producing tools shipped this session, each grounded in an
+official source and cited here. Spanish for these tool UIs is authored
+plain-language copy (the appeal-builder precedent), NOT the ported guide dataset.
+
+### Verification helper (`lib/verification/guide.ts`, `/verification`)
+- What verification is; that selection can be random and doesn't mean the
+  student erred; aid can't be paid until it's done; miss the deadline and Pell
+  eligibility is at risk.
+- The three federal tracking groups and what each verifies: **V1 (Standard)** =
+  income/tax info + family size; **V4 (Custom)** = identity; **V5 (Aggregate)** =
+  both.
+- Acceptable documents: IRS FA-DDX transfer, a free IRS Tax Return Transcript, or
+  a signed copy of the 2024 return + schedules (tax filers); a signed non-filing
+  statement + a W-2 per 2024 job (non-filers); a signed family-size statement;
+  a government photo ID for identity (passport/driver's license/state ID), shown
+  in person, by video, or notarized.
+- Currency fact: for **2026–27, a Statement of Educational Purpose is no longer
+  required**. Verification deadline is set by the Federal Register (~mid-Sept).
+- **Source:** 2026-2027 Federal Student Aid Handbook, Application & Verification
+  Guide, Ch. 4 <https://fsapartners.ed.gov/knowledge-center/fsa-handbook/2026-2027/application-and-verification-guide/ch4-verification-updates-and-corrections>;
+  Dear Colleague Letter 2025-11-26 (90 FR 54316)
+  <https://fsapartners.ed.gov/knowledge-center/library/dear-colleague-letters/2025-11-26/2026-2027-award-year-fafsar-information-be-verified-and-acceptable-documentation>;
+  StudentAid.gov review-and-correct <https://studentaid.gov/apply-for-aid/fafsa/review-and-correct>.
+- The AI endpoint (`/api/verification/note`) drafts only a message to the aid
+  office; all facts above are deterministic (never AI-generated).
+
+### Deadline engine (`lib/deadlines/ca-deadlines.ts`, `/key-dates`)
+- Cal Grant priority + absolute deadline **March 2** (FAFSA/CADAA + GPA);
+  community-college second deadline **Sept 2**; FAFSA & CADAA open **Oct 1**;
+  federal FAFSA deadline **June 30** (2026–27); Chafee accepted through **July 31**;
+  verification deadline ~mid-September (Federal Register, approximate).
+- **Source:** CSAC Cal Grant <https://www.csac.ca.gov/cal-grant>, apply
+  <https://www.csac.ca.gov/apply>, Chafee <https://www.csac.ca.gov/chafee>;
+  StudentAid.gov FAFSA deadlines <https://studentaid.gov/apply-for-aid/fafsa/fafsa-deadlines>.
+
+### Curated CA aid & scholarships (`lib/scholarships/ca-programs.ts`, `/ca-aid`)
+- STATIC reference only (no engine/matching/DB, per the v1 guardrail). Cal Grant
+  A/B, California Chafee Grant (**up to $5,000/yr**, foster youth), Middle Class
+  Scholarship (UC/CSU/CCC bachelor's), California College Promise Grant (CCC fee
+  waiver), and California Dream Act aid (CADAA pathway for undocumented/AB 540
+  students). Award amounts change yearly — each card links to the official page
+  for the current figure.
+- **Source:** CSAC Cal Grant <https://www.csac.ca.gov/cal-grant>, Chafee
+  <https://www.csac.ca.gov/chafee>, Middle Class Scholarship
+  <https://www.csac.ca.gov/middle-class-scholarship>, apply/Promise Grant
+  <https://www.csac.ca.gov/apply>, CA Dream Act <https://dream.csac.ca.gov/>.
