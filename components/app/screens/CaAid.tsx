@@ -5,27 +5,47 @@ import { Card, Button, Icon, IconTile, Badge, SegmentedControl, SectionHeading }
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
-import { CA_PROGRAMS, ELIGIBILITY_META, type CaProgram } from "@/lib/scholarships/ca-programs";
+import { isDreamActEligible } from "@/lib/scholarships/ca-programs";
+import type { ScholarshipSource } from "@/lib/types";
 
 /**
- * Curated California aid & scholarships — a static, sourced reference (no
- * matching engine, no student database, per the v1 guardrail). The one filter
- * that actually matters for California's mixed-status students: "open to CA
- * Dream Act applicants." Built from the app UI kit to match the product.
+ * Curated California aid & scholarships — now rendered from the LIVE
+ * `scholarship_sources` catalog (server-loaded, editable via /admin/scholarships)
+ * instead of a hardcoded array. The one filter that matters for California's
+ * mixed-status students: "open to CA Dream Act applicants." UI chrome is
+ * bilingual; program data is English from the catalog. Built from the app UI kit.
  */
 
 type Filter = "all" | "dream_act";
 
-const PROGRAM_VISUAL: Record<string, { icon: string; tone: "blue" | "green" | "amber" | "coral" | "brand" }> = {
-  "cal-grant-a": { icon: "star", tone: "blue" },
-  "cal-grant-b": { icon: "star", tone: "green" },
-  "chafee-grant": { icon: "shield", tone: "coral" },
-  "middle-class-scholarship": { icon: "star", tone: "amber" },
-  "promise-grant": { icon: "file", tone: "blue" },
-  "ca-dream-act": { icon: "shield-check", tone: "brand" },
-};
+function visualFor(p: ScholarshipSource, index: number): { icon: string; tone: "blue" | "green" | "amber" | "coral" | "brand" } {
+  const tags = p.tags ?? [];
+  if (tags.includes("dream_act_pathway")) return { icon: "shield-check", tone: "brand" };
+  if (tags.includes("foster-youth")) return { icon: "shield", tone: "coral" };
+  if (tags.includes("community-college")) return { icon: "file", tone: "blue" };
+  const rotate = ["blue", "green", "amber"] as const;
+  return { icon: "star", tone: rotate[index % rotate.length] };
+}
 
-export function CaAid() {
+function eligibilityChip(p: ScholarshipSource): { key: "both" | "pathway" | "fafsa"; tone: "green" | "amber" | "blue" } {
+  const tags = p.tags ?? [];
+  if (tags.includes("dream_act_pathway")) return { key: "pathway", tone: "amber" };
+  if (tags.includes("cadaa_eligible")) return { key: "both", tone: "green" };
+  return { key: "fafsa", tone: "blue" };
+}
+
+function formatAmount(n: number | null): string | null {
+  return n && n > 0 ? `$${n.toLocaleString("en-US")}` : null;
+}
+
+function formatDeadline(d: string | null): string | null {
+  if (!d) return null;
+  const parsed = new Date(`${d.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
   const { lang, t } = useLanguage();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -38,9 +58,14 @@ export function CaAid() {
         { value: "all", label: "All programs" },
         { value: "dream_act", label: "Open to Dream Act" },
       ],
-      whoFor: "Who it's for",
+      award: "Award",
       deadline: "Deadline",
+      varies: "Award varies — see official page",
+      rolling: "Rolling — apply anytime",
+      perYear: "/yr",
       apply: "Official page",
+      chips: { both: "FAFSA or Dream Act", pathway: "Dream Act pathway", fafsa: "FAFSA only" },
+      empty: "No programs to show yet.",
       note: "Award amounts change each year — check the official page for the current figure. Reference information for the 2026–27 year, not an application or an offer.",
     },
     es: {
@@ -51,16 +76,21 @@ export function CaAid() {
         { value: "all", label: "Todos los programas" },
         { value: "dream_act", label: "Abierto a la Ley Dream" },
       ],
-      whoFor: "Para quién",
+      award: "Monto",
       deadline: "Fecha límite",
+      varies: "El monto varía — consulta la página oficial",
+      rolling: "Continua — solicita en cualquier momento",
+      perYear: "/año",
       apply: "Página oficial",
+      chips: { both: "FAFSA o Ley Dream", pathway: "Vía Ley Dream", fafsa: "Solo FAFSA" },
+      empty: "Aún no hay programas para mostrar.",
       note: "Los montos cambian cada año — consulta la página oficial para la cifra actual. Información de referencia para el año 2026–27, no una solicitud ni una oferta.",
     },
   });
 
-  const programs = useMemo(
-    () => (filter === "dream_act" ? CA_PROGRAMS.filter((p) => p.eligibility !== "fafsa_only") : CA_PROGRAMS),
-    [filter]
+  const filtered = useMemo(
+    () => (filter === "dream_act" ? programs.filter(isDreamActEligible) : programs),
+    [programs, filter]
   );
 
   return (
@@ -81,11 +111,17 @@ export function CaAid() {
         style={{ marginBottom: 20 }}
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
-        {programs.map((p) => (
-          <ProgramCard key={p.id} p={p} lang={lang} labels={{ whoFor: s.whoFor, deadline: s.deadline, apply: s.apply }} />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <Card variant="clay" padding={28} style={{ textAlign: "center", color: "var(--gray-500)", fontWeight: 600 }}>
+          {s.empty}
+        </Card>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+          {filtered.map((p, i) => (
+            <ProgramCard key={p.id} p={p} index={i} labels={s} />
+          ))}
+        </div>
+      )}
 
       <div style={{ margin: "18px 2px 0" }}>
         <SourceBadge />
@@ -97,35 +133,48 @@ export function CaAid() {
 
 function ProgramCard({
   p,
-  lang,
+  index,
   labels,
 }: {
-  p: CaProgram;
-  lang: "en" | "es";
-  labels: { whoFor: string; deadline: string; apply: string };
+  p: ScholarshipSource;
+  index: number;
+  labels: {
+    award: string; deadline: string; varies: string; rolling: string; perYear: string; apply: string;
+    chips: { both: string; pathway: string; fafsa: string };
+  };
 }) {
-  const elig = ELIGIBILITY_META[p.eligibility];
-  const visual = PROGRAM_VISUAL[p.id] ?? { icon: "star", tone: "blue" as const };
+  const visual = visualFor(p, index);
+  const chip = eligibilityChip(p);
+  const amount = formatAmount(p.amount);
+  const deadline = formatDeadline(p.deadline);
+  const href = p.application_url || p.source_url || p.url || "#";
+
   return (
     <Card variant="clay" padding={20} lift style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
         <IconTile icon={visual.icon} tone={visual.tone} size={46} />
-        <Badge tone={elig.tone}>{elig.label[lang]}</Badge>
+        <Badge tone={chip.tone}>{labels.chips[chip.key]}</Badge>
       </div>
 
-      <h3 className="font-display" style={{ fontSize: 17.5, fontWeight: 900, letterSpacing: "-.3px", color: "var(--ink-900)", margin: "0 0 6px", lineHeight: 1.2 }}>
-        {p.name[lang]}
+      <h3 className="font-display" style={{ fontSize: 17.5, fontWeight: 900, letterSpacing: "-.3px", color: "var(--ink-900)", margin: "0 0 2px", lineHeight: 1.2 }}>
+        {p.name}
       </h3>
-      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--blue-700)", lineHeight: 1.5, margin: "0 0 16px" }}>
-        {p.amount[lang]}
-      </p>
+      {p.provider && (
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-400)", marginBottom: 12 }}>{p.provider}</div>
+      )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 11, marginBottom: 18 }}>
-        <InfoRow icon="shield" label={labels.whoFor} value={p.who[lang]} />
-        <InfoRow icon="calendar" label={labels.deadline} value={p.deadline[lang]} />
+      {p.eligibility && (
+        <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.55, margin: "0 0 16px" }}>
+          {p.eligibility}
+        </p>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 11, marginBottom: 18, marginTop: "auto" }}>
+        <InfoRow icon="star" label={labels.award} value={amount ? `${amount}${labels.perYear}` : labels.varies} />
+        <InfoRow icon="calendar" label={labels.deadline} value={deadline ?? labels.rolling} />
       </div>
 
-      <a href={p.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", marginTop: "auto" }}>
+      <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
         <Button variant="secondary" size="sm" iconLeft="arrow-right">{labels.apply}</Button>
       </a>
     </Card>
