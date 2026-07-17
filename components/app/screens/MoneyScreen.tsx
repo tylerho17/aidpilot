@@ -10,6 +10,7 @@ import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { demoFallback, makeDemoOffers, makeDemoScholarships, useDemoMutations } from "@/lib/demo";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { OfferComparison } from "@/components/aid-letter/OfferComparison";
 import type { ScholarshipMatch, UserAidOffer } from "@/lib/types";
 
 /* ── AID & MONEY - real-data port of the app UI kit (AppScreens2.jsx) ── */
@@ -483,6 +484,11 @@ export default function MoneyScreen() {
     <div>
       <Greeting title="Aid & Money" subtitle="Your aid offer, decoded - plus scholarships matched to you." />
       <OfferSection offer={offer} isDemo={offerIsDemo} offerCount={effectiveOffers.length} />
+      {effectiveOffers.length >= 2 && (
+        <div style={{ marginBottom: 28 }}>
+          <OfferComparison offers={effectiveOffers} />
+        </div>
+      )}
       <ScholarshipSection matches={matches} onSave={handleSave} />
       {savingError && (
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-500)", marginTop: 16 }}>
