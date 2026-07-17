@@ -377,6 +377,13 @@ export function HomeScreen() {
             title="Docs & Dates"
             sub="Every document and deadline in one place"
           />
+          <ToolLinkCard
+            href="/appeal"
+            icon="letter"
+            tone="coral"
+            title="Appeal your aid"
+            sub="Circumstances changed? Draft a letter to your school"
+          />
         </div>
 
         <SectionTitle>Coming soon</SectionTitle>

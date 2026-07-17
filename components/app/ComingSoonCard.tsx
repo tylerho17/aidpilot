@@ -14,14 +14,12 @@ const STRINGS = {
     soon: "Soon",
     items: [
       { icon: "star", label: "Scholarship tracker", href: "/scholarships" },
-      { icon: "letter", label: "Appeals", href: null },
     ],
   },
   es: {
     soon: "Pronto",
     items: [
       { icon: "star", label: "Rastreador de becas", href: "/scholarships" },
-      { icon: "letter", label: "Apelaciones", href: null },
     ],
   },
 };
