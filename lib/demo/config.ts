@@ -37,6 +37,9 @@ export function setDemoEnabled(on: boolean): void {
   } catch {
     // Ignore - env default still applies.
   }
+  if (typeof document !== "undefined") {
+    document.cookie = `${STORAGE_KEY}=${on ? "on" : "off"}; path=/; max-age=${on ? 86400 : 0}; samesite=lax`;
+  }
 }
 
 /** Ids of demo fixtures all start with this prefix so mutations can be
