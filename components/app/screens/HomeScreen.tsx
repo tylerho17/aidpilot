@@ -126,6 +126,7 @@ function HomeSkeleton() {
 
 export function HomeScreen() {
   const {
+    user,
     profile,
     tasks,
     deadlines,
@@ -143,10 +144,14 @@ export function HomeScreen() {
   // Demo seam: fixtures fill in only when demo mode is on AND the real
   // collection is empty. Real rows always win (see lib/demo).
   const demo = useDemoMutations();
-  const displayTasks = useMemo(() => demoFallback(tasks, makeDemoTasks), [tasks]);
-  const displayDeadlines = useMemo(() => demoFallback(deadlines, makeDemoDeadlines), [deadlines]);
-  const displayScholarships = useMemo(() => demoFallback(scholarships, makeDemoScholarships), [scholarships]);
-  const displayOffers = useMemo(() => demoFallback(offers, makeDemoOffers), [offers]);
+  const userId = user?.id ?? null;
+  const displayTasks = useMemo(() => demoFallback(tasks, makeDemoTasks, { userId }), [tasks, userId]);
+  const displayDeadlines = useMemo(() => demoFallback(deadlines, makeDemoDeadlines, { userId }), [deadlines, userId]);
+  const displayScholarships = useMemo(
+    () => demoFallback(scholarships, makeDemoScholarships, { userId }),
+    [scholarships, userId]
+  );
+  const displayOffers = useMemo(() => demoFallback(offers, makeDemoOffers, { userId }), [offers, userId]);
 
   const now = new Date();
   const greetingName = firstNameFrom(getProfileFullName(profile));

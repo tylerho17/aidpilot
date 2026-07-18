@@ -455,15 +455,16 @@ function ScholarshipSection({
 }
 
 export default function MoneyScreen() {
-  const { authReady: offersReady, loading: offersLoading, offers } = useAidOffers();
-  const { authReady: dataReady, loading: dataLoading, scholarships, saveScholarship } = useUserData();
+  const { authReady: offersReady, loading: offersLoading, userId: offerUserId, offers } = useAidOffers();
+  const { authReady: dataReady, loading: dataLoading, user, scholarships, saveScholarship } = useUserData();
   const { isDemo, toggle, has } = useDemoMutations();
   const [savingError, setSavingError] = useState(false);
 
-  const effectiveOffers = useMemo(() => demoFallback(offers, makeDemoOffers), [offers]);
+  const userId = user?.id ?? offerUserId;
+  const effectiveOffers = useMemo(() => demoFallback(offers, makeDemoOffers, { userId }), [offers, userId]);
   const effectiveScholarships = useMemo(
-    () => demoFallback(scholarships, makeDemoScholarships),
-    [scholarships],
+    () => demoFallback(scholarships, makeDemoScholarships, { userId }),
+    [scholarships, userId],
   );
   const matches = useMemo(
     () =>

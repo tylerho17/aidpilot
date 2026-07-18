@@ -103,7 +103,7 @@ function FafsaSkeleton() {
 }
 
 export default function FafsaScreen() {
-  const { authReady, loading, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
+  const { authReady, loading, user, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
     useUserData();
   const { t } = useLanguage();
   const s = t(STRINGS);
@@ -124,7 +124,11 @@ export default function FafsaScreen() {
   }, [ready, hasSteps, ensureUserFafsaSteps]);
 
   // Real rows win; fixtures fill in only when demo mode is on and Supabase is empty.
-  const effectiveSteps = useMemo(() => demoFallback(userFafsaSteps, makeDemoFafsaSteps), [userFafsaSteps]);
+  const userId = user?.id ?? null;
+  const effectiveSteps = useMemo(
+    () => demoFallback(userFafsaSteps, makeDemoFafsaSteps, { userId }),
+    [userFafsaSteps, userId]
+  );
 
   // user_fafsa_steps rows are loaded WITHOUT a join - hydrate each row's
   // workflow_step (title/description/order) from the global catalog so real
