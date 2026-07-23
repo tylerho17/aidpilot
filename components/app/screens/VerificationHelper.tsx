@@ -5,11 +5,11 @@ import { Card, Button, IconTile, OptionCard, SegmentedControl, StatusPanel, Sect
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { useVerificationStatus } from "@/hooks/useVerificationStatus";
 import {
   buildChecklist,
   checklistToText,
   GROUP_INFO,
-  type VerificationGroup,
   type FilerStatus,
   type ChecklistTone,
 } from "@/lib/verification/guide";
@@ -40,9 +40,8 @@ const ITEM_ICON: Record<string, string> = {
 
 export function VerificationHelper() {
   const { lang, t } = useLanguage();
-  const [group, setGroup] = useState<VerificationGroup | null>(null);
-  const [filer, setFiler] = useState<FilerStatus>("unsure");
-  const [schoolName, setSchoolName] = useState("");
+  const { status: saved, update } = useVerificationStatus();
+  const { group, filer, schoolName } = saved;
 
   const [status, setStatus] = useState<Status>("idle");
   const [note, setNote] = useState("");
@@ -233,7 +232,7 @@ export function VerificationHelper() {
             <OptionCard
               key={g.value}
               selected={group === g.value}
-              onClick={() => setGroup(g.value)}
+              onClick={() => update({ group: g.value })}
               icon={g.icon}
               title={g.title}
               description={g.desc}
@@ -250,7 +249,7 @@ export function VerificationHelper() {
               size="sm"
               options={s.filers}
               value={filer}
-              onChange={(v) => setFiler(v as FilerStatus)}
+              onChange={(v) => update({ filer: v as FilerStatus })}
             />
           </div>
         )}
@@ -328,7 +327,7 @@ export function VerificationHelper() {
                 label={s.schoolLabel}
                 placeholder={s.schoolPlaceholder}
                 value={schoolName}
-                onChange={(e) => setSchoolName(e.target.value)}
+                onChange={(e) => update({ schoolName: e.target.value })}
                 maxLength={120}
                 style={{ marginBottom: 16 }}
               />
