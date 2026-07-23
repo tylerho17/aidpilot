@@ -6,6 +6,7 @@ import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
 import { isDreamActEligible } from "@/lib/scholarships/ca-programs";
+import { useSavedItems } from "@/hooks/useSavedItems";
 import type { ScholarshipSource } from "@/lib/types";
 
 /**
@@ -16,7 +17,7 @@ import type { ScholarshipSource } from "@/lib/types";
  * bilingual; program data is English from the catalog. Built from the app UI kit.
  */
 
-type Filter = "all" | "dream_act";
+type Filter = "all" | "dream_act" | "saved";
 
 function visualFor(p: ScholarshipSource, index: number): { icon: string; tone: "blue" | "green" | "amber" | "coral" | "brand" } {
   const tags = p.tags ?? [];
@@ -48,6 +49,7 @@ function formatDeadline(d: string | null): string | null {
 export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
   const { lang, t } = useLanguage();
   const [filter, setFilter] = useState<Filter>("all");
+  const saved = useSavedItems("scholarship");
 
   const s = t({
     en: {
@@ -57,7 +59,11 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
       filters: [
         { value: "all", label: "All programs" },
         { value: "dream_act", label: "Open to Dream Act" },
+        { value: "saved", label: saved.count > 0 ? `Saved (${saved.count})` : "Saved" },
       ],
+      save: "Save",
+      savedLabel: "Saved",
+      emptySaved: "Nothing saved yet — tap Save on a program to keep it here.",
       award: "Award",
       deadline: "Deadline",
       varies: "Award varies — see official page",
@@ -75,7 +81,11 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
       filters: [
         { value: "all", label: "Todos los programas" },
         { value: "dream_act", label: "Abierto a la Ley Dream" },
+        { value: "saved", label: saved.count > 0 ? `Guardados (${saved.count})` : "Guardados" },
       ],
+      save: "Guardar",
+      savedLabel: "Guardado",
+      emptySaved: "Nada guardado aún — toca Guardar en un programa para conservarlo aquí.",
       award: "Monto",
       deadline: "Fecha límite",
       varies: "El monto varía — consulta la página oficial",
@@ -88,10 +98,11 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
     },
   });
 
-  const filtered = useMemo(
-    () => (filter === "dream_act" ? programs.filter(isDreamActEligible) : programs),
-    [programs, filter]
-  );
+  const filtered = useMemo(() => {
+    if (filter === "dream_act") return programs.filter(isDreamActEligible);
+    if (filter === "saved") return programs.filter((p) => saved.has(p.id));
+    return programs;
+  }, [programs, filter, saved]);
 
   return (
     <div>
@@ -113,12 +124,19 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
 
       {filtered.length === 0 ? (
         <Card variant="clay" padding={28} style={{ textAlign: "center", color: "var(--gray-500)", fontWeight: 600 }}>
-          {s.empty}
+          {filter === "saved" ? s.emptySaved : s.empty}
         </Card>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
           {filtered.map((p, i) => (
-            <ProgramCard key={p.id} p={p} index={i} labels={s} />
+            <ProgramCard
+              key={p.id}
+              p={p}
+              index={i}
+              labels={s}
+              isSaved={saved.has(p.id)}
+              onToggleSave={() => saved.toggle(p.id)}
+            />
           ))}
         </div>
       )}
@@ -135,13 +153,18 @@ function ProgramCard({
   p,
   index,
   labels,
+  isSaved,
+  onToggleSave,
 }: {
   p: ScholarshipSource;
   index: number;
   labels: {
     award: string; deadline: string; varies: string; rolling: string; perYear: string; apply: string;
+    save: string; savedLabel: string;
     chips: { both: string; pathway: string; fafsa: string };
   };
+  isSaved: boolean;
+  onToggleSave: () => void;
 }) {
   const visual = visualFor(p, index);
   const chip = eligibilityChip(p);
@@ -174,9 +197,33 @@ function ProgramCard({
         <InfoRow icon="calendar" label={labels.deadline} value={deadline ?? labels.rolling} />
       </div>
 
-      <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-        <Button variant="secondary" size="sm" iconLeft="arrow-right">{labels.apply}</Button>
-      </a>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+          <Button variant="secondary" size="sm" iconLeft="arrow-right">{labels.apply}</Button>
+        </a>
+        <button
+          type="button"
+          onClick={onToggleSave}
+          aria-pressed={isSaved}
+          aria-label={isSaved ? labels.savedLabel : labels.save}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 12px",
+            borderRadius: "var(--radius-pill)",
+            border: `1.5px solid ${isSaved ? "var(--blue-700)" : "var(--border-default)"}`,
+            background: isSaved ? "var(--blue-50)" : "#fff",
+            color: isSaved ? "var(--blue-700)" : "var(--gray-500)",
+            cursor: "pointer",
+            fontSize: 12.5,
+            fontWeight: 700,
+          }}
+        >
+          <Icon name={isSaved ? "check" : "bookmark"} size={15} color={isSaved ? "var(--blue-700)" : "var(--gray-400)"} />
+          {isSaved ? labels.savedLabel : labels.save}
+        </button>
+      </div>
     </Card>
   );
 }

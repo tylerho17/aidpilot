@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, Button, Badge, IconTile, SectionHeading } from "@/components/ui";
+import { Card, Button, Badge, Icon, IconTile, SectionHeading } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
+import { useSavedItems } from "@/hooks/useSavedItems";
 import {
   computeDeadlines,
   countdownLabel,
@@ -43,8 +44,9 @@ function dayNum(dateKey: string): number {
 
 export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
   const { lang, t } = useLanguage();
+  const handled = useSavedItems("deadline");
   const deadlines = useMemo(() => computeDeadlines(rows, new Date()), [rows]);
-  const next = deadlines.find((d) => d.status !== "past") ?? null;
+  const next = deadlines.find((d) => d.status !== "past" && !handled.has(d.id)) ?? null;
 
   const s = t({
     en: {
@@ -60,6 +62,8 @@ export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
       past: "Passed",
       days: "days",
       day: "day",
+      markDone: "Mark done",
+      done: "Done",
     },
     es: {
       eyebrow: "Fechas clave",
@@ -74,6 +78,8 @@ export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
       past: "Pasó",
       days: "días",
       day: "día",
+      markDone: "Marcar hecho",
+      done: "Hecho",
     },
   });
 
@@ -126,7 +132,14 @@ export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
       <SectionHeading size="sm" eyebrow={s.allDates} title={s.full} style={{ marginBottom: 14 }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {deadlines.map((d) => (
-          <TimelineRow key={d.id} d={d} lang={lang} labels={{ for: s.for, approx: s.approx, past: s.past }} />
+          <TimelineRow
+            key={d.id}
+            d={d}
+            lang={lang}
+            done={handled.has(d.id)}
+            onToggle={() => handled.toggle(d.id)}
+            labels={{ for: s.for, approx: s.approx, past: s.past, markDone: s.markDone, doneLabel: s.done }}
+          />
         ))}
       </div>
 
@@ -140,15 +153,20 @@ export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
 function TimelineRow({
   d,
   lang,
+  done,
+  onToggle,
   labels,
 }: {
   d: ComputedDeadline;
   lang: "en" | "es";
-  labels: { for: string; approx: string; past: string };
+  done: boolean;
+  onToggle: () => void;
+  labels: { for: string; approx: string; past: string; markDone: string; doneLabel: string };
 }) {
   const past = d.status === "past";
+  const dim = past || done;
   return (
-    <Card variant="clay" padding={16} style={{ opacity: past ? 0.6 : 1 }}>
+    <Card variant="clay" padding={16} style={{ opacity: dim ? 0.6 : 1 }}>
       <div style={{ display: "flex", gap: 15, alignItems: "flex-start" }}>
         <div
           style={{
@@ -157,21 +175,21 @@ function TimelineRow({
             textAlign: "center",
             padding: "9px 4px",
             borderRadius: 14,
-            background: past ? "var(--track)" : `var(--${TILE_TONE[d.tone]}-100)`,
+            background: dim ? "var(--track)" : `var(--${TILE_TONE[d.tone]}-100)`,
           }}
         >
-          <div style={{ fontFamily: "var(--font-metric)", fontSize: 19, fontWeight: 700, color: TONE_FG[d.tone], lineHeight: 1 }}>
+          <div style={{ fontFamily: "var(--font-metric)", fontSize: 19, fontWeight: 700, color: done ? "var(--green-600)" : TONE_FG[d.tone], lineHeight: 1 }}>
             {dayNum(d.date)}
           </div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".5px", color: TONE_FG[d.tone], marginTop: 3 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".5px", color: done ? "var(--green-600)" : TONE_FG[d.tone], marginTop: 3 }}>
             {monthAbbrev(d.date)}
           </div>
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span className="font-display" style={{ fontSize: 15.5, fontWeight: 800, color: "var(--ink-900)" }}>{d.title[lang]}</span>
-            <Badge tone={d.tone === "gray" ? "gray" : d.tone}>{past ? labels.past : countdownLabel(d.days, lang)}</Badge>
+            <span className="font-display" style={{ fontSize: 15.5, fontWeight: 800, color: done ? "var(--gray-400)" : "var(--ink-900)", textDecoration: done ? "line-through" : "none" }}>{d.title[lang]}</span>
+            <Badge tone={done ? "green" : d.tone === "gray" ? "gray" : d.tone}>{done ? labels.doneLabel : past ? labels.past : countdownLabel(d.days, lang)}</Badge>
           </div>
           <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 3 }}>
             {formatDeadlineDate(d.date)}{d.approx ? " *" : ""} · {labels.for} {d.who[lang]}
@@ -179,6 +197,28 @@ function TimelineRow({
           <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.55, margin: "8px 0 0" }}>{d.action[lang]}</p>
           {d.approx && <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", margin: "6px 0 0" }}>* {labels.approx}</p>}
         </div>
+
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-pressed={done}
+          aria-label={done ? labels.doneLabel : labels.markDone}
+          title={done ? labels.doneLabel : labels.markDone}
+          style={{
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            border: done ? "none" : "1.5px solid var(--border-default)",
+            background: done ? "var(--green-600)" : "#fff",
+            cursor: "pointer",
+          }}
+        >
+          <Icon name="check" size={15} color={done ? "#fff" : "var(--gray-400)"} strokeWidth={done ? 3 : 2} />
+        </button>
       </div>
     </Card>
   );
