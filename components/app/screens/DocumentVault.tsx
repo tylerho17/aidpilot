@@ -41,6 +41,7 @@ export function DocumentVault() {
       empty: "No documents yet. Upload the ones your school asked for.",
       view: "View",
       remove: "Delete",
+      confirmDelete: "Delete this document? This can't be undone.",
       tooBig: "That file is over 10 MB. Try a smaller file.",
       badType: "That file type isn't allowed. Use a PDF, PNG, JPG, or HEIC.",
       failed: "Upload failed. If this keeps happening, your vault may not be set up yet.",
@@ -64,6 +65,7 @@ export function DocumentVault() {
       empty: "Aún no hay documentos. Sube los que pidió tu escuela.",
       view: "Ver",
       remove: "Borrar",
+      confirmDelete: "¿Borrar este documento? No se puede deshacer.",
       tooBig: "Ese archivo supera los 10 MB. Prueba con uno más pequeño.",
       badType: "Ese tipo de archivo no se permite. Usa PDF, PNG, JPG o HEIC.",
       failed: "La subida falló. Si sigue pasando, tu bóveda puede no estar configurada aún.",
@@ -154,7 +156,9 @@ export function DocumentVault() {
                     </Button>
                     <button
                       type="button"
-                      onClick={() => void remove(doc.path)}
+                      onClick={() => {
+                        if (window.confirm(s.confirmDelete)) void remove(doc.path);
+                      }}
                       aria-label={s.remove}
                       title={s.remove}
                       style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, border: "1.5px solid var(--border-default)", background: "#fff", cursor: "pointer", flexShrink: 0 }}

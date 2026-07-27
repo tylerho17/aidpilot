@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card, Button, IconTile, OptionCard, SegmentedControl, StatusPanel, SectionHeading, Badge, TextField } from "@/components/ui";
+import Link from "next/link";
+import { Card, Button, Icon, IconTile, OptionCard, SegmentedControl, StatusPanel, SectionHeading, Badge, TextField } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
@@ -77,6 +78,7 @@ export function VerificationHelper() {
       copyList: "Copy",
       copied: "Copied",
       print: "Print / PDF",
+      vaultLink: "Keep these documents in your vault",
       deadlineEyebrow: "Deadline",
       deadlineTitle: "Don't miss your school's deadline.",
       deadlineBody:
@@ -123,6 +125,7 @@ export function VerificationHelper() {
       copyList: "Copiar",
       copied: "Copiado",
       print: "Imprimir / PDF",
+      vaultLink: "Guarda estos documentos en tu bóveda",
       deadlineEyebrow: "Fecha límite",
       deadlineTitle: "No pierdas la fecha límite de tu escuela.",
       deadlineBody:
@@ -305,8 +308,13 @@ export function VerificationHelper() {
                 </div>
               ))}
             </Card>
-            <div style={{ margin: "12px 2px 0" }}>
+            <div style={{ margin: "12px 2px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <SourceBadge />
+              <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)", textDecoration: "none" }}>
+                <Icon name="file" size={14} color="var(--blue-700)" />
+                {s.vaultLink}
+                <Icon name="arrow-right" size={13} color="var(--blue-700)" />
+              </Link>
             </div>
           </div>
 
