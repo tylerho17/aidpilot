@@ -7,6 +7,7 @@ import { Card, StatusPanel, StatCard, ChecklistItem, Button, Badge, IconTile, Ic
 import { Greeting, SectionTitle } from "@/components/app/screens/shared";
 import { ComingSoonCard } from "@/components/app/ComingSoonCard";
 import { NextDeadlineBadge } from "@/components/app/NextDeadlineBadge";
+import { NextMove } from "@/components/app/NextMove";
 import type { AidDeadline } from "@/lib/deadlines/ca-deadlines";
 import { GetStartedSpotlight } from "@/components/app/GetStartedSpotlight";
 import { useUserData } from "@/hooks/useUserData";
@@ -240,6 +241,8 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
           </div>
         }
       />
+
+      <NextMove aidDeadlines={aidDeadlines} />
 
       <GetStartedSpotlight />
 
