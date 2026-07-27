@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Button, OptionCard, StatusPanel, SectionHeading, TextField } from "@/components/ui";
+import Link from "next/link";
+import { Card, Button, Icon, OptionCard, StatusPanel, SectionHeading, TextField } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
@@ -62,6 +63,7 @@ export function SapAppeal() {
       copied: "Copied",
       print: "Print / Save PDF",
       note: "A draft to review, not official advice — fill in the bracketed details, attach documentation of your circumstance, and use your school's own SAP appeal form and deadline, since each school sets its own.",
+      vaultLink: "Keep your documentation in your vault",
     },
     es: {
       eyebrow: "Apelación de SAP",
@@ -93,6 +95,7 @@ export function SapAppeal() {
       copied: "Copiado",
       print: "Imprimir / Guardar PDF",
       note: "Un borrador para revisar, no asesoría oficial — completa los datos entre corchetes, adjunta documentación de tu circunstancia y usa el formulario y la fecha límite de apelación de SAP de tu escuela, ya que cada escuela fija los suyos.",
+      vaultLink: "Guarda tu documentación en tu bóveda",
     },
   });
 
@@ -234,8 +237,13 @@ export function SapAppeal() {
         </Card>
       )}
 
-      <div style={{ margin: "14px 2px 0" }}>
+      <div style={{ margin: "14px 2px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <SourceBadge />
+        <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)", textDecoration: "none" }}>
+          <Icon name="file" size={14} color="var(--blue-700)" />
+          {s.vaultLink}
+          <Icon name="arrow-right" size={13} color="var(--blue-700)" />
+        </Link>
       </div>
       {status === "done" && letter && (
         <p style={{ fontSize: 12, fontWeight: 500, color: "var(--gray-400)", lineHeight: 1.5, margin: "10px 2px 0" }}>{s.note}</p>
