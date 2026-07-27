@@ -416,6 +416,13 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
             title="California aid & scholarships"
             sub="Cal Grant, Chafee, Dream Act aid and more"
           />
+          <ToolLinkCard
+            href="/vault"
+            icon="file"
+            tone="green"
+            title="Document vault"
+            sub="Keep your aid paperwork in one private place"
+          />
         </div>
 
         <SectionTitle>Coming soon</SectionTitle>
