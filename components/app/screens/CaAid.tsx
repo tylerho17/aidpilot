@@ -138,7 +138,7 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
               labels={s}
               isSaved={saved.has(p.id)}
               onToggleSave={() => {
-                if (!saved.has(p.id)) track("scholarship_saved");
+                if (!saved.has(p.id)) track("scholarship_saved", { amount: p.amount ?? 0 });
                 saved.toggle(p.id);
               }}
             />
