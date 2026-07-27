@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { Card, Button, Icon, IconTile, StatusPanel, SectionHeading } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -79,7 +80,8 @@ export function DocumentVault() {
     if (!file) return;
     setError("");
     const res = await upload(file);
-    if (!res.ok) setError(res.reason === "too_big" ? s.tooBig : res.reason === "bad_type" ? s.badType : s.failed);
+    if (res.ok) track("document_uploaded");
+    else setError(res.reason === "too_big" ? s.tooBig : res.reason === "bad_type" ? s.badType : s.failed);
   }
 
   async function openDoc(doc: StoredDoc) {

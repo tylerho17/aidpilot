@@ -6,6 +6,7 @@ import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { track } from "@vercel/analytics";
 import {
   computeDeadlines,
   countdownLabel,
@@ -137,7 +138,10 @@ export function KeyDates({ deadlines: rows }: { deadlines: AidDeadline[] }) {
             d={d}
             lang={lang}
             done={handled.has(d.id)}
-            onToggle={() => handled.toggle(d.id)}
+            onToggle={() => {
+              if (!handled.has(d.id)) track("deadline_handled");
+              handled.toggle(d.id);
+            }}
             labels={{ for: s.for, approx: s.approx, past: s.past, markDone: s.markDone, doneLabel: s.done }}
           />
         ))}

@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
 import { isDreamActEligible, localizeProgram } from "@/lib/scholarships/ca-programs";
 import { useSavedItems } from "@/hooks/useSavedItems";
+import { track } from "@vercel/analytics";
 import type { ScholarshipSource } from "@/lib/types";
 
 /**
@@ -136,7 +137,10 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
               lang={lang}
               labels={s}
               isSaved={saved.has(p.id)}
-              onToggleSave={() => saved.toggle(p.id)}
+              onToggleSave={() => {
+                if (!saved.has(p.id)) track("scholarship_saved");
+                saved.toggle(p.id);
+              }}
             />
           ))}
         </div>

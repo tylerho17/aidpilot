@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { Card, Button, Icon, IconTile, OptionCard, SegmentedControl, StatusPanel, SectionHeading, Badge, TextField } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
@@ -199,6 +200,7 @@ export function VerificationHelper() {
     }
     setStatus("done");
     setNote(result.text);
+    track("verification_note_drafted", { group: group ?? "unsure" });
   }
 
   async function copyNote() {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@vercel/analytics";
 import { Card, Button, Icon, TextField } from "@/components/ui";
 import { SectionTitle } from "@/components/app/screens/shared";
 import { useLanguage } from "@/lib/i18n";
@@ -139,6 +140,7 @@ export function AppealBuilder() {
     }
     setStatus("done");
     setLetter(result.text);
+    track("appeal_drafted", { reason });
   }
 
   async function copy() {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { Card, Button, Icon, OptionCard, StatusPanel, SectionHeading, TextField } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
@@ -141,6 +142,7 @@ export function SapAppeal() {
     }
     setStatus("done");
     setLetter(result.text);
+    track("sap_appeal_drafted", { reason });
   }
 
   async function copy() {
