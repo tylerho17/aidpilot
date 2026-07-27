@@ -265,3 +265,18 @@ plain-language copy (the appeal-builder precedent), NOT the ported guide dataset
   <https://www.csac.ca.gov/chafee>, Middle Class Scholarship
   <https://www.csac.ca.gov/middle-class-scholarship>, apply/Promise Grant
   <https://www.csac.ca.gov/apply>, CA Dream Act <https://dream.csac.ca.gov/>.
+
+### SAP appeal builder (`/sap-appeal`, `app/api/sap-appeal/draft`)
+- A student who lost federal aid for not meeting Satisfactory Academic Progress
+  drafts an appeal. Framing sourced: SAP = GPA + completion **pace (~66.67%)** +
+  **maximum timeframe (150% of program length)**; an appeal must show **why** the
+  student fell short **and what has changed / their plan** to make progress;
+  valid grounds include injury/illness, the death of a relative, or other
+  special circumstances; a successful appeal → **financial-aid probation** or an
+  **academic plan**. The AI drafts only the letter (grounded to the student's
+  input, `[placeholder]` PII); all SAP facts above inform the framing, not the
+  output.
+- **Source:** Federal Student Aid Handbook — School-Determined Requirements /
+  Satisfactory Academic Progress
+  <https://fsapartners.ed.gov/knowledge-center/fsa-handbook/2026-2027/vol1/ch1-school-determined-requirements>;
+  StudentAid.gov SAP <https://studentaid.gov/help-center/answers/article/satisfactory-academic-progress>.

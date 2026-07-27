@@ -386,6 +386,13 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
             sub="Circumstances changed? Draft a letter to your school"
           />
           <ToolLinkCard
+            href="/sap-appeal"
+            icon="letter"
+            tone="coral"
+            title="Appeal a grades-based aid loss"
+            sub="Lost aid over SAP? Draft an appeal with your plan"
+          />
+          <ToolLinkCard
             href="/verification"
             icon="shield-check"
             tone="green"
