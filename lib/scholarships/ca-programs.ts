@@ -109,3 +109,64 @@ export function isDreamActEligible(source: ScholarshipSource): boolean {
   const tags = source.tags ?? [];
   return tags.includes("cadaa_eligible") || tags.includes("dream_act_pathway");
 }
+
+/**
+ * Spanish overlay for the curated CA programs, keyed by their (stable) English
+ * name. `scholarship_sources` is English-only, so this restores bilingual copy
+ * for the programs that matter most to California's Spanish-speaking families
+ * without a schema change. Admin-added scholarships without an entry here fall
+ * back to their English text. (A scalable path later: an `i18n` jsonb column on
+ * scholarship_sources.) Author-reviewed Spanish; a native check is still ideal.
+ */
+const PROVIDER_ES = "Comisión de Ayuda Estudiantil de California";
+
+const CA_AID_ES: Record<string, { name: string; provider: string; eligibility: string }> = {
+  "Cal Grant A": {
+    name: "Cal Grant A",
+    provider: PROVIDER_ES,
+    eligibility:
+      "Cubre la matrícula y las cuotas del sistema de UC y CSU para estudiantes con necesidad económica y un GPA que califique en una universidad de cuatro años. Solicita antes del 2 de marzo (2 de septiembre para estudiantes de colegio comunitario).",
+  },
+  "Cal Grant B": {
+    name: "Cal Grant B",
+    provider: PROVIDER_ES,
+    eligibility:
+      "Un subsidio de acceso para gastos de vida, libros y materiales para estudiantes de familias de bajos ingresos con necesidad económica — más ayuda con la matrícula y las cuotas después del primer año. Solicita antes del 2 de marzo (2 de septiembre para estudiantes de colegio comunitario).",
+  },
+  "California Chafee Grant": {
+    name: "Beca Chafee de California",
+    provider: PROVIDER_ES,
+    eligibility:
+      "Hasta $5,000 por año (no se debe reembolsar) para jóvenes de crianza actuales o anteriores que estuvieron en cuidado de crianza en algún momento entre los 16 y los 18 años. Solicita temprano; se acepta hasta el 31 de julio del año escolar.",
+  },
+  "Middle Class Scholarship": {
+    name: "Beca de Clase Media",
+    provider: PROVIDER_ES,
+    eligibility:
+      "Ayuda a estudiantes de licenciatura de ingresos bajos a medios (incluidos los de credencial docente) en UC, CSU o un programa de licenciatura de colegio comunitario. El monto varía según tus costos y otra ayuda. Ligada a tu FAFSA o Solicitud de la Ley Dream — presenta antes del 2 de marzo.",
+  },
+  "California College Promise Grant": {
+    name: "Beca California College Promise",
+    provider: PROVIDER_ES,
+    eligibility:
+      "Exime las cuotas de inscripción (por unidad) del colegio comunitario de California para estudiantes con necesidad económica. Solicita en cualquier momento a través de tu colegio comunitario o tu FAFSA/Solicitud de la Ley Dream.",
+  },
+  "California Dream Act aid (CADAA)": {
+    name: "Ayuda de la Ley Dream de California (CADAA)",
+    provider: PROVIDER_ES,
+    eligibility:
+      "La solicitud que abre la puerta al Cal Grant, la Beca de Clase Media, Chafee, la Beca Promise y más ayuda estatal para estudiantes indocumentados y otros elegibles que no pueden presentar la FAFSA (a menudo estudiantes AB 540). Se abre el 1 de octubre; 2 de marzo para el Cal Grant.",
+  },
+};
+
+/** Localize a catalog row's display text; falls back to the row's English. */
+export function localizeProgram(
+  p: ScholarshipSource,
+  lang: "en" | "es"
+): { name: string; provider: string | null; eligibility: string | null } {
+  if (lang === "es") {
+    const es = CA_AID_ES[p.name];
+    if (es) return { name: es.name, provider: es.provider, eligibility: es.eligibility };
+  }
+  return { name: p.name, provider: p.provider, eligibility: p.eligibility ?? null };
+}

@@ -5,7 +5,7 @@ import { Card, Button, Icon, IconTile, Badge, SegmentedControl, SectionHeading }
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
-import { isDreamActEligible } from "@/lib/scholarships/ca-programs";
+import { isDreamActEligible, localizeProgram } from "@/lib/scholarships/ca-programs";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import type { ScholarshipSource } from "@/lib/types";
 
@@ -133,6 +133,7 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
               key={p.id}
               p={p}
               index={i}
+              lang={lang}
               labels={s}
               isSaved={saved.has(p.id)}
               onToggleSave={() => saved.toggle(p.id)}
@@ -152,12 +153,14 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
 function ProgramCard({
   p,
   index,
+  lang,
   labels,
   isSaved,
   onToggleSave,
 }: {
   p: ScholarshipSource;
   index: number;
+  lang: "en" | "es";
   labels: {
     award: string; deadline: string; varies: string; rolling: string; perYear: string; apply: string;
     save: string; savedLabel: string;
@@ -168,6 +171,7 @@ function ProgramCard({
 }) {
   const visual = visualFor(p, index);
   const chip = eligibilityChip(p);
+  const loc = localizeProgram(p, lang);
   const amount = formatAmount(p.amount);
   const deadline = formatDeadline(p.deadline);
   const href = p.application_url || p.source_url || p.url || "#";
@@ -180,15 +184,15 @@ function ProgramCard({
       </div>
 
       <h3 className="font-display" style={{ fontSize: 17.5, fontWeight: 900, letterSpacing: "-.3px", color: "var(--ink-900)", margin: "0 0 2px", lineHeight: 1.2 }}>
-        {p.name}
+        {loc.name}
       </h3>
-      {p.provider && (
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-400)", marginBottom: 12 }}>{p.provider}</div>
+      {loc.provider && (
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gray-400)", marginBottom: 12 }}>{loc.provider}</div>
       )}
 
-      {p.eligibility && (
+      {loc.eligibility && (
         <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.55, margin: "0 0 16px" }}>
-          {p.eligibility}
+          {loc.eligibility}
         </p>
       )}
 
