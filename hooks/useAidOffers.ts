@@ -113,6 +113,22 @@ export function useAidOffers() {
 
   const supabase = useMemo(() => createClient(), []);
   const loadVersionRef = useRef(0);
+  const authChangeVersionRef = useRef(0);
+  const currentUserIdRef = useRef<string | null>(null);
+
+  const updateUserId = useCallback((nextUserId: string | null) => {
+    currentUserIdRef.current = nextUserId;
+    setUserId(nextUserId);
+  }, []);
+
+  const invalidatePendingLoads = useCallback(() => {
+    loadVersionRef.current += 1;
+  }, []);
+
+  const invalidateAuthChange = useCallback(() => {
+    authChangeVersionRef.current += 1;
+    invalidatePendingLoads();
+  }, [invalidatePendingLoads]);
 
   const syncTasksForOffer = useCallback(
     async (offer: UserAidOffer) => {
@@ -150,20 +166,20 @@ export function useAidOffers() {
           .eq("user_id", resolvedUserId)
           .order("created_at", { ascending: false });
 
-        if (loadVersion !== loadVersionRef.current) return;
+        if (loadVersion !== loadVersionRef.current || currentUserIdRef.current !== resolvedUserId) return;
         if (error) throw error;
 
         const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
         setOffers(rows);
         devLog("Aid offers loaded", rows.length);
       } catch (error) {
-        if (loadVersion !== loadVersionRef.current) return;
+        if (loadVersion !== loadVersionRef.current || currentUserIdRef.current !== resolvedUserId) return;
         console.error("Aid offers query failed:", error);
         devLog("Aid offers query failed");
         setOffers([]);
         setLoadError(toFriendlyError(error, AID_OFFER_LOAD_ERROR));
       } finally {
-        if (loadVersion === loadVersionRef.current && !options?.silent) {
+        if (loadVersion === loadVersionRef.current && currentUserIdRef.current === resolvedUserId && !options?.silent) {
           setLoading(false);
         }
       }
@@ -173,6 +189,7 @@ export function useAidOffers() {
 
   const reload = useCallback(
     async (options?: { silent?: boolean }) => {
+      const authChangeVersion = authChangeVersionRef.current;
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -180,19 +197,19 @@ export function useAidOffers() {
         data: { user },
       } = await supabase.auth.getUser();
       const resolvedUserId = (user ?? session?.user)?.id ?? null;
-      setUserId(resolvedUserId);
+      if (authChangeVersion !== authChangeVersionRef.current) return;
+      updateUserId(resolvedUserId);
       setAuthReady(true);
       await loadOffersForUser(resolvedUserId, options);
     },
-    [loadOffersForUser, supabase]
+    [loadOffersForUser, supabase, updateUserId]
   );
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
-      setLoadError(null);
-
+      const authChangeVersion = authChangeVersionRef.current;
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -203,42 +220,12 @@ export function useAidOffers() {
       const resolvedUser = user ?? session?.user ?? null;
       const resolvedUserId = resolvedUser?.id ?? null;
 
-      if (cancelled) return;
+      if (cancelled || authChangeVersion !== authChangeVersionRef.current) return;
 
       devLog("Aid offers user loaded", resolvedUserId ?? "logged-out");
-      setUserId(resolvedUserId);
+      updateUserId(resolvedUserId);
       setAuthReady(true);
-
-      if (!resolvedUserId) {
-        setOffers([]);
-        setLoading(false);
-        return;
-      }
-
-      devLog("Aid offers query started");
-
-      try {
-        const { data, error } = await supabase
-          .from("user_aid_offers")
-          .select("*")
-          .eq("user_id", resolvedUserId)
-          .order("created_at", { ascending: false });
-
-        if (cancelled) return;
-        if (error) throw error;
-
-        const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
-        setOffers(rows);
-        devLog("Aid offers loaded", rows.length);
-      } catch (error) {
-        if (cancelled) return;
-        console.error("Aid offers query failed:", error);
-        devLog("Aid offers query failed");
-        setOffers([]);
-        setLoadError(toFriendlyError(error, AID_OFFER_LOAD_ERROR));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      await loadOffersForUser(resolvedUserId);
     }
 
     void bootstrap();
@@ -250,7 +237,7 @@ export function useAidOffers() {
 
       if (event === "INITIAL_SESSION") {
         const initialUserId = session?.user?.id ?? null;
-        setUserId(initialUserId);
+        updateUserId(initialUserId);
         setAuthReady(true);
         if (initialUserId) {
           void loadOffersForUser(initialUserId, { silent: true });
@@ -259,7 +246,8 @@ export function useAidOffers() {
       }
 
       const nextUserId = session?.user?.id ?? null;
-      setUserId(nextUserId);
+      invalidateAuthChange();
+      updateUserId(nextUserId);
       setAuthReady(true);
 
       if (!nextUserId) {
@@ -274,10 +262,10 @@ export function useAidOffers() {
 
     return () => {
       cancelled = true;
-      loadVersionRef.current += 1;
+      invalidatePendingLoads();
       subscription.unsubscribe();
     };
-  }, [loadOffersForUser, supabase]);
+  }, [invalidateAuthChange, invalidatePendingLoads, loadOffersForUser, supabase, updateUserId]);
 
   const saveOffer = useCallback(
     async (input: AidOfferInput, offerId?: string) => {
