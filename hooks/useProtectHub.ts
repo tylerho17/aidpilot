@@ -36,6 +36,7 @@ export function useProtectHub() {
     authReady: userAuthReady,
     loading: userLoading,
     loadError: userLoadError,
+    loadData: reloadUserData,
     deadlines,
     documents,
   } = useUserData();
@@ -45,16 +46,16 @@ export function useProtectHub() {
   const loading = !authReady || userLoading || (userId !== null && (schoolLoading || offersLoading));
   const refreshStartedRef = useRef(false);
 
-  const loadError = userLoadError ? PROTECT_LOAD_ERROR : null;
+  const loadError = null;
   const dataWarning =
-    userId && !userLoadError && (schoolLoadError || offersLoadError) ? PROTECT_LOAD_ERROR : null;
+    userId && (userLoadError || schoolLoadError || offersLoadError) ? PROTECT_LOAD_ERROR : null;
 
   const refreshData = useCallback(
     async (options?: { silent?: boolean }) => {
       if (!userId) return;
-      await Promise.all([reloadSchool(options), reloadOffers(options)]);
+      await Promise.all([reloadUserData(options), reloadSchool(options), reloadOffers(options)]);
     },
-    [reloadOffers, reloadSchool, userId]
+    [reloadOffers, reloadSchool, reloadUserData, userId]
   );
 
   useEffect(() => {
