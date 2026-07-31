@@ -21,6 +21,57 @@ create table if not exists public.scholarships (
     ))
 );
 
+alter table public.scholarships
+  add column if not exists provider text,
+  add column if not exists description text,
+  add column if not exists scholarship_type text default 'general',
+  add column if not exists is_active boolean default true;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'scholarships'
+      and column_name = 'source_name'
+  ) then
+    update public.scholarships
+    set
+      provider = coalesce(provider, source_name),
+      scholarship_type = coalesce(scholarship_type, 'general'),
+      is_active = coalesce(is_active, true);
+  else
+    update public.scholarships
+    set
+      scholarship_type = coalesce(scholarship_type, 'general'),
+      is_active = coalesce(is_active, true);
+  end if;
+end $$;
+
+alter table public.scholarships
+  alter column scholarship_type set default 'general',
+  alter column scholarship_type set not null,
+  alter column is_active set default true,
+  alter column is_active set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.scholarships'::regclass
+      and conname = 'scholarships_scholarship_type_check'
+  ) then
+    alter table public.scholarships
+      add constraint scholarships_scholarship_type_check
+      check (scholarship_type in (
+        'general', 'need_based', 'merit_based', 'local', 'major_specific',
+        'identity_based', 'first_gen', 'transfer', 'school_specific'
+      ));
+  end if;
+end $$;
+
 create unique index if not exists scholarships_name_idx on public.scholarships (name);
 create index if not exists scholarships_active_idx on public.scholarships (is_active);
 
@@ -54,6 +105,7 @@ create index if not exists user_scholarship_matches_user_status_idx on public.us
 alter table public.scholarships enable row level security;
 alter table public.user_scholarship_matches enable row level security;
 
+drop policy if exists "Authenticated users can read scholarships" on public.scholarships;
 drop policy if exists "Authenticated users can read active scholarships" on public.scholarships;
 drop policy if exists "Admins can manage scholarships" on public.scholarships;
 
