@@ -39,7 +39,7 @@ export async function syncAidOfferTasks(
 
     const { error } = await supabase
       .from("aid_tasks")
-      .update({ status: "Complete", updated_at: now })
+      .delete()
       .eq("id", task.id)
       .eq("user_id", userId);
 

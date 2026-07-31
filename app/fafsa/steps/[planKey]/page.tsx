@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import FafsaStepPage from "@/components/fafsa/FafsaStepPage";
+import FafsaStepClient from "@/components/product/FafsaStepClient";
 import { getFafsaStep } from "@/lib/fafsa/steps";
 
 type PageProps = {
@@ -10,9 +10,5 @@ export default async function FafsaGuidedStepRoute({ params }: PageProps) {
   const { planKey } = await params;
   const step = getFafsaStep(planKey);
 
-  if (!step) {
-    notFound();
-  }
-
-  return <FafsaStepPage step={step} />;
+  return step ? <FafsaStepPage step={step} /> : <FafsaStepClient />;
 }
