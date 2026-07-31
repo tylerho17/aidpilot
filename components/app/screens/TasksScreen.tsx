@@ -141,13 +141,14 @@ function EmptyState({ message }: { message: string }) {
 const columnStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
 
 export function TasksScreen() {
-  const { deadlines, documents, updateDocumentStatus, authReady, loading } = useUserData();
+  const { user, deadlines, documents, updateDocumentStatus, authReady, loading } = useUserData();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [datesView, setDatesView] = useState<"list" | "calendar">("list");
   const demo = useDemoMutations();
 
-  const displayDeadlines = useMemo(() => demoFallback(deadlines, makeDemoDeadlines), [deadlines]);
-  const displayDocuments = useMemo(() => demoFallback(documents, makeDemoDocuments), [documents]);
+  const userId = user?.id ?? null;
+  const displayDeadlines = useMemo(() => demoFallback(deadlines, makeDemoDeadlines, { userId }), [deadlines, userId]);
+  const displayDocuments = useMemo(() => demoFallback(documents, makeDemoDocuments, { userId }), [documents, userId]);
 
   // Calendar events: every deadline, plus documents that carry a due date.
   const calendarEvents = useMemo<CalendarEvent[]>(() => {

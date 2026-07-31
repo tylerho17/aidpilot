@@ -21,11 +21,16 @@ export {
  *   const deadlines = demoFallback(userData.deadlines, makeDemoDeadlines);
  *
  * Real rows always win - the moment Supabase has data (or demo mode is off),
- * fixtures disappear with zero code changes. Fixtures only fill in when demo
- * mode is on AND the real collection is empty.
+ * fixtures disappear with zero code changes. Fixtures only fill in for
+ * signed-out demo visitors when the real collection is empty.
  */
-export function demoFallback<T>(real: T[] | null | undefined, fixture: () => T[]): T[] {
+export function demoFallback<T>(
+  real: T[] | null | undefined,
+  fixture: () => T[],
+  options?: { userId?: string | null },
+): T[] {
   if (real && real.length > 0) return real;
+  if (options?.userId) return real ?? [];
   if (!isDemoEnabled()) return real ?? [];
   return fixture();
 }

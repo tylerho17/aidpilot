@@ -15,7 +15,6 @@ export default function DemoPage() {
 
   useEffect(() => {
     setDemoEnabled(true);
-    document.cookie = "aidpilot-demo=on; path=/; max-age=86400; samesite=lax";
     router.replace("/dashboard");
   }, [router]);
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthButton, AuthInput, AuthShell } from "@/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
+import { setDemoEnabled } from "@/lib/demo";
 import { useLanguage } from "@/lib/i18n";
 
 const STRINGS = {
@@ -59,6 +60,7 @@ export default function LoginPage() {
       return;
     }
 
+    setDemoEnabled(false);
     const { data: profile } = await supabase
       .from("student_profiles")
       .select("is_onboarded")

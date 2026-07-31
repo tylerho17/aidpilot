@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthButton, AuthInput, AuthShell } from "@/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
+import { setDemoEnabled } from "@/lib/demo";
 import { useLanguage } from "@/lib/i18n";
 
 const STRINGS = {
@@ -61,6 +62,7 @@ export default function SignupPage() {
       return;
     }
 
+    setDemoEnabled(false);
     router.push("/onboarding");
     router.refresh();
   }
