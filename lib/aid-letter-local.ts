@@ -101,9 +101,14 @@ export function resolveAidLetterFromSources(
   }
 
   if (remote && local) {
+    if (!isLocalNewerThanRemote(remote, local)) {
+      clearAidLetterLocalStore();
+      return { letter: remote, localMode: false };
+    }
+
     return {
       letter: mergeRemoteWithLocal(remote, local),
-      localMode: isAidLetterLocalMode(),
+      localMode: true,
     };
   }
 
@@ -112,6 +117,21 @@ export function resolveAidLetterFromSources(
   }
 
   return { letter: null, localMode: false };
+}
+
+function timestampMs(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isLocalNewerThanRemote(remote: AidLetter, local: AidLetterLocalStore): boolean {
+  const localSavedAt = timestampMs(local.savedAt);
+  const remoteUpdatedAt = timestampMs(remote.updated_at);
+
+  if (!localSavedAt) return false;
+  if (!remoteUpdatedAt) return isAidLetterLocalMode();
+  return localSavedAt > remoteUpdatedAt;
 }
 
 function mergeRemoteWithLocal(remote: AidLetter, local: AidLetterLocalStore): AidLetter {

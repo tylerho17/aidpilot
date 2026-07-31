@@ -41,6 +41,7 @@ import {
 import { normalizeRequiredInfo } from "@/lib/required-info";
 import {
   aidLetterFromLocalStore,
+  clearAidLetterLocalStore,
   resolveAidLetterFromSources,
   saveAidLetterLocal,
 } from "@/lib/aid-letter-local";
@@ -669,6 +670,7 @@ function useUserDataState() {
           parent_plus_loans_amount: input.parent_plus_loans_amount,
           private_loans_amount: input.private_loans_amount,
         };
+        clearAidLetterLocalStore();
         setAidLetterLocalMode(false);
         setAidLetters([merged]);
         return { letter: merged, savedLocally: false as const };
@@ -683,6 +685,7 @@ function useUserDataState() {
         parent_plus_loans_amount: input.parent_plus_loans_amount,
         private_loans_amount: input.private_loans_amount,
       };
+      clearAidLetterLocalStore();
       setAidLetterLocalMode(false);
       setAidLetters([merged]);
       return { letter: merged, savedLocally: false as const };

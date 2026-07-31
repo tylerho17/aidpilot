@@ -141,8 +141,8 @@ export function loadFafsaDemoFallback(userId: string): FafsaDemoStore | null {
     if (!parsed.intake || !Array.isArray(parsed.tasks)) {
       return null;
     }
-    const ownerMatches = parsed.userId === userId || parsed.userId === FAFSA_DEMO_GUEST_USER_ID;
-    if (!ownerMatches) {
+    if (parsed.userId !== userId) {
+      clearFafsaDemoFallback();
       return null;
     }
     return parsed;
