@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUserData } from "@/hooks/useUserData";
 import { listDocs, uploadDoc, removeDoc, type StoredDoc, type UploadResult } from "@/lib/documents/vault";
 
@@ -13,39 +13,54 @@ export function useDocuments() {
   const [docs, setDocs] = useState<StoredDoc[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const activeUserIdRef = useRef<string | null>(null);
+  const loadVersionRef = useRef(0);
 
-  const refresh = useCallback(async (uid: string) => {
+  const refresh = useCallback(async (uid: string, loadVersion: number) => {
     const list = await listDocs(uid);
-    setDocs(list);
+    if (activeUserIdRef.current === uid && loadVersionRef.current === loadVersion) {
+      setDocs(list);
+    }
   }, []);
 
   useEffect(() => {
     if (!authReady) return;
-    let cancelled = false;
+    const loadVersion = ++loadVersionRef.current;
+    activeUserIdRef.current = user?.id ?? null;
+
     void (async () => {
       if (!user) {
         setDocs([]);
+        setLoading(false);
+        setBusy(false);
         return;
       }
       setLoading(true);
       const list = await listDocs(user.id);
-      if (!cancelled) {
+      if (activeUserIdRef.current === user.id && loadVersionRef.current === loadVersion) {
         setDocs(list);
         setLoading(false);
       }
     })();
+
     return () => {
-      cancelled = true;
+      if (loadVersionRef.current === loadVersion) {
+        loadVersionRef.current += 1;
+      }
     };
   }, [authReady, user]);
 
   const upload = useCallback(
     async (file: File): Promise<UploadResult> => {
       if (!user) return { ok: false, reason: "failed" };
+      const uid = user.id;
+      const loadVersion = loadVersionRef.current;
       setBusy(true);
-      const res = await uploadDoc(user.id, file);
-      if (res.ok) await refresh(user.id);
-      setBusy(false);
+      const res = await uploadDoc(uid, file);
+      if (res.ok) await refresh(uid, loadVersion);
+      if (activeUserIdRef.current === uid && loadVersionRef.current === loadVersion) {
+        setBusy(false);
+      }
       return res;
     },
     [user, refresh]
@@ -54,10 +69,14 @@ export function useDocuments() {
   const remove = useCallback(
     async (path: string) => {
       if (!user) return;
+      const uid = user.id;
+      const loadVersion = loadVersionRef.current;
       setBusy(true);
       await removeDoc(path);
-      await refresh(user.id);
-      setBusy(false);
+      await refresh(uid, loadVersion);
+      if (activeUserIdRef.current === uid && loadVersionRef.current === loadVersion) {
+        setBusy(false);
+      }
     },
     [user, refresh]
   );
