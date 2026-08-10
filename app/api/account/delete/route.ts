@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -31,7 +32,7 @@ function isMissingStorageResource(error: unknown): boolean {
 }
 
 async function deleteVaultFiles(
-  admin: ReturnType<typeof createClient>,
+  admin: SupabaseClient,
   userId: string
 ): Promise<{ error: unknown | null }> {
   const bucket = admin.storage.from(DOCUMENT_BUCKET);
