@@ -11,6 +11,7 @@ import { useUserData } from "@/hooks/useUserData";
 import { demoFallback, makeDemoOffers, makeDemoScholarships, useDemoMutations } from "@/lib/demo";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
 import { OfferComparison } from "@/components/aid-letter/OfferComparison";
+import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import type { ScholarshipMatch, UserAidOffer } from "@/lib/types";
 
 /* ── AID & MONEY - real-data port of the app UI kit (AppScreens2.jsx) ── */
@@ -222,14 +223,15 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
     setErr("");
 
     // Stream the decoded explanation onto the card as it's written.
+    const calc = calculateAidOfferFromRecord(offer);
     const result = await streamAiAnswer(
       "/api/aid-letter/explain",
       {
         schoolName: offer.school_name,
         costOfAttendance: offer.cost_of_attendance,
-        grants: offer.grants_and_scholarships,
-        workStudy: offer.work_study,
-        loans: offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans,
+        grants: calc.giftAid,
+        workStudy: calc.workStudy,
+        loans: calc.loanTotal,
         lang,
       },
       (partial) => {
@@ -320,10 +322,11 @@ function OfferSection({
   }
 
   const coa = offer.cost_of_attendance;
-  const grants = offer.grants_and_scholarships;
-  const work = offer.work_study;
-  const loans = offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans;
-  const outOfPocket = Math.max(0, coa - grants - work - loans);
+  const calc = calculateAidOfferFromRecord(offer);
+  const giftAid = calc.giftAid;
+  const work = calc.workStudy;
+  const loans = calc.loanTotal;
+  const outOfPocket = calc.remainingGapAfterAllAid;
 
   const pct = (value: number): number => (coa > 0 ? (value / coa) * 100 : 0);
 
@@ -353,19 +356,19 @@ function OfferSection({
           </div>
         </div>
         <OfferBar segments={[
-          { pct: pct(grants), color: "var(--green-600)" },
+          { pct: pct(giftAid), color: "var(--green-600)" },
           { pct: pct(work), color: "var(--blue-500)" },
           { pct: pct(loans), color: "var(--amber-600)" },
           { pct: pct(outOfPocket), color: "var(--coral-600)" },
         ]} />
         <div style={{ marginTop: 10 }}>
-          <OfferRow dot="var(--green-600)" label="Grants & scholarships" note="free money" value={usd(grants)} valueColor="var(--green-600)" />
+          <OfferRow dot="var(--green-600)" label="Gift aid" note="grants, scholarships, and other aid" value={usd(giftAid)} valueColor="var(--green-600)" />
           <OfferRow dot="var(--blue-500)" label="Work-study" note="you earn it" value={usd(work)} />
           <OfferRow dot="var(--amber-600)" label="Loans offered" note="optional - you can decline" value={usd(loans)} valueColor="var(--amber-600)" />
           <OfferRow dot="var(--coral-600)" label="Out-of-pocket" value={usd(outOfPocket)} valueColor="var(--coral-600)" />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-card)", flexWrap: "wrap", gap: 10 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gray-500)" }}>Grants cover most of your cost - loans are optional.</span>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gray-500)" }}>Gift aid lowers your cost - loans are optional.</span>
           {isDemo ? (
             <Button
               variant="clay"
