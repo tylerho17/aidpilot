@@ -3,15 +3,15 @@ import { getAuthenticatedUserId } from "@/lib/fafsa/progress-sync";
 import type { VerificationGroup, FilerStatus } from "@/lib/verification/guide";
 
 /**
- * Persistence for the FAFSA verification helper. Device-local (localStorage) so
- * it works instantly and signed-out, plus a best-effort cloud upsert to
- * `user_verification_status` (migration 027) so a signed-in student's group and
- * answers follow them across devices. Mirrors the fafsa progress local+cloud
- * pattern; degrades to local-only when signed out or the table isn't there yet.
+ * Persistence for the FAFSA verification helper. Signed-in users get a
+ * user-scoped local cache plus a best-effort cloud upsert to
+ * `user_verification_status` (migration 027) so their group and answers follow
+ * them across devices. Signed-out state is session-only to avoid leaking a prior
+ * user's school or verification group on shared browsers.
  */
 
 const TABLE = "user_verification_status";
-const LOCAL_KEY = "aidpilot.verification.status.v1";
+const localKey = (userId: string) => `aidpilot.verification.status.user.${userId}.v1`;
 
 export interface VerificationStatus {
   group: VerificationGroup | null;
@@ -31,27 +31,30 @@ function normalize(raw: Partial<VerificationStatus> | null | undefined): Verific
   return { group, filer, schoolName };
 }
 
-export function readLocalStatus(): VerificationStatus {
-  if (typeof window === "undefined") return { ...EMPTY_STATUS };
+export function readLocalStatus(userId?: string | null): VerificationStatus {
+  if (!userId || typeof window === "undefined") return { ...EMPTY_STATUS };
   try {
-    const raw = window.localStorage.getItem(LOCAL_KEY);
+    const raw = window.localStorage.getItem(localKey(userId));
     return raw ? normalize(JSON.parse(raw)) : { ...EMPTY_STATUS };
   } catch {
     return { ...EMPTY_STATUS };
   }
 }
 
-export function writeLocalStatus(status: VerificationStatus): void {
-  if (typeof window === "undefined") return;
+export function writeLocalStatus(status: VerificationStatus, userId?: string | null): void {
+  if (!userId || typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LOCAL_KEY, JSON.stringify(normalize(status)));
+    window.localStorage.setItem(localKey(userId), JSON.stringify(normalize(status)));
   } catch {
     /* storage blocked (private mode / quota) - the cloud copy still syncs */
   }
 }
 
-/** Returns the cloud row for a signed-in user, or null (missing table/row/error). */
-export async function fetchCloudStatus(userId: string): Promise<VerificationStatus | null> {
+/** Returns the cloud row for a signed-in user, preserving empty rows vs errors. */
+export async function fetchCloudStatus(userId: string): Promise<{
+  status: VerificationStatus | null;
+  error: unknown | null;
+}> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
@@ -59,27 +62,29 @@ export async function fetchCloudStatus(userId: string): Promise<VerificationStat
       .select("tracking_group, filed_taxes, school_name")
       .eq("user_id", userId)
       .maybeSingle();
-    if (error || !data) return null;
-    return normalize({
+    if (error) return { status: null, error };
+    if (!data) return { status: null, error: null };
+    const status = normalize({
       group: data.tracking_group as VerificationGroup,
       filer: data.filed_taxes as FilerStatus,
       schoolName: data.school_name ?? "",
     });
+    return { status, error: null };
   } catch {
-    return null;
+    return { status: null, error: true };
   }
 }
 
 /** Best-effort upsert of the signed-in user's status. No-op when signed out. */
-export async function upsertCloudStatus(status: VerificationStatus): Promise<void> {
+export async function upsertCloudStatus(status: VerificationStatus, userId?: string | null): Promise<void> {
   try {
-    const userId = await getAuthenticatedUserId();
-    if (!userId) return;
+    const currentUserId = userId ?? (await getAuthenticatedUserId());
+    if (!currentUserId) return;
     const supabase = createClient();
     const n = normalize(status);
     await supabase.from(TABLE).upsert(
       {
-        user_id: userId,
+        user_id: currentUserId,
         tracking_group: n.group,
         filed_taxes: n.filer,
         school_name: n.schoolName || null,
