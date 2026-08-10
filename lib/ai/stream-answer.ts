@@ -36,6 +36,7 @@ export async function streamAiAnswer(
   // Some environments (or a disabled ReadableStream) hand back the whole body.
   if (!res.body) {
     const text = await res.text();
+    if (!text.trim()) return { ok: false, error: GENERIC_ERROR, warming: false };
     onText(text);
     return { ok: true, text };
   }
@@ -53,9 +54,10 @@ export async function streamAiAnswer(
     accumulated += decoder.decode();
     onText(accumulated);
   } catch {
-    // Surface whatever streamed; only treat a totally empty stream as an error.
-    if (!accumulated) return { ok: false, error: GENERIC_ERROR, warming: false };
+    return { ok: false, error: GENERIC_ERROR, warming: false };
   }
+
+  if (!accumulated.trim()) return { ok: false, error: GENERIC_ERROR, warming: false };
 
   return { ok: true, text: accumulated };
 }

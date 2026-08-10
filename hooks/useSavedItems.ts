@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthenticatedUserId } from "@/lib/fafsa/progress-sync";
 import {
@@ -14,28 +14,35 @@ import {
 } from "@/lib/saved-items/store";
 
 /**
- * Per-user saved/handled flags for a given item type. Lazy-inits from device
- * storage, then merges in the signed-in user's cloud set (union — nothing is
- * lost) and pushes any local-only keys up. Toggling writes local + best-effort
- * cloud. Only sets state inside async/subscription callbacks. Safe under
- * AppChrome (client-only render).
+ * Per-user saved/handled flags for a given item type. Signed-out users get an
+ * anonymous device-local set; signed-in users get a user-scoped device cache
+ * merged with their cloud set. Toggling writes local + best-effort cloud.
  */
 export function useSavedItems(type: SavedItemType) {
-  const [ids, setIds] = useState<Set<string>>(() => readLocalSet(type));
+  const [ids, setIds] = useState<Set<string>>(() => new Set());
+  const userIdRef = useRef<string | null>(null);
+  const hydrateSeqRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate(userId: string | null) {
-      if (!userId) return;
+      const seq = hydrateSeqRef.current + 1;
+      hydrateSeqRef.current = seq;
+      userIdRef.current = userId;
+      if (!userId) {
+        setIds(readLocalSet(type, null));
+        return;
+      }
+      const local = readLocalSet(type, userId);
+      setIds(local);
       const cloud = await fetchCloudSet(userId, type);
-      if (cancelled || !cloud) return;
-      const local = readLocalSet(type);
+      if (cancelled || hydrateSeqRef.current !== seq || !cloud) return;
       const merged = new Set([...local, ...cloud]);
       setIds(merged);
-      writeLocalSet(type, merged);
+      writeLocalSet(type, merged, userId);
       const localOnly = [...local].filter((k) => !cloud.has(k));
-      if (localOnly.length > 0) void pushLocalOnly(type, localOnly);
+      if (localOnly.length > 0) void pushLocalOnly(type, localOnly, userId);
     }
 
     void (async () => {
@@ -58,16 +65,17 @@ export function useSavedItems(type: SavedItemType) {
 
   const toggle = useCallback(
     (key: string) => {
+      const userId = userIdRef.current;
       setIds((prev) => {
         const next = new Set(prev);
         if (next.has(key)) {
           next.delete(key);
-          void removeCloudItem(type, key);
+          void removeCloudItem(type, key, userId);
         } else {
           next.add(key);
-          void addCloudItem(type, key);
+          void addCloudItem(type, key, userId);
         }
-        writeLocalSet(type, next);
+        writeLocalSet(type, next, userId);
         return next;
       });
     },
