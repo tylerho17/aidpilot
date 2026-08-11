@@ -19,6 +19,11 @@ export interface VerificationStatus {
   schoolName: string;
 }
 
+export interface VerificationStatusSnapshot {
+  status: VerificationStatus;
+  updatedAt: string | null;
+}
+
 export const EMPTY_STATUS: VerificationStatus = { group: null, filer: "unsure", schoolName: "" };
 
 const GROUPS = new Set<VerificationGroup>(["V1", "V4", "V5", "unsure"]);
@@ -32,39 +37,51 @@ function normalize(raw: Partial<VerificationStatus> | null | undefined): Verific
 }
 
 export function readLocalStatus(): VerificationStatus {
-  if (typeof window === "undefined") return { ...EMPTY_STATUS };
+  return readLocalStatusSnapshot().status;
+}
+
+export function readLocalStatusSnapshot(): VerificationStatusSnapshot {
+  if (typeof window === "undefined") return { status: { ...EMPTY_STATUS }, updatedAt: null };
   try {
     const raw = window.localStorage.getItem(LOCAL_KEY);
-    return raw ? normalize(JSON.parse(raw)) : { ...EMPTY_STATUS };
+    if (!raw) return { status: { ...EMPTY_STATUS }, updatedAt: null };
+    const parsed = JSON.parse(raw) as Partial<VerificationStatus> & { updatedAt?: unknown };
+    return {
+      status: normalize(parsed),
+      updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : null,
+    };
   } catch {
-    return { ...EMPTY_STATUS };
+    return { status: { ...EMPTY_STATUS }, updatedAt: null };
   }
 }
 
-export function writeLocalStatus(status: VerificationStatus): void {
+export function writeLocalStatus(status: VerificationStatus, updatedAt = new Date().toISOString()): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LOCAL_KEY, JSON.stringify(normalize(status)));
+    window.localStorage.setItem(LOCAL_KEY, JSON.stringify({ ...normalize(status), updatedAt }));
   } catch {
     /* storage blocked (private mode / quota) - the cloud copy still syncs */
   }
 }
 
 /** Returns the cloud row for a signed-in user, or null (missing table/row/error). */
-export async function fetchCloudStatus(userId: string): Promise<VerificationStatus | null> {
+export async function fetchCloudStatus(userId: string): Promise<VerificationStatusSnapshot | null> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from(TABLE)
-      .select("tracking_group, filed_taxes, school_name")
+      .select("tracking_group, filed_taxes, school_name, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !data) return null;
-    return normalize({
-      group: data.tracking_group as VerificationGroup,
-      filer: data.filed_taxes as FilerStatus,
-      schoolName: data.school_name ?? "",
-    });
+    return {
+      status: normalize({
+        group: data.tracking_group as VerificationGroup,
+        filer: data.filed_taxes as FilerStatus,
+        schoolName: data.school_name ?? "",
+      }),
+      updatedAt: typeof data.updated_at === "string" ? data.updated_at : null,
+    };
   } catch {
     return null;
   }

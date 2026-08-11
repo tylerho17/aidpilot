@@ -140,7 +140,7 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
     updateTaskStatus,
   } = useUserData();
   const { snapshot, loading: protectLoading } = useProtectHub();
-  const { offers } = useAidOffers();
+  const { offers, authReady: offersAuthReady, loading: offersLoading } = useAidOffers();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [poppingId, setPoppingId] = useState<string | null>(null);
@@ -157,8 +157,8 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   const greetingName = firstNameFrom(getProfileFullName(profile));
   const todayLabel = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
-  // Loading: wait for auth + the first data + protect snapshot.
-  if (!userAuthReady || userLoading || protectLoading) {
+  // Loading: wait for auth + the first data + protect snapshot + offer totals.
+  if (!userAuthReady || userLoading || protectLoading || !offersAuthReady || offersLoading) {
     return <HomeSkeleton />;
   }
 
