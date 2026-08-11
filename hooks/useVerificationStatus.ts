@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getAuthenticatedUserId } from "@/lib/fafsa/progress-sync";
 import {
   readLocalStatus,
+  readLocalStatusSnapshot,
   writeLocalStatus,
   fetchCloudStatus,
   upsertCloudStatus,
@@ -30,10 +31,23 @@ export function useVerificationStatus() {
       if (!userId || touchedRef.current) return;
       const cloud = await fetchCloudStatus(userId);
       if (cancelled || !cloud || touchedRef.current) return;
-      // Only adopt the cloud row if it actually holds something.
-      if (cloud.group || cloud.schoolName || cloud.filer !== "unsure") {
-        setStatus(cloud);
-        writeLocalStatus(cloud);
+      const local = readLocalStatusSnapshot();
+      if (!hasData(cloud.status)) return;
+
+      if (hasData(local.status) && !sameStatus(local.status, cloud.status)) {
+        const cloudIsNewer =
+          local.updatedAt !== null &&
+          cloud.updatedAt !== null &&
+          new Date(cloud.updatedAt).getTime() > new Date(local.updatedAt).getTime();
+        if (!cloudIsNewer) {
+          void upsertCloudStatus(local.status);
+          return;
+        }
+      }
+
+      if (!sameStatus(local.status, cloud.status)) {
+        setStatus(cloud.status);
+        writeLocalStatus(cloud.status, cloud.updatedAt ?? undefined);
       }
     }
 
@@ -66,4 +80,12 @@ export function useVerificationStatus() {
   }, []);
 
   return { status, update };
+}
+
+function hasData(status: VerificationStatus): boolean {
+  return Boolean(status.group || status.schoolName || status.filer !== "unsure");
+}
+
+function sameStatus(a: VerificationStatus, b: VerificationStatus): boolean {
+  return a.group === b.group && a.filer === b.filer && a.schoolName === b.schoolName;
 }
