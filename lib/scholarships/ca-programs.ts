@@ -16,6 +16,7 @@ import type { ScholarshipSource } from "@/lib/types";
  */
 
 const SEEDED = "2026-07-17T00:00:00.000Z";
+const CA_AID_SOURCE = "ca_aid_v1";
 
 function program(p: Partial<ScholarshipSource> & { name: string }): ScholarshipSource {
   return {
@@ -41,7 +42,7 @@ function program(p: Partial<ScholarshipSource> & { name: string }): ScholarshipS
     essay_required: false,
     effort_level: "low",
     min_gpa: null,
-    source: "ca_aid_v1",
+    source: CA_AID_SOURCE,
     verified_date: "2026-07-17",
     active: true,
   };
@@ -103,6 +104,15 @@ export const CA_PROGRAM_FALLBACK: ScholarshipSource[] = [
 
 /** Which "aid & scholarships" tag scopes a source to the /ca-aid screen. */
 export const CA_AID_TAG = "california";
+
+/**
+ * Saved state must survive the transition from static fallback rows to live DB
+ * rows. Fallback ids are deterministic (`ca_aid:<name>`), while seeded DB rows
+ * have UUID ids, so curated CA-aid rows use the fallback-compatible key.
+ */
+export function caAidSavedKey(source: ScholarshipSource): string {
+  return source.source === CA_AID_SOURCE ? `ca_aid:${source.name}` : source.id;
+}
 
 /** True when a program is open to CA Dream Act applicants (not only FAFSA). */
 export function isDreamActEligible(source: ScholarshipSource): boolean {

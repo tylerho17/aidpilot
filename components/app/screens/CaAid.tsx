@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Card, Button, Icon, IconTile, Badge, SegmentedControl, SectionHeading } from "@/components/ui";
 import { SourceBadge } from "@/components/app/SourceBadge";
 import { useLanguage } from "@/lib/i18n";
 import { CURRENCY_LABEL } from "@/lib/fafsa-guide/currency";
-import { isDreamActEligible, localizeProgram } from "@/lib/scholarships/ca-programs";
+import { caAidSavedKey, isDreamActEligible, localizeProgram } from "@/lib/scholarships/ca-programs";
 import { useSavedItems } from "@/hooks/useSavedItems";
 import { track } from "@vercel/analytics";
 import type { ScholarshipSource } from "@/lib/types";
@@ -50,7 +50,12 @@ function formatDeadline(d: string | null): string | null {
 export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
   const { lang, t } = useLanguage();
   const [filter, setFilter] = useState<Filter>("all");
-  const saved = useSavedItems("scholarship");
+  const { has: hasSavedItem, toggle: toggleSavedItem } = useSavedItems("scholarship");
+  const isProgramSaved = useCallback(
+    (p: ScholarshipSource) => hasSavedItem(caAidSavedKey(p)) || hasSavedItem(p.id),
+    [hasSavedItem]
+  );
+  const savedProgramCount = programs.filter(isProgramSaved).length;
 
   const s = t({
     en: {
@@ -60,7 +65,7 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
       filters: [
         { value: "all", label: "All programs" },
         { value: "dream_act", label: "Open to Dream Act" },
-        { value: "saved", label: saved.count > 0 ? `Saved (${saved.count})` : "Saved" },
+        { value: "saved", label: savedProgramCount > 0 ? `Saved (${savedProgramCount})` : "Saved" },
       ],
       save: "Save",
       savedLabel: "Saved",
@@ -82,7 +87,7 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
       filters: [
         { value: "all", label: "Todos los programas" },
         { value: "dream_act", label: "Abierto a la Ley Dream" },
-        { value: "saved", label: saved.count > 0 ? `Guardados (${saved.count})` : "Guardados" },
+        { value: "saved", label: savedProgramCount > 0 ? `Guardados (${savedProgramCount})` : "Guardados" },
       ],
       save: "Guardar",
       savedLabel: "Guardado",
@@ -101,9 +106,9 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
 
   const filtered = useMemo(() => {
     if (filter === "dream_act") return programs.filter(isDreamActEligible);
-    if (filter === "saved") return programs.filter((p) => saved.has(p.id));
+    if (filter === "saved") return programs.filter(isProgramSaved);
     return programs;
-  }, [programs, filter, saved]);
+  }, [programs, filter, isProgramSaved]);
 
   return (
     <div>
@@ -129,20 +134,29 @@ export function CaAid({ programs }: { programs: ScholarshipSource[] }) {
         </Card>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
-          {filtered.map((p, i) => (
-            <ProgramCard
-              key={p.id}
-              p={p}
-              index={i}
-              lang={lang}
-              labels={s}
-              isSaved={saved.has(p.id)}
-              onToggleSave={() => {
-                if (!saved.has(p.id)) track("scholarship_saved", { amount: p.amount ?? 0 });
-                saved.toggle(p.id);
-              }}
-            />
-          ))}
+          {filtered.map((p, i) => {
+            const savedKey = caAidSavedKey(p);
+            const isSaved = isProgramSaved(p);
+            return (
+              <ProgramCard
+                key={p.id}
+                p={p}
+                index={i}
+                lang={lang}
+                labels={s}
+                isSaved={isSaved}
+                onToggleSave={() => {
+                  if (isSaved) {
+                    if (hasSavedItem(savedKey)) toggleSavedItem(savedKey);
+                    if (savedKey !== p.id && hasSavedItem(p.id)) toggleSavedItem(p.id);
+                    return;
+                  }
+                  track("scholarship_saved", { amount: p.amount ?? 0 });
+                  toggleSavedItem(savedKey);
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
