@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -58,7 +58,7 @@ const GOAL_OPTIONS = ["Protect my aid", "Catch deadlines", "Upload documents", "
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { lang, setLang, t } = useLanguage();
   const L = t(ONBOARDING_STRINGS);
   const [checkingAuth, setCheckingAuth] = useState(true);
