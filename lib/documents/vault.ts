@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 export const BUCKET = "student-docs";
 export const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 export const ALLOWED_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/heic"];
-export const ALLOWED_LABEL = "PDF, PNG, JPG, or HEIC · up to 10 MB";
+export const ALLOWED_LABEL = "PDF, PNG, JPG, or HEIC/HEIF · up to 10 MB";
 
 export type StoredDoc = { name: string; label: string; path: string; size: number; createdAt: string };
 
@@ -42,14 +42,27 @@ export async function listDocs(userId: string): Promise<StoredDoc[]> {
 
 export type UploadResult = { ok: true } | { ok: false; reason: "too_big" | "bad_type" | "failed" };
 
+function uploadContentType(file: File): string | null {
+  const type = file.type.toLowerCase();
+  if (ALLOWED_TYPES.includes(type)) return type;
+
+  const isHeicName = /\.(heic|heif)$/i.test(file.name);
+  if (isHeicName && (type === "" || type === "application/octet-stream" || type === "image/heif")) {
+    return "image/heic";
+  }
+
+  return null;
+}
+
 export async function uploadDoc(userId: string, file: File): Promise<UploadResult> {
   if (file.size > MAX_BYTES) return { ok: false, reason: "too_big" };
-  if (!ALLOWED_TYPES.includes(file.type)) return { ok: false, reason: "bad_type" };
+  const contentType = uploadContentType(file);
+  if (!contentType) return { ok: false, reason: "bad_type" };
   try {
     const supabase = createClient();
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "document";
     const path = `${userId}/${Date.now()}-${safe}`;
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false, contentType });
     return error ? { ok: false, reason: "failed" } : { ok: true };
   } catch {
     return { ok: false, reason: "failed" };
