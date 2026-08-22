@@ -9,8 +9,9 @@ import type { GuideSection } from "@/lib/fafsa-guide/schema";
  *
  * Answers come from Claude constrained to AidPilot's human-sourced guide
  * content (lib/fafsa-guide) - the model is instructed to decline anything the
- * guide doesn't cover. Questions are never stored; no auth or PII involved.
- * Without ANTHROPIC_API_KEY the route degrades to a 503 the UI explains.
+ * guide doesn't cover. Questions are never stored; optional personalization
+ * context can include aid-path categories, so the UI must disclose when it is
+ * sent. Without ANTHROPIC_API_KEY the route degrades to a 503 the UI explains.
  */
 
 const MAX_QUESTION_CHARS = 500;
@@ -94,8 +95,8 @@ export async function POST(request: Request) {
 
   let question: string;
   let lang: "en" | "es";
-  // Optional non-PII personalization context (which form, parent situation,
-  // timeline) so answers are tailored. Length-capped; never contains names/SSNs.
+  // Optional personalization context (which form, parent situation, timeline)
+  // so answers are tailored. Length-capped; never contains names/SSNs.
   let context = "";
   try {
     const body = (await request.json()) as { question?: unknown; lang?: unknown; context?: unknown };

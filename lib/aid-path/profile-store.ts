@@ -1,10 +1,10 @@
 /**
  * Aid-path profile: the student's answers to a short triage that personalizes
  * the whole app (which form to file, which parent, what to do now). Stored
- * client-side only (localStorage) - no names, no SSNs, no finances, just three
- * coarse categorical answers - matching AidPilot's privacy posture (see
- * lib/fafsa/progress-store.ts, lib/streak/streak-store.ts). Exposed as a
- * useSyncExternalStore-compatible module store.
+ * client-side in localStorage - no names, no SSNs, no finances, just three
+ * coarse categorical answers. AI features may include this context when the
+ * student asks for personalized help, so UI copy must disclose that path.
+ * Exposed as a useSyncExternalStore-compatible module store.
  */
 
 export const AID_PATH_LOCAL_KEY = "aidpilot:aid-path:v1";

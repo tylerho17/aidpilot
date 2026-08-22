@@ -55,7 +55,7 @@ export function VerificationHelper() {
     en: {
       eyebrow: "FAFSA verification",
       heading: "Selected for verification?",
-      sub: "Tell us what your school flagged and we'll lay out exactly what to gather — nothing you enter is stored.",
+      sub: "Tell us what your school flagged and we'll lay out exactly what to gather. Your answers are remembered on this device and synced to your account when you're signed in.",
       reassureEyebrow: "You're not in trouble",
       reassureTitle: "Being selected doesn't mean you did anything wrong.",
       reassureBody: "Some students are picked at random, and some schools check every form. It just means you have a short list of documents to send.",
@@ -102,7 +102,7 @@ export function VerificationHelper() {
     es: {
       eyebrow: "Verificación de FAFSA",
       heading: "¿Te seleccionaron para verificación?",
-      sub: "Dinos qué marcó tu escuela y te mostramos exactamente qué reunir — no se guarda nada de lo que escribas.",
+      sub: "Dinos qué marcó tu escuela y te mostramos exactamente qué reunir. Tus respuestas se recuerdan en este dispositivo y se sincronizan con tu cuenta cuando inicias sesión.",
       reassureEyebrow: "No estás en problemas",
       reassureTitle: "Que te seleccionen no significa que hiciste algo mal.",
       reassureBody: "A algunos estudiantes los eligen al azar y algunas escuelas revisan todos los formularios. Solo significa que tienes una lista corta de documentos para enviar.",
