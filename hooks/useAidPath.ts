@@ -15,9 +15,10 @@ export function useAidPath(): AidPathProfile {
 }
 
 /**
- * A compact, non-PII context string for personalizing AI answers - empty until
- * the student has done the triage (at least picked a form). Send it as the
- * `context` field to the ask endpoint.
+ * A compact context string for personalizing AI answers - empty until the
+ * student has done the triage (at least picked a form). This may include
+ * sensitive aid-path categories like CADAA routing, so user-facing AI copy must
+ * disclose that the context is sent when AI help is used.
  */
 export function useAidPathContext(): string {
   const profile = useAidPath();

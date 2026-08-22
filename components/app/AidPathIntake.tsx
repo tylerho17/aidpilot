@@ -20,8 +20,10 @@ type Option = { value: string; label: string; sub?: string };
 /**
  * Three-question triage that personalizes the whole plan: which form to file
  * (FAFSA vs CADAA), which parent contributes, and where the student is in the
- * timeline. Answers are coarse categories stored on-device only. When answered,
- * shows a personalized "Your path" summary instead of the generic checklist.
+ * timeline. Answers are coarse categories stored on this device, and may be
+ * sent with AI requests when the student uses personalized AI help. When
+ * answered, shows a personalized "Your path" summary instead of the generic
+ * checklist.
  */
 export function AidPathIntake() {
   const { t } = useLanguage();
@@ -32,8 +34,9 @@ export function AidPathIntake() {
 
   const s = t({
     en: {
-      intro: "Answer 3 quick questions and AidPilot tailors your plan — nothing leaves your device.",
+      intro: "Answer 3 quick questions and AidPilot tailors your plan. Your answers stay on this device, and can be sent with AI questions only when you use AI help.",
       yourPath: "Your path",
+      aiNote: "AI tools can use these answers to tailor guidance when you ask for help.",
       edit: "Redo",
       next: "of 3",
       q: [
@@ -69,8 +72,9 @@ export function AidPathIntake() {
       ] as { field: Field; title: string; options: Option[] }[],
     },
     es: {
-      intro: "Responde 3 preguntas rápidas y AidPilot personaliza tu plan — nada sale de tu dispositivo.",
+      intro: "Responde 3 preguntas rápidas y AidPilot personaliza tu plan. Tus respuestas se quedan en este dispositivo y solo pueden enviarse con preguntas de IA cuando usas ayuda de IA.",
       yourPath: "Tu ruta",
+      aiNote: "Las herramientas de IA pueden usar estas respuestas para personalizar la guía cuando pides ayuda.",
       edit: "Rehacer",
       next: "de 3",
       q: [
@@ -136,6 +140,7 @@ export function AidPathIntake() {
           <PathLine icon="plane" text={guide.pathLine} />
           {guide.parentLine && <PathLine icon="shield" text={guide.parentLine} />}
           {guide.timelineLine && <PathLine icon="calendar" text={guide.timelineLine} />}
+          <PathLine icon="shield-check" text={s.aiNote} />
         </div>
       </Card>
     );
