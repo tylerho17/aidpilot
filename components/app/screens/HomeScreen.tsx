@@ -167,9 +167,10 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   // coherent demo narrative instead of the real protect snapshot.
   const usingDemo = tasks.length === 0 && offers.length === 0 && displayTasks.length > 0;
 
-  // ── StatCard 1: Aid secured this year (sum of grants + scholarships across offers) ──
-  const aidSecured = displayOffers.reduce((sum, offer) => sum + offer.grants_and_scholarships, 0);
-  const offerCount = displayOffers.length;
+  // ── StatCard 1: Aid secured this year (sum of grants + scholarships across confirmed offers) ──
+  const securedOffers = displayOffers.filter((offer) => offer.offer_status === "official" || offer.offer_status === "reviewed");
+  const aidSecured = securedOffers.reduce((sum, offer) => sum + offer.grants_and_scholarships, 0);
+  const offerCount = securedOffers.length;
 
   // ── StatCard 2: Next deadline ──
   const soonest = nextDeadline(displayDeadlines);
