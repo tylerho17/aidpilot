@@ -1,8 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+const DOCUMENT_BUCKET = "student-docs";
 const USER_TABLES = [
   "scholarship_matches",
   "aid_recommendations",
@@ -19,6 +20,36 @@ const USER_TABLES = [
   "user_scholarship_matches",
   "student_profiles",
 ] as const;
+
+function isMissingBucketError(error: unknown): boolean {
+  const maybe = error as { statusCode?: string | number; message?: string; error?: string } | null;
+  const message = `${maybe?.message ?? ""} ${maybe?.error ?? ""}`;
+  return /bucket.*not found|not found.*bucket/i.test(message);
+}
+
+async function deleteDocumentVaultFiles(admin: SupabaseClient, userId: string): Promise<void> {
+  const bucket = admin.storage.from(DOCUMENT_BUCKET);
+  const paths: string[] = [];
+  let offset = 0;
+  const limit = 100;
+
+  for (;;) {
+    const { data, error } = await bucket.list(userId, { limit, offset });
+    if (error) {
+      if (isMissingBucketError(error)) return;
+      throw error;
+    }
+
+    const page = data ?? [];
+    paths.push(...page.filter((item) => item.name && item.id).map((item) => `${userId}/${item.name}`));
+    if (page.length < limit) break;
+    offset += page.length;
+  }
+
+  if (paths.length === 0) return;
+  const { error } = await bucket.remove(paths);
+  if (error) throw error;
+}
 
 export async function POST() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,6 +95,8 @@ export async function POST() {
   });
 
   try {
+    await deleteDocumentVaultFiles(admin, user.id);
+
     for (const table of USER_TABLES) {
       const { error } = await admin.from(table).delete().eq(table === "student_profiles" ? "id" : "user_id", user.id);
       if (error) {

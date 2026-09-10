@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isRecoverableWithLocalFallback } from "@/lib/friendly-errors";
 import {
-  canUseFafsaProgressStorage,
   readFafsaProgressLocal,
   writeFafsaProgressLocal,
 } from "@/lib/fafsa/progress-store";
@@ -22,11 +21,6 @@ import { FAFSA_STEPS, getNextIncompleteStep, type FafsaStep } from "@/lib/fafsa/
 function normalizeCompletedKeys(keys: string[]): string[] {
   const valid = new Set(FAFSA_STEPS.map((step) => step.planKey));
   return [...new Set(keys)].filter((key) => valid.has(key));
-}
-
-function readInitialCompletedKeys(): string[] {
-  if (!canUseFafsaProgressStorage()) return [];
-  return normalizeCompletedKeys(readFafsaProgressLocal().completedPlanKeys);
 }
 
 function syncStatusForError(error: unknown): FafsaProgressSyncStatus {
@@ -50,10 +44,11 @@ function logSyncFailure(error: unknown): void {
 }
 
 export function useFafsaProgress() {
-  const [completedPlanKeys, setCompletedPlanKeys] = useState<string[]>(readInitialCompletedKeys);
+  const [completedPlanKeys, setCompletedPlanKeys] = useState<string[]>([]);
   const [syncStatus, setSyncStatus] = useState<FafsaProgressSyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
-  const userIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null | undefined>(undefined);
+  const mutationVersionRef = useRef(0);
 
   const applySyncFailure = useCallback((error: unknown) => {
     logSyncFailure(error);
@@ -61,18 +56,24 @@ export function useFafsaProgress() {
     setSyncMessage(FAFSA_PROGRESS_SYNC_FALLBACK_MESSAGE);
   }, []);
 
-  const persistLocal = useCallback((keys: string[]) => {
+  const persistLocal = useCallback((keys: string[], userId: string | null) => {
     const normalized = normalizeCompletedKeys(keys);
     setCompletedPlanKeys(normalized);
-    writeFafsaProgressLocal(normalized);
+    writeFafsaProgressLocal(normalized, userId);
     return normalized;
   }, []);
 
   const hydrateFromCloud = useCallback(
     async (userId: string) => {
       userIdRef.current = userId;
-      const localKeys = normalizeCompletedKeys(readFafsaProgressLocal().completedPlanKeys);
+      const startedAtVersion = mutationVersionRef.current;
+      const localKeys = normalizeCompletedKeys(readFafsaProgressLocal(userId).completedPlanKeys);
+      setCompletedPlanKeys(localKeys);
       const { completedPlanKeys: cloudKeys, error } = await fetchCloudFafsaProgress(userId);
+
+      if (userIdRef.current !== userId || mutationVersionRef.current !== startedAtVersion) {
+        return;
+      }
 
       if (error) {
         applySyncFailure(error);
@@ -80,7 +81,7 @@ export function useFafsaProgress() {
       }
 
       const merged = mergeCompletedPlanKeys(localKeys, normalizeCompletedKeys(cloudKeys));
-      persistLocal(merged);
+      persistLocal(merged, userId);
       setSyncStatus("synced");
       setSyncMessage(null);
 
@@ -104,6 +105,7 @@ export function useFafsaProgress() {
 
       if (!userId) {
         userIdRef.current = null;
+        setCompletedPlanKeys(normalizeCompletedKeys(readFafsaProgressLocal(null).completedPlanKeys));
         setSyncStatus("local-only");
         setSyncMessage(null);
         return;
@@ -114,41 +116,49 @@ export function useFafsaProgress() {
 
     void bootstrap();
 
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
+    const subscription = (() => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (cancelled) return;
 
-      const userId = session?.user?.id ?? null;
-      userIdRef.current = userId;
+          const userId = session?.user?.id ?? null;
+          userIdRef.current = userId;
 
-      if (!userId) {
-        setSyncStatus("local-only");
-        setSyncMessage(null);
-        return;
+          if (!userId) {
+            setCompletedPlanKeys(normalizeCompletedKeys(readFafsaProgressLocal(null).completedPlanKeys));
+            setSyncStatus("local-only");
+            setSyncMessage(null);
+            return;
+          }
+
+          void hydrateFromCloud(userId);
+        });
+        return subscription;
+      } catch {
+        return null;
       }
-
-      void hydrateFromCloud(userId);
-    });
+    })();
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [hydrateFromCloud]);
 
   const syncStepToCloud = useCallback(
-    async (planKey: string, completed: boolean) => {
-      const userId = userIdRef.current ?? (await getAuthenticatedUserId());
+    async (planKey: string, completed: boolean, scopedUserId: string | null) => {
+      const userId = scopedUserId;
       if (!userId) {
         setSyncStatus("local-only");
         setSyncMessage(null);
         return;
       }
 
-      userIdRef.current = userId;
       const { error } = await upsertCloudFafsaStep(userId, planKey, completed);
+      if (userIdRef.current !== userId) return;
       if (error) {
         applySyncFailure(error);
         return;
@@ -168,36 +178,34 @@ export function useFafsaProgress() {
   const markComplete = useCallback(
     (planKey: string) => {
       if (!FAFSA_STEPS.some((step) => step.planKey === planKey)) return;
-      let changed = false;
+      if (completedPlanKeys.includes(planKey)) return;
+      const userId = userIdRef.current ?? null;
+      mutationVersionRef.current += 1;
       setCompletedPlanKeys((prev) => {
         if (prev.includes(planKey)) return prev;
-        changed = true;
         const next = normalizeCompletedKeys([...prev, planKey]);
-        writeFafsaProgressLocal(next);
+        writeFafsaProgressLocal(next, userId);
         return next;
       });
-      if (changed) {
-        void syncStepToCloud(planKey, true);
-      }
+      void syncStepToCloud(planKey, true, userId);
     },
-    [syncStepToCloud]
+    [completedPlanKeys, syncStepToCloud]
   );
 
   const markIncomplete = useCallback(
     (planKey: string) => {
-      let changed = false;
+      if (!completedPlanKeys.includes(planKey)) return;
+      const userId = userIdRef.current ?? null;
+      mutationVersionRef.current += 1;
       setCompletedPlanKeys((prev) => {
         if (!prev.includes(planKey)) return prev;
-        changed = true;
         const next = normalizeCompletedKeys(prev.filter((key) => key !== planKey));
-        writeFafsaProgressLocal(next);
+        writeFafsaProgressLocal(next, userId);
         return next;
       });
-      if (changed) {
-        void syncStepToCloud(planKey, false);
-      }
+      void syncStepToCloud(planKey, false, userId);
     },
-    [syncStepToCloud]
+    [completedPlanKeys, syncStepToCloud]
   );
 
   const completionCount = completedPlanKeys.length;

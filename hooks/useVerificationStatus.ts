@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthenticatedUserId } from "@/lib/fafsa/progress-sync";
 import {
+  EMPTY_STATUS,
   readLocalStatus,
   writeLocalStatus,
   fetchCloudStatus,
+  hasVerificationStatus,
   upsertCloudStatus,
   type VerificationStatus,
 } from "@/lib/verification/status";
@@ -20,20 +22,31 @@ import {
  * and only ever calls setState inside async/subscription callbacks.
  */
 export function useVerificationStatus() {
-  const [status, setStatus] = useState<VerificationStatus>(readLocalStatus);
+  const [status, setStatus] = useState<VerificationStatus>({ ...EMPTY_STATUS });
   const touchedRef = useRef(false);
+  const activeUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
+    function enterScope(userId: string | null) {
+      if (activeUserIdRef.current === userId) return;
+      activeUserIdRef.current = userId;
+      touchedRef.current = false;
+      setStatus(readLocalStatus(userId));
+    }
+
     async function hydrate(userId: string | null) {
+      enterScope(userId);
       if (!userId || touchedRef.current) return;
+      const local = readLocalStatus(userId);
       const cloud = await fetchCloudStatus(userId);
-      if (cancelled || !cloud || touchedRef.current) return;
-      // Only adopt the cloud row if it actually holds something.
-      if (cloud.group || cloud.schoolName || cloud.filer !== "unsure") {
+      if (cancelled || activeUserIdRef.current !== userId || touchedRef.current) return;
+      if (hasVerificationStatus(cloud)) {
         setStatus(cloud);
-        writeLocalStatus(cloud);
+        writeLocalStatus(cloud, userId);
+      } else if (hasVerificationStatus(local)) {
+        void upsertCloudStatus(local, userId);
       }
     }
 
@@ -42,16 +55,23 @@ export function useVerificationStatus() {
       if (!cancelled) await hydrate(uid);
     })();
 
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!cancelled) void hydrate(session?.user?.id ?? null);
-    });
+    const subscription = (() => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!cancelled) void hydrate(session?.user?.id ?? null);
+        });
+        return subscription;
+      } catch {
+        return null;
+      }
+    })();
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -59,8 +79,9 @@ export function useVerificationStatus() {
     touchedRef.current = true;
     setStatus((prev) => {
       const next = { ...prev, ...patch };
-      writeLocalStatus(next);
-      void upsertCloudStatus(next);
+      const userId = activeUserIdRef.current ?? null;
+      writeLocalStatus(next, userId);
+      void upsertCloudStatus(next, userId);
       return next;
     });
   }, []);

@@ -11,7 +11,9 @@ import type { VerificationGroup, FilerStatus } from "@/lib/verification/guide";
  */
 
 const TABLE = "user_verification_status";
-const LOCAL_KEY = "aidpilot.verification.status.v1";
+const LEGACY_LOCAL_KEY = "aidpilot.verification.status.v1";
+const LOCAL_KEY_PREFIX = "aidpilot.verification.status.v2";
+const ANONYMOUS_SCOPE = "anonymous";
 
 export interface VerificationStatus {
   group: VerificationGroup | null;
@@ -31,20 +33,47 @@ function normalize(raw: Partial<VerificationStatus> | null | undefined): Verific
   return { group, filer, schoolName };
 }
 
-export function readLocalStatus(): VerificationStatus {
+export function hasVerificationStatus(status: VerificationStatus | null | undefined): status is VerificationStatus {
+  return !!status && (status.group !== null || status.filer !== "unsure" || status.schoolName.trim() !== "");
+}
+
+function localKey(userId: string | null = null): string {
+  return `${LOCAL_KEY_PREFIX}:${userId ?? ANONYMOUS_SCOPE}`;
+}
+
+function readStatusAtKey(key: string): VerificationStatus | null {
+  const raw = window.localStorage.getItem(key);
+  return raw ? normalize(JSON.parse(raw)) : null;
+}
+
+export function readLocalStatus(userId: string | null = null): VerificationStatus {
   if (typeof window === "undefined") return { ...EMPTY_STATUS };
   try {
-    const raw = window.localStorage.getItem(LOCAL_KEY);
-    return raw ? normalize(JSON.parse(raw)) : { ...EMPTY_STATUS };
+    const scoped = readStatusAtKey(localKey(userId));
+    if (scoped) return scoped;
+
+    // The v1 key was shared by every browser user. It is safe to preserve only
+    // for signed-out use; authenticated users get a clean, user-scoped cache.
+    if (!userId) {
+      const legacy = readStatusAtKey(LEGACY_LOCAL_KEY);
+      if (legacy) {
+        window.localStorage.setItem(localKey(null), JSON.stringify(legacy));
+        window.localStorage.removeItem(LEGACY_LOCAL_KEY);
+        return legacy;
+      }
+    }
+
+    return { ...EMPTY_STATUS };
   } catch {
     return { ...EMPTY_STATUS };
   }
 }
 
-export function writeLocalStatus(status: VerificationStatus): void {
+export function writeLocalStatus(status: VerificationStatus, userId: string | null = null): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LOCAL_KEY, JSON.stringify(normalize(status)));
+    window.localStorage.setItem(localKey(userId), JSON.stringify(normalize(status)));
+    window.localStorage.removeItem(LEGACY_LOCAL_KEY);
   } catch {
     /* storage blocked (private mode / quota) - the cloud copy still syncs */
   }
@@ -71,9 +100,9 @@ export async function fetchCloudStatus(userId: string): Promise<VerificationStat
 }
 
 /** Best-effort upsert of the signed-in user's status. No-op when signed out. */
-export async function upsertCloudStatus(status: VerificationStatus): Promise<void> {
+export async function upsertCloudStatus(status: VerificationStatus, scopedUserId?: string | null): Promise<void> {
   try {
-    const userId = await getAuthenticatedUserId();
+    const userId = scopedUserId ?? (await getAuthenticatedUserId());
     if (!userId) return;
     const supabase = createClient();
     const n = normalize(status);
