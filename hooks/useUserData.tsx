@@ -134,7 +134,7 @@ function useUserDataState() {
   const supabase = useMemo(() => createClient(), []);
   const hasLoadedOnceRef = useRef(false);
   const adminCacheRef = useRef<{ userId: string; isAdmin: boolean; checkedAt: number } | null>(null);
-  const loadInFlightRef = useRef<Promise<void> | null>(null);
+  const loadVersionRef = useRef(0);
   const scholarshipSchemaModeRef = useRef<ScholarshipSchemaMode>("extended");
 
   const getIntelligenceUserData = useCallback(
@@ -167,12 +167,29 @@ function useUserDataState() {
     ]
   );
 
+  const clearLoadedData = useCallback(() => {
+    setProfile(null);
+    setTasks([]);
+    setDocuments([]);
+    setScholarships([]);
+    setDeadlines([]);
+    setAidLetters([]);
+    setWeeklyReports([]);
+    setRecommendations([]);
+    setUserFafsaSteps([]);
+    setWorkflowSteps([]);
+    setScholarshipSources([]);
+    setFafsaIntake(null);
+    setFafsaDemoMode(false);
+    setAidLetterLocalMode(false);
+    setIsScholarshipAdmin(false);
+    adminCacheRef.current = null;
+  }, []);
+
   const loadData = useCallback(
     async (options?: { silent?: boolean }) => {
-      if (loadInFlightRef.current) {
-        await loadInFlightRef.current;
-        return;
-      }
+      const loadVersion = ++loadVersionRef.current;
+      const isCurrentLoad = () => loadVersion === loadVersionRef.current;
 
       const run = async () => {
         const isInitialLoad = !hasLoadedOnceRef.current;
@@ -189,34 +206,19 @@ function useUserDataState() {
           const {
             data: { session },
           } = await supabase.auth.getSession();
-          const sessionUser = session?.user ?? null;
-          if (sessionUser) {
-            setUser(sessionUser);
-          }
 
           const {
             data: { user: authUser },
           } = await supabase.auth.getUser();
-          const resolvedUser = authUser ?? sessionUser;
+          const resolvedUser = authUser ?? session?.user ?? null;
+
+          if (!isCurrentLoad()) {
+            return;
+          }
 
           if (!resolvedUser) {
             setUser(null);
-            setProfile(null);
-            setTasks([]);
-            setDocuments([]);
-            setScholarships([]);
-            setDeadlines([]);
-            setAidLetters([]);
-            setWeeklyReports([]);
-            setRecommendations([]);
-            setUserFafsaSteps([]);
-            setWorkflowSteps([]);
-            setScholarshipSources([]);
-            setFafsaIntake(null);
-            setFafsaDemoMode(false);
-            setAidLetterLocalMode(false);
-            setIsScholarshipAdmin(false);
-            adminCacheRef.current = null;
+            clearLoadedData();
             setAuthReady(true);
             return;
           }
@@ -264,6 +266,10 @@ function useUserDataState() {
             loadScholarshipSources(supabase),
             supabase.from("fafsa_intake_responses").select("*").eq("user_id", resolvedUser.id).maybeSingle(),
           ]);
+
+          if (!isCurrentLoad()) {
+            return;
+          }
 
           setIsScholarshipAdmin(adminFlag);
 
@@ -349,6 +355,7 @@ function useUserDataState() {
                   .select("*")
                   .eq("user_id", resolvedUser.id)
                   .order("created_at");
+                if (!isCurrentLoad()) return;
                 setUserFafsaSteps((seededSteps ?? []) as UserFafsaStep[]);
               } catch (err) {
                 console.error("Failed to seed user FAFSA steps:", err);
@@ -357,21 +364,21 @@ function useUserDataState() {
           }
         } catch (err) {
           console.error("useUserData: loadData failed", err);
-          if (!options?.silent) {
+          if (isCurrentLoad() && !options?.silent) {
             setLoadError(toFriendlyError(err, "Could not load your data. Please refresh the page."));
           }
         } finally {
-          hasLoadedOnceRef.current = true;
-          setAuthReady(true);
-          setLoading(false);
-          loadInFlightRef.current = null;
+          if (isCurrentLoad()) {
+            hasLoadedOnceRef.current = true;
+            setAuthReady(true);
+            setLoading(false);
+          }
         }
       };
 
-      loadInFlightRef.current = run();
-      await loadInFlightRef.current;
+      await run();
     },
-    [supabase]
+    [clearLoadedData, supabase]
   );
 
   useEffect(() => {
@@ -388,11 +395,17 @@ function useUserDataState() {
         }
         return;
       }
+      setUser(session?.user ?? null);
+      clearLoadedData();
+      setAuthReady(true);
       void loadData({ silent: true });
     });
 
-    return () => subscription.unsubscribe();
-  }, [loadData, supabase]);
+    return () => {
+      loadVersionRef.current += 1;
+      subscription.unsubscribe();
+    };
+  }, [clearLoadedData, loadData, supabase]);
 
   const updateTaskStatus = async (taskId: string, status: string) => {
     const demoUserId = user?.id ?? FAFSA_DEMO_GUEST_USER_ID;
