@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUserData } from "@/hooks/useUserData";
 import { listDocs, uploadDoc, removeDoc, type StoredDoc, type UploadResult } from "@/lib/documents/vault";
 
@@ -10,27 +10,41 @@ import { listDocs, uploadDoc, removeDoc, type StoredDoc, type UploadResult } fro
  */
 export function useDocuments() {
   const { user, authReady } = useUserData();
-  const [docs, setDocs] = useState<StoredDoc[]>([]);
+  const [docSnapshot, setDocSnapshot] = useState<{ userId: string | null; docs: StoredDoc[] }>({
+    userId: null,
+    docs: [],
+  });
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const currentUserIdRef = useRef<string | null>(null);
+  const loadVersionRef = useRef(0);
+  const mutationVersionRef = useRef(0);
 
   const refresh = useCallback(async (uid: string) => {
+    const version = ++loadVersionRef.current;
     const list = await listDocs(uid);
-    setDocs(list);
+    if (currentUserIdRef.current === uid && loadVersionRef.current === version) {
+      setDocSnapshot({ userId: uid, docs: list });
+    }
   }, []);
 
   useEffect(() => {
     if (!authReady) return;
+    const uid = user?.id ?? null;
+    currentUserIdRef.current = uid;
+    const version = ++loadVersionRef.current;
+    mutationVersionRef.current += 1;
     let cancelled = false;
     void (async () => {
-      if (!user) {
-        setDocs([]);
+      setBusy(false);
+      setLoading(!!uid);
+      if (!uid) {
+        setDocSnapshot({ userId: null, docs: [] });
         return;
       }
-      setLoading(true);
-      const list = await listDocs(user.id);
-      if (!cancelled) {
-        setDocs(list);
+      const list = await listDocs(uid);
+      if (!cancelled && currentUserIdRef.current === uid && loadVersionRef.current === version) {
+        setDocSnapshot({ userId: uid, docs: list });
         setLoading(false);
       }
     })();
@@ -41,26 +55,43 @@ export function useDocuments() {
 
   const upload = useCallback(
     async (file: File): Promise<UploadResult> => {
-      if (!user) return { ok: false, reason: "failed" };
+      const uid = user?.id;
+      if (!uid) return { ok: false, reason: "failed" };
+      const mutationVersion = ++mutationVersionRef.current;
       setBusy(true);
-      const res = await uploadDoc(user.id, file);
-      if (res.ok) await refresh(user.id);
-      setBusy(false);
-      return res;
+      try {
+        const res = await uploadDoc(uid, file);
+        if (res.ok) await refresh(uid);
+        return res;
+      } finally {
+        if (currentUserIdRef.current === uid && mutationVersionRef.current === mutationVersion) {
+          setBusy(false);
+        }
+      }
     },
-    [user, refresh]
+    [user?.id, refresh]
   );
 
   const remove = useCallback(
     async (path: string) => {
-      if (!user) return;
+      const uid = user?.id;
+      if (!uid) return;
+      const mutationVersion = ++mutationVersionRef.current;
       setBusy(true);
-      await removeDoc(path);
-      await refresh(user.id);
-      setBusy(false);
+      try {
+        await removeDoc(path);
+        await refresh(uid);
+      } finally {
+        if (currentUserIdRef.current === uid && mutationVersionRef.current === mutationVersion) {
+          setBusy(false);
+        }
+      }
     },
-    [user, refresh]
+    [user?.id, refresh]
   );
+
+  const uid = user?.id ?? null;
+  const docs = docSnapshot.userId === uid ? docSnapshot.docs : [];
 
   return { signedIn: !!user, authReady, docs, loading, busy, upload, remove };
 }
