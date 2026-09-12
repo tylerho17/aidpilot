@@ -8,6 +8,7 @@
  */
 
 export const AID_PATH_LOCAL_KEY = "aidpilot:aid-path:v1";
+const AID_PATH_GUEST_KEY = `${AID_PATH_LOCAL_KEY}:guest`;
 
 /** Which application the student files. "unsure" = show both / route to triage. */
 export type AidForm = "fafsa" | "cadaa" | "unsure";
@@ -26,7 +27,8 @@ export type AidPathProfile = {
 const EMPTY: AidPathProfile = { form: null, parents: null, timeline: null, updatedAt: null };
 
 let snapshot: AidPathProfile = EMPTY;
-let hydrated = false;
+let activeStorageKey = AID_PATH_GUEST_KEY;
+let hydratedKey: string | null = null;
 const listeners = new Set<() => void>();
 
 function canUseStorage(): boolean {
@@ -37,10 +39,14 @@ const FORMS: AidForm[] = ["fafsa", "cadaa", "unsure"];
 const PARENTS: ParentSituation[] = ["together", "divorced", "single", "cant_provide"];
 const TIMELINES: Timeline[] = ["senior", "junior", "underclass", "college"];
 
-function readFromStorage(): AidPathProfile {
+function storageKeyForUser(userId: string | null): string {
+  return userId ? `${AID_PATH_LOCAL_KEY}:user:${userId}` : AID_PATH_GUEST_KEY;
+}
+
+function readFromStorage(key: string): AidPathProfile {
   if (!canUseStorage()) return EMPTY;
   try {
-    const raw = window.localStorage.getItem(AID_PATH_LOCAL_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Partial<AidPathProfile>;
     return {
@@ -55,16 +61,17 @@ function readFromStorage(): AidPathProfile {
 }
 
 function ensureHydrated(): void {
-  if (hydrated) return;
-  snapshot = readFromStorage();
-  hydrated = true;
+  if (hydratedKey === activeStorageKey) return;
+  snapshot = readFromStorage(activeStorageKey);
+  hydratedKey = activeStorageKey;
 }
 
 function persist(next: AidPathProfile): void {
   snapshot = next;
+  hydratedKey = activeStorageKey;
   if (canUseStorage()) {
     try {
-      window.localStorage.setItem(AID_PATH_LOCAL_KEY, JSON.stringify(next));
+      window.localStorage.setItem(activeStorageKey, JSON.stringify(next));
     } catch {
       // Storage disabled/full - keep the in-memory snapshot so the UI still works.
     }
@@ -86,6 +93,25 @@ export function getAidPathSnapshot(): AidPathProfile {
 
 export function getAidPathServerSnapshot(): AidPathProfile {
   return EMPTY;
+}
+
+export function setAidPathUserId(userId: string | null): void {
+  const nextKey = storageKeyForUser(userId);
+  if (activeStorageKey === nextKey && hydratedKey === nextKey) return;
+
+  activeStorageKey = nextKey;
+  snapshot = readFromStorage(activeStorageKey);
+  hydratedKey = activeStorageKey;
+
+  if (canUseStorage()) {
+    try {
+      window.localStorage.removeItem(AID_PATH_LOCAL_KEY);
+    } catch {
+      /* best-effort legacy cleanup */
+    }
+  }
+
+  listeners.forEach((listener) => listener());
 }
 
 /** Merge a partial answer set into the profile. */
