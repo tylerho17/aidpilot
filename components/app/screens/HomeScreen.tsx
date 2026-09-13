@@ -131,6 +131,7 @@ function HomeSkeleton() {
 
 export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   const {
+    user,
     profile,
     tasks,
     deadlines,
@@ -228,7 +229,7 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
 
   return (
     <div>
-      <OutcomeBeacon secured={aidSecured} potential={scholarshipPotential} />
+      <OutcomeBeacon secured={aidSecured} potential={scholarshipPotential} scopeKey={user?.id ?? "signed-out"} />
       <Greeting
         title={`Good ${timeOfDay(now.getHours())}, ${greetingName}`}
         subtitle={`${todayLabel} · here's your weekly check-in.`}
