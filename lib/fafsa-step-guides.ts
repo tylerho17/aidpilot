@@ -154,7 +154,7 @@ const GUIDES: FafsaStepGuide[] = [
       "FAFSA might pause you mid-form if nobody can answer money questions. You are not entering dollar amounts here - just checking whether you can find tax info when StudentAid.gov asks.",
     before_you_start: [
       "Know whether you or a parent filed taxes for the year FAFSA asks about.",
-      "Locate where tax documents are stored (IRS account, tax preparer, filing cabinet) - you do not upload these to AidPilot.",
+      "Locate where tax documents are stored (IRS account, tax preparer, filing cabinet, or your optional AidPilot vault if you choose to upload copies).",
       "List of any untaxed income or special situations you might need to report on StudentAid.gov.",
     ],
     instructions: [

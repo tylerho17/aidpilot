@@ -6,7 +6,7 @@ This document maps the student financial aid journey into product states, tasks,
 
 ## Safety note
 
-AidPilot does not submit FAFSA forms, does not connect to FAFSA accounts, does not collect FAFSA login credentials, does not collect Social Security numbers, and does not store tax documents. AidPilot helps students organize the process and understand what to do next.
+AidPilot does not submit FAFSA forms, does not connect to FAFSA accounts, and never asks students to type FAFSA login credentials or Social Security numbers into its forms. The optional document vault stores only files a student chooses to upload and is not an official submission channel. AidPilot helps students organize the process and understand what to do next.
 
 ## Phase 1: Before FAFSA opens
 

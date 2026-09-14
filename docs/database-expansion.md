@@ -66,7 +66,7 @@ This expansion does not add:
 
 `aid_letters` and `appeal_drafts` involve more sensitive financial content and should come after the core workflow (tasks, deadlines, documents status, scholarships, weekly reports) is validated with real students.
 
-AidPilot still does not collect Social Security numbers, FAFSA login credentials, or tax documents.
+AidPilot still does not ask students to type Social Security numbers or FAFSA login credentials into its forms. Document vault storage is optional and limited to files a student chooses to upload.
 
 ## How to run the migration
 

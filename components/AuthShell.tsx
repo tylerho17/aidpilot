@@ -7,10 +7,10 @@ import { useLanguage } from "@/lib/i18n";
 
 const SHELL_STRINGS = {
   en: {
-    disclaimer: "AidPilot does not collect FAFSA login credentials, Social Security numbers, or tax documents.",
+    disclaimer: "AidPilot never asks you to type FAFSA login credentials or Social Security numbers. Vault uploads are optional.",
   },
   es: {
-    disclaimer: "AidPilot no recopila credenciales de FAFSA, números de Seguro Social ni documentos de impuestos.",
+    disclaimer: "AidPilot nunca te pide escribir credenciales de FAFSA ni números de Seguro Social. Las subidas a la bóveda son opcionales.",
   },
 };
 
