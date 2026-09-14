@@ -19,7 +19,7 @@
 
 ## Privacy stance
 
-AidPilot never collects FAFSA login credentials, Social Security numbers, or tax documents — the guide teaches, the tracker tracks, and the AI answers are grounded in sourced content with no personal data involved.
+AidPilot never asks students to type FAFSA login credentials or Social Security numbers into its forms. The optional document vault stores only files a student chooses to upload; the guide teaches, the tracker tracks, and AI answers are grounded in sourced content without requiring sensitive identifiers.
 
 ## Local development
 

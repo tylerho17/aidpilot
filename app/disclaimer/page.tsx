@@ -25,7 +25,7 @@ export default function DisclaimerPage() {
     <LegalShell
       badge="Trust and safety"
       heading="Disclaimer"
-      lastUpdated="June 24, 2026"
+      lastUpdated="September 14, 2026"
     >
       <SectionCard title="AidPilot is not FAFSA" accent="amber">
         <p>AidPilot is an independent educational and organizational tool. We are <strong style={{ color: "var(--amber-600)" }}>not FAFSA</strong>, not Federal Student Aid, not the U.S. Department of Education, and <strong style={{ color: "var(--amber-600)" }}>not affiliated with, endorsed by, or connected to</strong> any college, university, or scholarship provider.</p>
@@ -44,8 +44,8 @@ export default function DisclaimerPage() {
       </SectionCard>
 
       <SectionCard title="Sensitive information" accent="green">
-        <p>AidPilot does not ask for or store Social Security numbers, tax returns, FAFSA login credentials, or other sensitive financial documents. Do not share this information with us or enter it into unofficial third-party tools.</p>
-        <p style={{ marginTop: 12 }}>AidPilot currently tracks document status only and does not require tax document uploads. Document upload and aid letter scanning features are planned for later.</p>
+        <p>AidPilot does not ask you to type Social Security numbers or FAFSA login credentials into its forms. Do not type those into AidPilot or any unofficial third-party tool.</p>
+        <p style={{ marginTop: 12 }}>The optional document vault stores files you choose to upload, which may include tax returns, sensitive identifiers, or other financial documents requested by your school. The vault is for organizing your own copies only; it is not an official submission channel, so always send required documents through your school&apos;s official portal or process.</p>
       </SectionCard>
 
       <SectionCard title="Third-party scholarships and links">

@@ -19,14 +19,14 @@ export default function PrivacyPage() {
     <LegalShell
       badge="Trust and safety"
       heading="Privacy Policy"
-      lastUpdated="June 24, 2026"
+      lastUpdated="September 14, 2026"
     >
       <SectionCard accent="green">
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
           <IconTile icon="shield-check" tone="green" size={36} radius={10} strokeWidth={2.4} style={{ marginTop: 2 }} />
           <div>
-            <p style={{ fontWeight: 700, color: "var(--text-heading)", margin: "0 0 6px", fontSize: "var(--text-base)" }}>AidPilot does not collect sensitive financial data.</p>
-            <p style={{ margin: 0, color: "var(--ink-700)" }}>We do not collect Social Security numbers, tax documents, FAFSA login credentials, or sensitive financial documents. We never will.</p>
+            <p style={{ fontWeight: 700, color: "var(--text-heading)", margin: "0 0 6px", fontSize: "var(--text-base)" }}>AidPilot does not ask for FAFSA credentials or Social Security numbers.</p>
+            <p style={{ margin: 0, color: "var(--ink-700)" }}>We never ask you to type FAFSA login credentials or Social Security numbers into AidPilot forms. If you choose to use the document vault, we store the files you upload so you can access or delete them from your account.</p>
           </div>
         </div>
       </SectionCard>
@@ -43,9 +43,10 @@ export default function PrivacyPage() {
           <li><strong style={{ color: "var(--text-heading)" }}>Account information</strong>, such as your email address and first name when you create an account.</li>
           <li><strong style={{ color: "var(--text-heading)" }}>Profile details you choose to share</strong>, such as school, year, state, student type, FAFSA status, aid types, goals, and scholarship preferences.</li>
           <li><strong style={{ color: "var(--text-heading)" }}>Aid tracking data you enter</strong>, such as document status, deadlines, tasks, aid letter numbers, and scholarship match actions (save, apply, ignore).</li>
+          <li><strong style={{ color: "var(--text-heading)" }}>Documents you choose to upload</strong> to the optional document vault, such as verification paperwork, appeal evidence, award letters, or tax documents your school asks you to keep handy.</li>
           <li><strong style={{ color: "var(--text-heading)" }}>Usage information</strong>, such as pages visited and features used, collected through standard analytics tools.</li>
         </ul>
-        <p style={{ marginTop: 16, fontWeight: 700, color: "var(--text-heading)" }}>We do not collect Social Security numbers, tax documents, FAFSA login credentials, or sensitive financial documents. AidPilot currently tracks document status only and does not require tax document uploads.</p>
+        <p style={{ marginTop: 16, fontWeight: 700, color: "var(--text-heading)" }}>We do not ask you to enter FAFSA login credentials or Social Security numbers into AidPilot forms. The document vault is optional private storage for files you choose to upload; it is not an official FAFSA, scholarship, or school submission channel.</p>
       </SectionCard>
 
       <SectionCard title="How we use your information">
@@ -60,6 +61,7 @@ export default function PrivacyPage() {
 
       <SectionCard title="How we store and protect data">
         <p>Account and profile data are stored using Supabase, a hosted database provider. We use industry-standard security practices and only collect information necessary to provide our service. No system is 100% secure, but we work to protect your data responsibly.</p>
+        <p style={{ marginTop: 12 }}>Document vault files are stored in a private per-account Supabase Storage bucket and opened through short-lived signed links. If an uploaded file contains sensitive identifiers, they are stored as part of that file. You can delete uploaded vault files from your account at any time.</p>
         <p style={{ marginTop: 12 }}>Server-side operations that require elevated access (such as account deletion) use a service role key stored only on the server - never in your browser.</p>
       </SectionCard>
 

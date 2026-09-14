@@ -93,7 +93,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Independent student? Confirm you meet federal independence criteria before proceeding alone.",
     ],
     privacyReminder:
-      "AidPilot does not collect contributor SSNs or tax data. Contributors enter sensitive info only on StudentAid.gov.",
+      "AidPilot never asks contributors to type SSNs, FAFSA passwords, or tax return values into its forms. Contributors enter sensitive FAFSA answers only on StudentAid.gov.",
     primaryCtaLabel: "Review contributor rules",
     nextPlanKey: "gather-records",
     previousPlanKey: "create-account",
@@ -282,7 +282,7 @@ export const FAFSA_STEPS: FafsaStep[] = [
       "Conflicting deadlines? Follow the earliest date among federal, state, and school.",
     ],
     privacyReminder:
-      "Use official school portals only. Do not send SSNs or tax documents through AidPilot.",
+      "Use official school portals for submission. Do not enter SSNs in AidPilot; the vault is only optional storage for your own copies.",
     primaryCtaLabel: "Open school portals",
     followUpCtaLabel: "Track school portals",
     nextPlanKey: "respond-verification",

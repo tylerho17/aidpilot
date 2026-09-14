@@ -87,7 +87,7 @@ const WORKFLOW = [
   { step: "04", title: "Office spends less time chasing", body: "Fewer calls, fewer re-requests, fewer last-minute escalations. Students arrive already informed." },
 ];
 
-const NO_ASK = ["Social Security numbers", "Tax documents", "FAFSA login credentials", "Bank account information"];
+const NO_ASK = ["Social Security numbers", "FAFSA login credentials", "Bank account information", "Tax return values"];
 
 export default function SchoolsPage() {
   return (
@@ -200,7 +200,7 @@ export default function SchoolsPage() {
       <section style={{ padding: "56px 40px" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <Card variant="flat" padding="26px 30px" style={{ display: "flex", flexWrap: "wrap", gap: "12px 28px", alignItems: "center" }}>
-            <span style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--text-muted)" }}>AidPilot never asks students for:</span>
+            <span style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--text-muted)" }}>AidPilot never asks students to type:</span>
             {NO_ASK.map((item) => (
               <span key={item} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--ink-700)" }}>
                 <Icon name="check" size={15} color="var(--green-600)" strokeWidth={3} />{item}
