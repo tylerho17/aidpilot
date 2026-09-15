@@ -42,7 +42,7 @@ const ITEM_ICON: Record<string, string> = {
 
 export function VerificationHelper() {
   const { lang, t } = useLanguage();
-  const { status: saved, update } = useVerificationStatus();
+  const { status: saved, update, reset } = useVerificationStatus();
   const { group, filer, schoolName } = saved;
 
   const [status, setStatus] = useState<Status>("idle");
@@ -80,6 +80,7 @@ export function VerificationHelper() {
       copied: "Copied",
       print: "Print / PDF",
       vaultLink: "Keep these documents in your vault",
+      doneCta: "Mark verification done",
       deadlineEyebrow: "Deadline",
       deadlineTitle: "Don't miss your school's deadline.",
       deadlineBody:
@@ -127,6 +128,7 @@ export function VerificationHelper() {
       copied: "Copiado",
       print: "Imprimir / PDF",
       vaultLink: "Guarda estos documentos en tu bóveda",
+      doneCta: "Marcar verificación hecha",
       deadlineEyebrow: "Fecha límite",
       deadlineTitle: "No pierdas la fecha límite de tu escuela.",
       deadlineBody:
@@ -312,11 +314,16 @@ export function VerificationHelper() {
             </Card>
             <div style={{ margin: "12px 2px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <SourceBadge />
-              <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)", textDecoration: "none" }}>
-                <Icon name="file" size={14} color="var(--blue-700)" />
-                {s.vaultLink}
-                <Icon name="arrow-right" size={13} color="var(--blue-700)" />
-              </Link>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <Button variant="secondary" size="sm" iconLeft="check" onClick={reset}>
+                  {s.doneCta}
+                </Button>
+                <Link href="/vault" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--blue-700)", textDecoration: "none" }}>
+                  <Icon name="file" size={14} color="var(--blue-700)" />
+                  {s.vaultLink}
+                  <Icon name="arrow-right" size={13} color="var(--blue-700)" />
+                </Link>
+              </span>
             </div>
           </div>
 

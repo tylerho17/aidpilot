@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n";
+import { useSavedItems } from "@/hooks/useSavedItems";
 import { nextDeadline, CA_DEADLINES, type AidDeadline, type DeadlineTone } from "@/lib/deadlines/ca-deadlines";
 
 /**
@@ -23,7 +24,11 @@ const PILL: Record<DeadlineTone, { bg: string; fg: string; icon: string }> = {
 
 export function NextDeadlineBadge({ deadlines = CA_DEADLINES }: { deadlines?: AidDeadline[] }) {
   const { lang, t } = useLanguage();
-  const next = useMemo(() => nextDeadline(deadlines), [deadlines]);
+  const { has: hasHandledDeadline } = useSavedItems("deadline");
+  const next = useMemo(
+    () => nextDeadline(deadlines.filter((deadline) => !hasHandledDeadline(deadline.id))),
+    [deadlines, hasHandledDeadline]
+  );
   if (!next) return null;
 
   const p = PILL[next.tone];
