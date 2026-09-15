@@ -8,6 +8,7 @@ import {
   writeLocalStatus,
   fetchCloudStatus,
   upsertCloudStatus,
+  EMPTY_STATUS,
   type VerificationStatus,
 } from "@/lib/verification/status";
 
@@ -65,5 +66,13 @@ export function useVerificationStatus() {
     });
   }, []);
 
-  return { status, update };
+  const reset = useCallback(() => {
+    touchedRef.current = true;
+    const next = { ...EMPTY_STATUS };
+    writeLocalStatus(next);
+    void upsertCloudStatus(next);
+    setStatus(next);
+  }, []);
+
+  return { status, update, reset };
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, Button, IconTile } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n";
 import { useVerificationStatus } from "@/hooks/useVerificationStatus";
+import { useSavedItems } from "@/hooks/useSavedItems";
 import { nextDeadline, countdownLabel, type AidDeadline } from "@/lib/deadlines/ca-deadlines";
 
 /**
@@ -19,8 +20,10 @@ const URGENT_DAYS = 21;
 export function NextMove({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   const { lang, t } = useLanguage();
   const { status } = useVerificationStatus();
+  const { has: hasHandledDeadline } = useSavedItems("deadline");
 
-  const next = aidDeadlines && aidDeadlines.length > 0 ? nextDeadline(aidDeadlines) : null;
+  const activeDeadlines = aidDeadlines?.filter((deadline) => !hasHandledDeadline(deadline.id));
+  const next = activeDeadlines && activeDeadlines.length > 0 ? nextDeadline(activeDeadlines) : null;
   const deadlineUrgent = next && next.days >= 0 && next.days <= URGENT_DAYS;
   const verificationActive = status.group !== null;
 
