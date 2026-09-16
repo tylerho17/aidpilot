@@ -141,7 +141,9 @@ export function loadFafsaDemoFallback(userId: string): FafsaDemoStore | null {
     if (!parsed.intake || !Array.isArray(parsed.tasks)) {
       return null;
     }
-    const ownerMatches = parsed.userId === userId || parsed.userId === FAFSA_DEMO_GUEST_USER_ID;
+    // Guest demo data is intentionally device-local; do not hydrate it into a
+    // newly signed-in account where task updates would never reach Supabase.
+    const ownerMatches = parsed.userId === userId;
     if (!ownerMatches) {
       return null;
     }
