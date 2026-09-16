@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -19,6 +19,25 @@ const USER_TABLES = [
   "user_scholarship_matches",
   "student_profiles",
 ] as const;
+
+async function cleanupUserRows(
+  admin: SupabaseClient,
+  userId: string
+): Promise<void> {
+  for (const table of USER_TABLES) {
+    try {
+      const { error } = await admin
+        .from(table)
+        .delete()
+        .eq(table === "student_profiles" ? "id" : "user_id", userId);
+      if (error) {
+        console.error(`Delete account: failed on ${table}`, error);
+      }
+    } catch (error) {
+      console.error(`Delete account: failed on ${table}`, error);
+    }
+  }
+}
 
 export async function POST() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,17 +83,14 @@ export async function POST() {
   });
 
   try {
-    for (const table of USER_TABLES) {
-      const { error } = await admin.from(table).delete().eq(table === "student_profiles" ? "id" : "user_id", user.id);
-      if (error) {
-        console.error(`Delete account: failed on ${table}`, error);
-      }
-    }
-
     const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
     if (deleteUserError) {
       return NextResponse.json({ error: deleteUserError.message }, { status: 500 });
     }
+
+    // Auth deletion is the point of no return. It triggers FK cascades in the
+    // normal schema; this pass only cleans up legacy/non-cascaded rows.
+    await cleanupUserRows(admin, user.id);
 
     return NextResponse.json({ success: true });
   } catch (err) {
