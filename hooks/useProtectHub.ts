@@ -43,7 +43,7 @@ export function useProtectHub() {
   const userId = user?.id ?? schoolUserId ?? offersUserId ?? null;
   const authReady = userAuthReady && schoolAuthReady && offersAuthReady;
   const loading = !authReady || userLoading || (userId !== null && (schoolLoading || offersLoading));
-  const refreshStartedRef = useRef(false);
+  const refreshedUserIdRef = useRef<string | null>(null);
 
   const loadError = userLoadError ? PROTECT_LOAD_ERROR : null;
   const dataWarning =
@@ -58,8 +58,12 @@ export function useProtectHub() {
   );
 
   useEffect(() => {
-    if (!authReady || !userId || loading || refreshStartedRef.current) return;
-    refreshStartedRef.current = true;
+    if (!userId) {
+      refreshedUserIdRef.current = null;
+      return;
+    }
+    if (!authReady || loading || refreshedUserIdRef.current === userId) return;
+    refreshedUserIdRef.current = userId;
     void refreshData({ silent: true });
   }, [authReady, loading, refreshData, userId]);
 
