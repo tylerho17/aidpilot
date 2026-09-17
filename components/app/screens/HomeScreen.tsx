@@ -24,7 +24,7 @@ import {
   DEMO_PROTECT_PANEL,
 } from "@/lib/demo";
 import { getProfileFullName } from "@/lib/profile-fields";
-import { isAidTaskComplete } from "@/lib/data-helpers";
+import { isAidTaskComplete, isNewScholarshipMatch } from "@/lib/data-helpers";
 import type { ProtectOverallStatus } from "@/lib/protect/getProtectStatus";
 import type { AidTask, Deadline } from "@/lib/types";
 
@@ -175,8 +175,8 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   const soonest = nextDeadline(displayDeadlines);
   const nextDeadlineDays = soonest ? daysUntil(soonest.deadline_date, now) : Number.NaN;
 
-  // ── StatCard 3: New scholarships (not ignored) ──
-  const openScholarships = displayScholarships.filter((s) => !s.ignored && s.status !== "ignored");
+  // ── StatCard 3: New scholarships (not saved/applied/ignored) ──
+  const openScholarships = displayScholarships.filter((s) => isNewScholarshipMatch(s));
   const scholarshipCount = openScholarships.length;
   const scholarshipPotential = openScholarships.reduce((sum, s) => sum + (s.amount ?? 0), 0);
 
