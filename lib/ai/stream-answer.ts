@@ -53,8 +53,9 @@ export async function streamAiAnswer(
     accumulated += decoder.decode();
     onText(accumulated);
   } catch {
-    // Surface whatever streamed; only treat a totally empty stream as an error.
-    if (!accumulated) return { ok: false, error: GENERIC_ERROR, warming: false };
+    // A dropped stream can leave letters or notes half-written. Treat that as a
+    // failed draft so callers do not enable copy/print or count analytics.
+    return { ok: false, error: GENERIC_ERROR, warming: false };
   }
 
   return { ok: true, text: accumulated };
