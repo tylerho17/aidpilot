@@ -31,7 +31,6 @@ export function useAiAsk() {
 
     const result = await streamAiAnswer("/api/fafsa-guide/ask", { question, lang, context }, (partial) => {
       if (runRef.current !== runId) return;
-      setStatus("done");
       setText(partial);
       setShown(partial.length);
     });

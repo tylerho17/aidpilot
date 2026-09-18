@@ -41,7 +41,6 @@ export function LandingAsk() {
       "/api/fafsa-guide/ask",
       { question: trimmed, lang: "en" },
       (partial) => {
-        setStatus("done");
         setAnswer(partial);
         setShown(partial.length);
       }
@@ -142,19 +141,19 @@ export function LandingAsk() {
                 <Icon name="plane" size={19} color="#fff" strokeWidth={2} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                {status === "loading" && (
+                {status === "loading" && !answer && (
                   <span style={{ fontSize: 15, fontWeight: 600, color: "var(--gray-400)" }}>AidPilot is reading the guide…</span>
                 )}
                 {status === "error" && (
                   <span style={{ fontSize: 15, fontWeight: 600, color: "var(--amber-700)" }}>{errorMsg}</span>
                 )}
-                {status === "done" && (
+                {(status === "done" || (status === "loading" && answer)) && (
                   <>
                     <p style={{ fontSize: 15.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
                       {answer.slice(0, shown)}
-                      {shown < answer.length && <span style={{ opacity: 0.5 }}>▍</span>}
+                      {status === "loading" && <span style={{ opacity: 0.5 }}>▍</span>}
                     </p>
-                    {answer && <SourceBadge />}
+                    {status === "done" && answer && <SourceBadge />}
                   </>
                 )}
               </div>

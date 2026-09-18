@@ -130,7 +130,6 @@ export function SapAppeal() {
       "/api/sap-appeal/draft",
       { reason, details: details.trim(), plan: plan.trim(), schoolName: schoolName.trim(), lang, context: aiContext },
       (partial) => {
-        setStatus("done");
         setLetter(partial);
       }
     );
