@@ -128,7 +128,6 @@ export function AppealBuilder() {
       "/api/aid-appeal/draft",
       { reason, details: details.trim(), schoolName: schoolName.trim(), lang, context: aiContext },
       (partial) => {
-        setStatus("done");
         setLetter(partial);
       }
     );

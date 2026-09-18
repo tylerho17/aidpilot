@@ -67,7 +67,7 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
 
           {status !== "idle" && (
             <div style={{ marginTop: 14 }}>
-              {status === "loading" && (
+              {status === "loading" && !text && (
                 <span style={{ fontSize: 14, fontWeight: 600, color: "var(--gray-400)" }}>{s.thinking}</span>
               )}
               {status === "error" && (
@@ -75,14 +75,14 @@ export function FafsaCoach({ stepTitle }: { stepTitle: string }) {
                   {error === "__warming__" ? s.warming : error}
                 </span>
               )}
-              {status === "done" && (
+              {(status === "done" || (status === "loading" && text)) && (
                 <>
                   <p style={{ fontSize: 14.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
                     {text.slice(0, shown)}
-                    {shown < text.length && <span style={{ opacity: 0.5 }}>▍</span>}
+                    {status === "loading" && <span style={{ opacity: 0.5 }}>▍</span>}
                   </p>
-                  {text && <SourceBadge />}
-                  <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>
+                  {status === "done" && text && <SourceBadge />}
+                  {status === "done" && <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>}
                 </>
               )}
             </div>

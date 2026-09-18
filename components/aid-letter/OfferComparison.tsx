@@ -82,7 +82,6 @@ export function OfferComparison({ offers }: { offers: UserAidOffer[] }) {
       "/api/aid-letter/compare",
       { offers: payload, lang, context: aiContext },
       (partial) => {
-        setStatus("done");
         setText(partial);
       }
     );

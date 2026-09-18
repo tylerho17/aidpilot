@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Card, Button, Badge, IconButton, Icon } from "@/components/ui";
@@ -208,14 +208,22 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
   const [text, setText] = useState("");
   const [shown, setShown] = useState(0);
   const [err, setErr] = useState("");
+  const runRef = useRef(0);
 
   const s = t({
     en: { cta: "Explain this offer with AI", again: "Explain again", thinking: "AidPilot is reading your offer…", warming: "AidPilot's AI isn't available right now.", note: "AI summary from your numbers - not official financial-aid advice." },
     es: { cta: "Explica esta oferta con IA", again: "Explicar de nuevo", thinking: "AidPilot está leyendo tu oferta…", warming: "El AI de AidPilot no está disponible ahora.", note: "Resumen de IA a partir de tus cifras - no es asesoría oficial de ayuda financiera." },
   });
 
+  useEffect(() => {
+    return () => {
+      runRef.current += 1;
+    };
+  }, []);
+
   async function explain() {
     if (status === "loading") return;
+    const runId = ++runRef.current;
     setStatus("loading");
     setText("");
     setShown(0);
@@ -233,12 +241,13 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
         lang,
       },
       (partial) => {
-        setStatus("done");
+        if (runRef.current !== runId) return;
         setText(partial);
         setShown(partial.length);
       }
     );
 
+    if (runRef.current !== runId) return;
     if (!result.ok) {
       setStatus("error");
       setErr(result.warming ? s.warming : result.error);
@@ -260,15 +269,15 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
             <Icon name="plane" size={16} color="#fff" strokeWidth={2} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {status === "loading" && <span style={{ fontSize: 14, fontWeight: 600, color: "var(--gray-400)" }}>{s.thinking}</span>}
+            {status === "loading" && !text && <span style={{ fontSize: 14, fontWeight: 600, color: "var(--gray-400)" }}>{s.thinking}</span>}
             {status === "error" && <span style={{ fontSize: 14, fontWeight: 600, color: "var(--amber-700)" }}>{err}</span>}
-            {status === "done" && (
+            {(status === "done" || (status === "loading" && text)) && (
               <>
                 <p style={{ fontSize: 14.5, fontWeight: 500, color: "var(--ink-800)", lineHeight: 1.65, margin: 0, whiteSpace: "pre-line" }}>
                   {text.slice(0, shown)}
-                  {shown < text.length && <span style={{ opacity: 0.5 }}>▍</span>}
+                  {status === "loading" && <span style={{ opacity: 0.5 }}>▍</span>}
                 </p>
-                <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>
+                {status === "done" && <p style={{ fontSize: 11.5, fontWeight: 500, color: "var(--gray-400)", marginTop: 8, lineHeight: 1.5 }}>{s.note}</p>}
               </>
             )}
           </div>
@@ -396,7 +405,7 @@ function OfferSection({
           </div>
         )}
 
-        <AiExplainBlock offer={offer} />
+        <AiExplainBlock key={offer.id} offer={offer} />
       </Card>
     </>
   );

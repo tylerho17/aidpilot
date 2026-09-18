@@ -188,7 +188,6 @@ export function VerificationHelper() {
       "/api/verification/note",
       { group: group ?? "unsure", filer, schoolName: schoolName.trim(), lang },
       (partial) => {
-        setStatus("done");
         setNote(partial);
       }
     );
