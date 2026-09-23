@@ -2,12 +2,13 @@
  * Aid-path profile: the student's answers to a short triage that personalizes
  * the whole app (which form to file, which parent, what to do now). Stored
  * client-side only (localStorage) - no names, no SSNs, no finances, just three
- * coarse categorical answers - matching AidPilot's privacy posture (see
- * lib/fafsa/progress-store.ts, lib/streak/streak-store.ts). Exposed as a
- * useSyncExternalStore-compatible module store.
+ * coarse categorical answers. Storage is scoped per signed-in user so shared
+ * browsers never feed one student's path into another student's AI context.
+ * Exposed as a useSyncExternalStore-compatible module store.
  */
 
 export const AID_PATH_LOCAL_KEY = "aidpilot:aid-path:v1";
+const AID_PATH_GUEST_SCOPE = "guest";
 
 /** Which application the student files. "unsure" = show both / route to triage. */
 export type AidForm = "fafsa" | "cadaa" | "unsure";
@@ -23,11 +24,16 @@ export type AidPathProfile = {
   updatedAt: string | null;
 };
 
-const EMPTY: AidPathProfile = { form: null, parents: null, timeline: null, updatedAt: null };
+export const EMPTY_AID_PATH: AidPathProfile = { form: null, parents: null, timeline: null, updatedAt: null };
 
-let snapshot: AidPathProfile = EMPTY;
+let storageKey = scopedStorageKey(null);
+let snapshot: AidPathProfile = EMPTY_AID_PATH;
 let hydrated = false;
 const listeners = new Set<() => void>();
+
+function scopedStorageKey(userId: string | null): string {
+  return `${AID_PATH_LOCAL_KEY}:${userId ?? AID_PATH_GUEST_SCOPE}`;
+}
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -37,11 +43,11 @@ const FORMS: AidForm[] = ["fafsa", "cadaa", "unsure"];
 const PARENTS: ParentSituation[] = ["together", "divorced", "single", "cant_provide"];
 const TIMELINES: Timeline[] = ["senior", "junior", "underclass", "college"];
 
-function readFromStorage(): AidPathProfile {
-  if (!canUseStorage()) return EMPTY;
+function readFromStorage(key: string): AidPathProfile {
+  if (!canUseStorage()) return EMPTY_AID_PATH;
   try {
-    const raw = window.localStorage.getItem(AID_PATH_LOCAL_KEY);
-    if (!raw) return EMPTY;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return EMPTY_AID_PATH;
     const parsed = JSON.parse(raw) as Partial<AidPathProfile>;
     return {
       form: FORMS.includes(parsed.form as AidForm) ? (parsed.form as AidForm) : null,
@@ -50,13 +56,34 @@ function readFromStorage(): AidPathProfile {
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : null,
     };
   } catch {
-    return EMPTY;
+    return EMPTY_AID_PATH;
   }
 }
 
 function ensureHydrated(): void {
   if (hydrated) return;
-  snapshot = readFromStorage();
+  snapshot = readFromStorage(storageKey);
+  hydrated = true;
+}
+
+export function clearLegacyAidPathProfile(): void {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.removeItem(AID_PATH_LOCAL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function notify(): void {
+  listeners.forEach((listener) => listener());
+}
+
+function setStorageScope(userId: string | null): void {
+  const nextKey = scopedStorageKey(userId);
+  if (storageKey === nextKey && hydrated) return;
+  storageKey = nextKey;
+  snapshot = readFromStorage(storageKey);
   hydrated = true;
 }
 
@@ -64,12 +91,13 @@ function persist(next: AidPathProfile): void {
   snapshot = next;
   if (canUseStorage()) {
     try {
-      window.localStorage.setItem(AID_PATH_LOCAL_KEY, JSON.stringify(next));
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+      window.localStorage.removeItem(AID_PATH_LOCAL_KEY);
     } catch {
       // Storage disabled/full - keep the in-memory snapshot so the UI still works.
     }
   }
-  listeners.forEach((listener) => listener());
+  notify();
 }
 
 export function subscribeAidPath(listener: () => void): () => void {
@@ -79,13 +107,14 @@ export function subscribeAidPath(listener: () => void): () => void {
   };
 }
 
-export function getAidPathSnapshot(): AidPathProfile {
+export function getAidPathSnapshot(userId: string | null): AidPathProfile {
+  setStorageScope(userId);
   ensureHydrated();
   return snapshot;
 }
 
 export function getAidPathServerSnapshot(): AidPathProfile {
-  return EMPTY;
+  return EMPTY_AID_PATH;
 }
 
 /** Merge a partial answer set into the profile. */
@@ -95,7 +124,7 @@ export function updateAidPath(patch: Partial<Omit<AidPathProfile, "updatedAt">>)
 }
 
 export function resetAidPath(): void {
-  persist({ ...EMPTY });
+  persist({ ...EMPTY_AID_PATH });
 }
 
 export function isAidPathComplete(p: AidPathProfile): boolean {

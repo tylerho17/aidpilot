@@ -1,7 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useUserData } from "@/hooks/useUserData";
 import {
+  clearLegacyAidPathProfile,
+  EMPTY_AID_PATH,
   getAidPathServerSnapshot,
   getAidPathSnapshot,
   subscribeAidPath,
@@ -11,7 +14,16 @@ import { describeAidPath } from "@/lib/aid-path/guidance";
 
 /** Reads the triage profile, re-rendering when it changes. */
 export function useAidPath(): AidPathProfile {
-  return useSyncExternalStore(subscribeAidPath, getAidPathSnapshot, getAidPathServerSnapshot);
+  const { authReady, user } = useUserData();
+  const userId = user?.id ?? null;
+  const getSnapshot = useCallback(
+    () => (authReady ? getAidPathSnapshot(userId) : EMPTY_AID_PATH),
+    [authReady, userId]
+  );
+  useEffect(() => {
+    if (authReady) clearLegacyAidPathProfile();
+  }, [authReady, userId]);
+  return useSyncExternalStore(subscribeAidPath, getSnapshot, getAidPathServerSnapshot);
 }
 
 /**

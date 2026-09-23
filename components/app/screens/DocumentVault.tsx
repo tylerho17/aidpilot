@@ -128,7 +128,7 @@ export function DocumentVault() {
           </StatusPanel>
 
           <Card variant="clay" padding={22} style={{ marginBottom: 22 }}>
-            <input ref={inputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.heic" onChange={onPick} style={{ display: "none" }} />
+            <input ref={inputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.heic,.heif" onChange={onPick} style={{ display: "none" }} />
             <Button variant="clay" iconLeft="plus" loading={busy} onClick={() => inputRef.current?.click()}>
               {busy ? s.uploading : s.upload}
             </Button>
