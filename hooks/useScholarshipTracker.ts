@@ -124,6 +124,7 @@ export function useScholarshipTracker() {
 
   const supabase = useMemo(() => createClient(), []);
   const loadVersionRef = useRef(0);
+  const authVersionRef = useRef(0);
 
   const loadMatchesForUser = useCallback(
     async (resolvedUserId: string | null) => {
@@ -169,6 +170,7 @@ export function useScholarshipTracker() {
   }, [supabase]);
 
   const reload = useCallback(async () => {
+    const authVersion = authVersionRef.current;
     setLoading(true);
     setLoadError(null);
     try {
@@ -179,15 +181,17 @@ export function useScholarshipTracker() {
         data: { user },
       } = await supabase.auth.getUser();
       const resolvedUserId = (user ?? session?.user)?.id ?? null;
+      if (authVersion !== authVersionRef.current) return;
       setUserId(resolvedUserId);
       setAuthReady(true);
       await Promise.all([loadCatalog(), loadMatchesForUser(resolvedUserId)]);
     } catch (error) {
+      if (authVersion !== authVersionRef.current) return;
       console.error("Scholarship tracker reload failed:", error);
       devLog("Scholarship tracker query failed");
       setLoadError(toFriendlyError(error, SCHOLARSHIP_LOAD_ERROR));
     } finally {
-      setLoading(false);
+      if (authVersion === authVersionRef.current) setLoading(false);
     }
   }, [loadCatalog, loadMatchesForUser, supabase]);
 
@@ -195,6 +199,7 @@ export function useScholarshipTracker() {
     let cancelled = false;
 
     async function bootstrap() {
+      const authVersion = authVersionRef.current;
       setLoadError(null);
 
       const {
@@ -206,7 +211,7 @@ export function useScholarshipTracker() {
 
       const resolvedUserId = (user ?? session?.user)?.id ?? null;
 
-      if (cancelled) return;
+      if (cancelled || authVersion !== authVersionRef.current) return;
 
       devLog("Scholarship tracker user loaded", resolvedUserId ?? "logged-out");
       setUserId(resolvedUserId);
@@ -214,19 +219,20 @@ export function useScholarshipTracker() {
 
       try {
         await loadCatalog();
+        if (cancelled || authVersion !== authVersionRef.current) return;
         if (resolvedUserId) {
           await loadMatchesForUser(resolvedUserId);
         } else {
           setMatches([]);
         }
       } catch (error) {
-        if (cancelled) return;
+        if (cancelled || authVersion !== authVersionRef.current) return;
         console.error("Scholarship tracker load failed:", error);
         devLog("Scholarship tracker query failed");
         setMatches([]);
         setLoadError(toFriendlyError(error, SCHOLARSHIP_LOAD_ERROR));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && authVersion === authVersionRef.current) setLoading(false);
       }
     }
 
@@ -237,28 +243,28 @@ export function useScholarshipTracker() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED") return;
 
-      if (event === "INITIAL_SESSION") {
-        const initialUserId = session?.user?.id ?? null;
-        setUserId(initialUserId);
-        setAuthReady(true);
-        if (initialUserId) {
-          void loadMatchesForUser(initialUserId);
-        }
-        return;
-      }
-
+      const authVersion = ++authVersionRef.current;
       const nextUserId = session?.user?.id ?? null;
       setUserId(nextUserId);
       setAuthReady(true);
+      setLoading(true);
+      setLoadError(null);
 
-      if (!nextUserId) {
-        setMatches([]);
-        setLoadError(null);
-        setLoading(false);
-        return;
-      }
-
-      void loadMatchesForUser(nextUserId);
+      void (async () => {
+        try {
+          await loadCatalog();
+          if (authVersion !== authVersionRef.current) return;
+          await loadMatchesForUser(nextUserId);
+        } catch (error) {
+          if (authVersion !== authVersionRef.current) return;
+          console.error("Scholarship tracker load failed:", error);
+          devLog("Scholarship tracker query failed");
+          setMatches([]);
+          setLoadError(toFriendlyError(error, SCHOLARSHIP_LOAD_ERROR));
+        } finally {
+          if (authVersion === authVersionRef.current) setLoading(false);
+        }
+      })();
     });
 
     return () => {

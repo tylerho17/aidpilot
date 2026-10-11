@@ -113,6 +113,7 @@ export function useAidOffers() {
 
   const supabase = useMemo(() => createClient(), []);
   const loadVersionRef = useRef(0);
+  const authVersionRef = useRef(0);
 
   const syncTasksForOffer = useCallback(
     async (offer: UserAidOffer) => {
@@ -173,6 +174,7 @@ export function useAidOffers() {
 
   const reload = useCallback(
     async (options?: { silent?: boolean }) => {
+      const authVersion = authVersionRef.current;
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -180,6 +182,7 @@ export function useAidOffers() {
         data: { user },
       } = await supabase.auth.getUser();
       const resolvedUserId = (user ?? session?.user)?.id ?? null;
+      if (authVersion !== authVersionRef.current) return;
       setUserId(resolvedUserId);
       setAuthReady(true);
       await loadOffersForUser(resolvedUserId, options);
@@ -191,6 +194,7 @@ export function useAidOffers() {
     let cancelled = false;
 
     async function bootstrap() {
+      const authVersion = authVersionRef.current;
       setLoadError(null);
 
       const {
@@ -203,42 +207,13 @@ export function useAidOffers() {
       const resolvedUser = user ?? session?.user ?? null;
       const resolvedUserId = resolvedUser?.id ?? null;
 
-      if (cancelled) return;
+      if (cancelled || authVersion !== authVersionRef.current) return;
 
       devLog("Aid offers user loaded", resolvedUserId ?? "logged-out");
       setUserId(resolvedUserId);
       setAuthReady(true);
 
-      if (!resolvedUserId) {
-        setOffers([]);
-        setLoading(false);
-        return;
-      }
-
-      devLog("Aid offers query started");
-
-      try {
-        const { data, error } = await supabase
-          .from("user_aid_offers")
-          .select("*")
-          .eq("user_id", resolvedUserId)
-          .order("created_at", { ascending: false });
-
-        if (cancelled) return;
-        if (error) throw error;
-
-        const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
-        setOffers(rows);
-        devLog("Aid offers loaded", rows.length);
-      } catch (error) {
-        if (cancelled) return;
-        console.error("Aid offers query failed:", error);
-        devLog("Aid offers query failed");
-        setOffers([]);
-        setLoadError(toFriendlyError(error, AID_OFFER_LOAD_ERROR));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      await loadOffersForUser(resolvedUserId);
     }
 
     void bootstrap();
@@ -248,26 +223,10 @@ export function useAidOffers() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED") return;
 
-      if (event === "INITIAL_SESSION") {
-        const initialUserId = session?.user?.id ?? null;
-        setUserId(initialUserId);
-        setAuthReady(true);
-        if (initialUserId) {
-          void loadOffersForUser(initialUserId, { silent: true });
-        }
-        return;
-      }
-
+      authVersionRef.current += 1;
       const nextUserId = session?.user?.id ?? null;
       setUserId(nextUserId);
       setAuthReady(true);
-
-      if (!nextUserId) {
-        setOffers([]);
-        setLoadError(null);
-        setLoading(false);
-        return;
-      }
 
       void loadOffersForUser(nextUserId);
     });
