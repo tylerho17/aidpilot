@@ -20,7 +20,37 @@ const USER_TABLES = [
   "student_profiles",
 ] as const;
 
-export async function POST() {
+function firstHeaderValue(value: string | null): string | null {
+  return value?.split(",")[0]?.trim() || null;
+}
+
+function expectedOrigin(request: Request): string {
+  const url = new URL(request.url);
+  const host = firstHeaderValue(request.headers.get("x-forwarded-host")) ?? request.headers.get("host") ?? url.host;
+  const protocol = firstHeaderValue(request.headers.get("x-forwarded-proto")) ?? url.protocol.replace(":", "");
+  return `${protocol}://${host}`;
+}
+
+function isSameOriginDeleteRequest(request: Request): boolean {
+  const expected = expectedOrigin(request);
+  const origin = request.headers.get("origin");
+  if (origin) return origin === expected;
+
+  const referer = request.headers.get("referer");
+  if (!referer) return false;
+
+  try {
+    return new URL(referer).origin === expected;
+  } catch {
+    return false;
+  }
+}
+
+export async function POST(request: Request) {
+  if (!isSameOriginDeleteRequest(request)) {
+    return NextResponse.json({ error: "Invalid account deletion request." }, { status: 403 });
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
