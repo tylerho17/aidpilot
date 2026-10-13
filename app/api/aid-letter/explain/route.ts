@@ -71,12 +71,14 @@ export async function POST(request: Request) {
 
   const costOfAttendance = num(body.costOfAttendance);
   const grants = num(body.grants);
+  const otherAid = num(body.otherAid ?? 0);
   const workStudy = num(body.workStudy);
   const loans = num(body.loans);
-  if (costOfAttendance === null || grants === null || workStudy === null || loans === null) {
+  if (costOfAttendance === null || grants === null || otherAid === null || workStudy === null || loans === null) {
     return NextResponse.json({ error: "Invalid offer amounts." }, { status: 400 });
   }
-  const outOfPocket = Math.max(0, costOfAttendance - grants - workStudy - loans);
+  const totalGiftAid = grants + otherAid;
+  const outOfPocket = Math.max(0, costOfAttendance - totalGiftAid - workStudy - loans);
   const schoolName = typeof body.schoolName === "string" ? body.schoolName.slice(0, 100).trim() : "";
   const lang = body.lang === "es" ? "es" : "en";
 
@@ -84,10 +86,14 @@ export async function POST(request: Request) {
     schoolName ? `School: ${schoolName}` : "School: (unnamed)",
     `Cost of attendance (one year): $${costOfAttendance.toLocaleString()}`,
     `Grants and scholarships (free money): $${grants.toLocaleString()}`,
+    otherAid > 0 ? `Other gift aid (free money): $${otherAid.toLocaleString()}` : "",
+    otherAid > 0 ? `Total gift aid (free money): $${totalGiftAid.toLocaleString()}` : "",
     `Work-study offered: $${workStudy.toLocaleString()}`,
     `Loans offered: $${loans.toLocaleString()}`,
     `Out-of-pocket / remaining gap: $${outOfPocket.toLocaleString()}`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 

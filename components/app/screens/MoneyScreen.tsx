@@ -10,6 +10,7 @@ import { useAidOffers } from "@/hooks/useAidOffers";
 import { useUserData } from "@/hooks/useUserData";
 import { demoFallback, makeDemoOffers, makeDemoScholarships, useDemoMutations } from "@/lib/demo";
 import { streamAiAnswer } from "@/lib/ai/stream-answer";
+import { calculateAidOfferFromRecord } from "@/lib/aid-letter/calculateAidOffer";
 import { OfferComparison } from "@/components/aid-letter/OfferComparison";
 import type { ScholarshipMatch, UserAidOffer } from "@/lib/types";
 
@@ -228,6 +229,7 @@ function AiExplainBlock({ offer }: { offer: UserAidOffer }) {
         schoolName: offer.school_name,
         costOfAttendance: offer.cost_of_attendance,
         grants: offer.grants_and_scholarships,
+        otherAid: offer.other_aid,
         workStudy: offer.work_study,
         loans: offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans,
         lang,
@@ -319,11 +321,14 @@ function OfferSection({
     );
   }
 
+  const calc = calculateAidOfferFromRecord(offer);
   const coa = offer.cost_of_attendance;
   const grants = offer.grants_and_scholarships;
-  const work = offer.work_study;
-  const loans = offer.federal_student_loans + offer.parent_plus_loans + offer.private_loans;
-  const outOfPocket = Math.max(0, coa - grants - work - loans);
+  const otherAid = offer.other_aid;
+  const giftAid = calc.giftAid;
+  const work = calc.workStudy;
+  const loans = calc.loanTotal;
+  const outOfPocket = calc.remainingGapAfterAllAid;
 
   const pct = (value: number): number => (coa > 0 ? (value / coa) * 100 : 0);
 
@@ -353,19 +358,20 @@ function OfferSection({
           </div>
         </div>
         <OfferBar segments={[
-          { pct: pct(grants), color: "var(--green-600)" },
+          { pct: pct(giftAid), color: "var(--green-600)" },
           { pct: pct(work), color: "var(--blue-500)" },
           { pct: pct(loans), color: "var(--amber-600)" },
           { pct: pct(outOfPocket), color: "var(--coral-600)" },
         ]} />
         <div style={{ marginTop: 10 }}>
           <OfferRow dot="var(--green-600)" label="Grants & scholarships" note="free money" value={usd(grants)} valueColor="var(--green-600)" />
+          {otherAid > 0 && <OfferRow dot="var(--green-600)" label="Other gift aid" note="free money" value={usd(otherAid)} valueColor="var(--green-600)" />}
           <OfferRow dot="var(--blue-500)" label="Work-study" note="you earn it" value={usd(work)} />
           <OfferRow dot="var(--amber-600)" label="Loans offered" note="optional - you can decline" value={usd(loans)} valueColor="var(--amber-600)" />
           <OfferRow dot="var(--coral-600)" label="Out-of-pocket" value={usd(outOfPocket)} valueColor="var(--coral-600)" />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-card)", flexWrap: "wrap", gap: 10 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gray-500)" }}>Grants cover most of your cost - loans are optional.</span>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gray-500)" }}>Gift aid lowers your real cost - loans are optional.</span>
           {isDemo ? (
             <Button
               variant="clay"
