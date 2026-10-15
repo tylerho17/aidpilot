@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toFriendlyError } from "@/lib/friendly-errors";
 import { AID_OFFER_LOAD_ERROR, AID_OFFER_SAVE_ERROR, AID_OFFER_UPDATE_ERROR } from "@/lib/aid-letter/calculateAidOffer";
-import { completeAidOfferTasks, syncAidOfferTasks } from "@/lib/aid-letter/sync-aid-offer-tasks";
+import { deleteAidOfferTasks, syncAidOfferTasks } from "@/lib/aid-letter/sync-aid-offer-tasks";
 import { AID_OFFER_RECORD_STATUSES, type AidOfferRecordStatus, type UserAidOffer } from "@/lib/types";
 
 export type AidOfferInput = {
@@ -335,7 +335,7 @@ export function useAidOffers() {
       try {
         const { error } = await supabase.from("user_aid_offers").delete().eq("id", offerId).eq("user_id", userId);
         if (error) throw error;
-        await completeAidOfferTasks(supabase, userId, offerId);
+        await deleteAidOfferTasks(supabase, userId, offerId);
         setOffers((prev) => prev.filter((offer) => offer.id !== offerId));
         return true;
       } catch (error) {

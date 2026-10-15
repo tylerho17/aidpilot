@@ -37,11 +37,7 @@ export async function syncAidOfferTasks(
       continue;
     }
 
-    const { error } = await supabase
-      .from("aid_tasks")
-      .update({ status: "Complete", updated_at: now })
-      .eq("id", task.id)
-      .eq("user_id", userId);
+    const { error } = await supabase.from("aid_tasks").delete().eq("id", task.id).eq("user_id", userId);
 
     if (error) throw error;
   }
@@ -88,28 +84,15 @@ export async function syncAidOfferTasks(
   }
 }
 
-export async function completeAidOfferTasks(supabase: SupabaseClient, userId: string, offerId: string): Promise<void> {
+export async function deleteAidOfferTasks(supabase: SupabaseClient, userId: string, offerId: string): Promise<void> {
   const prefix = aidOfferTaskPrefix(offerId);
-  const now = new Date().toISOString();
 
-  const { data: existing, error: loadError } = await supabase
+  const { error } = await supabase
     .from("aid_tasks")
-    .select("id, status")
+    .delete()
     .eq("user_id", userId)
     .eq("task_source", AID_OFFER_TASK_SOURCE)
     .like("plan_key", `${prefix}%`);
 
-  if (loadError) throw loadError;
-
-  for (const task of existing ?? []) {
-    if (isAidTaskComplete(task.status)) continue;
-
-    const { error } = await supabase
-      .from("aid_tasks")
-      .update({ status: "Complete", updated_at: now })
-      .eq("id", task.id)
-      .eq("user_id", userId);
-
-    if (error) throw error;
-  }
+  if (error) throw error;
 }
