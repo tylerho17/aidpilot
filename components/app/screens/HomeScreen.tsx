@@ -14,6 +14,7 @@ import { GetStartedSpotlight } from "@/components/app/GetStartedSpotlight";
 import { useUserData } from "@/hooks/useUserData";
 import { useProtectHub } from "@/hooks/useProtectHub";
 import { useAidOffers } from "@/hooks/useAidOffers";
+import { calculateSecuredGiftAid } from "@/lib/aid-letter/calculateAidOffer";
 import {
   demoFallback,
   makeDemoTasks,
@@ -167,9 +168,15 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
   // coherent demo narrative instead of the real protect snapshot.
   const usingDemo = tasks.length === 0 && offers.length === 0 && displayTasks.length > 0;
 
-  // ── StatCard 1: Aid secured this year (sum of grants + scholarships across offers) ──
-  const aidSecured = displayOffers.reduce((sum, offer) => sum + offer.grants_and_scholarships, 0);
+  // ── StatCard 1: Aid secured this year (best grant/scholarship package) ──
+  const aidSecured = calculateSecuredGiftAid(displayOffers);
   const offerCount = displayOffers.length;
+  const offerSub =
+    offerCount > 0
+      ? offerCount === 1
+        ? "from 1 offer"
+        : `best of ${offerCount} offers`
+      : "Add an offer to track it";
 
   // ── StatCard 2: Next deadline ──
   const soonest = nextDeadline(displayDeadlines);
@@ -270,7 +277,7 @@ export function HomeScreen({ aidDeadlines }: { aidDeadlines?: AidDeadline[] }) {
         <StatCard
           label="Aid secured this year"
           value={money(aidSecured)}
-          sub={offerCount > 0 ? `across ${offerCount} offer${offerCount === 1 ? "" : "s"}` : "Add an offer to track it"}
+          sub={offerSub}
           icon="shield-check"
           tone="green"
           valueColor="var(--green-600)"
