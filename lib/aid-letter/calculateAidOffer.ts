@@ -92,6 +92,13 @@ export function calculateAidOfferFromRecord(offer: UserAidOffer): AidOfferCalcul
   return calculateAidOffer(offer);
 }
 
+export function calculateSecuredGiftAid(offers: UserAidOffer[]): number {
+  return offers.reduce((highest, offer) => {
+    const { giftAid } = calculateAidOfferFromRecord(offer);
+    return Math.max(highest, giftAid);
+  }, 0);
+}
+
 export const AID_OFFER_LOAD_ERROR = "We couldn't load your aid offers right now. Please try again in a moment.";
 export const AID_OFFER_SAVE_ERROR = "We couldn't save this aid offer right now. Please try again.";
 export const AID_OFFER_UPDATE_ERROR = "We couldn't update this aid offer right now. Please try again.";
