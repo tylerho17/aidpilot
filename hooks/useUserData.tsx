@@ -26,6 +26,7 @@ import { seedUserFafsaSteps } from "@/lib/intelligence/seed-global";
 import { saveWeeklyReportForUser } from "@/lib/intelligence/weekly-report";
 import { saveFafsaIntakeAndPlan as persistFafsaIntakeAndPlan } from "@/lib/fafsa-plan-persist";
 import { parseIntakeRow } from "@/lib/fafsa-intake-map";
+import { clearDemoSession } from "@/lib/demo/config";
 import {
   applyFafsaDemoFallbackForUser,
   buildDemoFafsaPlanTasks,
@@ -222,6 +223,7 @@ function useUserDataState() {
           }
 
           setUser(resolvedUser);
+          clearDemoSession();
           setAuthReady(true);
 
           const cachedAdmin = adminCacheRef.current;
