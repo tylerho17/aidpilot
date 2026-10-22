@@ -7,12 +7,14 @@
  *
  * Resolution order:
  *   1. localStorage "aidpilot-demo" ("on" | "off") - runtime override for a
- *      quick toggle mid-demo without a rebuild.
+ *      quick toggle mid-demo without a rebuild. The same value is mirrored to a
+ *      short-lived cookie so middleware can admit signed-out demo visitors.
  *   2. NEXT_PUBLIC_DEMO_MODE env var ("true" | "false") - deploy-time default.
  *   3. Default: ON in development, OFF in production.
  */
 
 const STORAGE_KEY = "aidpilot-demo";
+const DEMO_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24;
 
 export function isDemoEnabled(): boolean {
   if (typeof window !== "undefined") {
@@ -37,6 +39,17 @@ export function setDemoEnabled(on: boolean): void {
   } catch {
     // Ignore - env default still applies.
   }
+  try {
+    document.cookie = on
+      ? `${STORAGE_KEY}=on; path=/; max-age=${DEMO_COOKIE_MAX_AGE_SECONDS}; samesite=lax`
+      : `${STORAGE_KEY}=; path=/; max-age=0; samesite=lax`;
+  } catch {
+    // Ignore - the client-side localStorage flag is the rendering source of truth.
+  }
+}
+
+export function clearDemoSession(): void {
+  setDemoEnabled(false);
 }
 
 /** Ids of demo fixtures all start with this prefix so mutations can be
