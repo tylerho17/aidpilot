@@ -95,15 +95,27 @@ export function resolveAidLetterFromSources(
   remote: AidLetter | null
 ): { letter: AidLetter | null; localMode: boolean } {
   const local = loadAidLetterLocal(userId);
+  const localMode = isAidLetterLocalMode();
+
+  if (!localMode) {
+    if (local) {
+      clearAidLetterLocalStore();
+    }
+    return { letter: remote, localMode: false };
+  }
 
   if (!remote && local) {
     return { letter: aidLetterFromLocalStore(userId, local), localMode: true };
   }
 
   if (remote && local) {
+    if (!isLocalNewerThanRemote(local, remote)) {
+      clearAidLetterLocalStore();
+      return { letter: remote, localMode: false };
+    }
     return {
       letter: mergeRemoteWithLocal(remote, local),
-      localMode: isAidLetterLocalMode(),
+      localMode: true,
     };
   }
 
@@ -114,11 +126,23 @@ export function resolveAidLetterFromSources(
   return { letter: null, localMode: false };
 }
 
+function isLocalNewerThanRemote(local: AidLetterLocalStore, remote: AidLetter): boolean {
+  const localTime = Date.parse(local.savedAt);
+  if (!Number.isFinite(localTime)) return false;
+
+  const remoteTime = Date.parse(remote.updated_at ?? remote.created_at);
+  if (!Number.isFinite(remoteTime)) return true;
+
+  return localTime > remoteTime;
+}
+
 function mergeRemoteWithLocal(remote: AidLetter, local: AidLetterLocalStore): AidLetter {
+  const decoded = decodeAidOffer(local.input);
   return {
     ...remote,
     school_name: local.input.school_name || remote.school_name,
-    cost_of_attendance: local.input.cost_of_attendance || remote.cost_of_attendance,
+    aid_year: local.aid_year || remote.aid_year,
+    cost_of_attendance: local.input.cost_of_attendance,
     grants_amount: local.input.grants,
     scholarships_amount: local.input.scholarships,
     work_study_amount: local.input.work_study,
@@ -131,5 +155,6 @@ function mergeRemoteWithLocal(remote: AidLetter, local: AidLetterLocalStore): Ai
       local.input.unsubsidized_loans +
       local.input.parent_plus_loans +
       local.input.private_loans,
+    estimated_net_cost: decoded.estimatedGapAfterAllAid,
   };
 }
