@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { isRateLimited, requestRateLimitKey, type RateLimitHits } from "@/lib/request-rate-limit";
 
 /**
  * AI aid-letter decoder - explains a college financial aid offer's numbers in
@@ -14,18 +15,7 @@ const ANTHROPIC_KEY =
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 8;
-const hits = new Map<string, { count: number; windowStart: number }>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = hits.get(key);
-  if (!entry || now - entry.windowStart > WINDOW_MS) {
-    hits.set(key, { count: 1, windowStart: now });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > MAX_PER_WINDOW;
-}
+const hits: RateLimitHits = new Map();
 
 const MAX_AMOUNT = 500_000;
 
@@ -54,8 +44,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (rateLimited(ip)) {
+  if (isRateLimited(hits, requestRateLimitKey(request), WINDOW_MS, MAX_PER_WINDOW)) {
     return NextResponse.json(
       { error: "Too many requests - give it a minute and try again." },
       { status: 429 }
