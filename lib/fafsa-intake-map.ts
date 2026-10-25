@@ -118,11 +118,9 @@ export function supabaseErrorMessage(error: unknown): string {
   return String(error);
 }
 
-export function logFafsaSupabaseError(label: string, error: unknown, payload?: unknown) {
+export function logFafsaSupabaseError(label: string, error: unknown) {
   console.error(label, {
-    error,
     message: supabaseErrorMessage(error),
-    payload,
     supabase:
       error && typeof error === "object"
         ? {
