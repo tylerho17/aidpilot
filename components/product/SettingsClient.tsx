@@ -18,6 +18,7 @@ import {
 import { getInitials } from "@/lib/data-helpers";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
+import { clearAidPilotBrowserData } from "@/lib/privacy/local-data";
 import { ONBOARDING_STRINGS, optionLabel } from "@/app/onboarding/strings";
 import {
   isAuthSessionError,
@@ -398,6 +399,7 @@ function SettingsInner() {
         setDeleteError(body.error ?? "Could not delete account. Please contact support.");
         return;
       }
+      clearAidPilotBrowserData();
       await supabase.auth.signOut();
       window.location.href = "/";
     } catch (error) {
