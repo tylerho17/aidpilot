@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Card, Badge, IconTile, Button, SegmentedControl } from "@/components/ui";
 import { Greeting, SectionTitle, money } from "@/components/app/screens/shared";
 import { DeadlineCalendar, type CalendarEvent } from "@/components/app/screens/DeadlineCalendar";
 import { useUserData } from "@/hooks/useUserData";
+import { useDocuments } from "@/hooks/useDocuments";
 import { demoFallback, makeDemoDeadlines, makeDemoDocuments, useDemoMutations } from "@/lib/demo";
 import type { Deadline, DocumentItem, DocumentStatus } from "@/lib/types";
 
@@ -142,8 +143,12 @@ const columnStyle: CSSProperties = { display: "flex", flexDirection: "column", g
 
 export function TasksScreen() {
   const { deadlines, documents, updateDocumentStatus, authReady, loading } = useUserData();
+  const { upload: uploadVaultDocument } = useDocuments();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState("");
   const [datesView, setDatesView] = useState<"list" | "calendar">("list");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingUploadDocRef = useRef<DocumentItem | null>(null);
   const demo = useDemoMutations();
 
   const displayDeadlines = useMemo(() => demoFallback(deadlines, makeDemoDeadlines), [deadlines]);
@@ -197,11 +202,34 @@ export function TasksScreen() {
       if (!demo.has(doc.id)) demo.toggle(doc.id);
       return;
     }
+    setUploadError("");
+    pendingUploadDocRef.current = doc;
+    fileInputRef.current?.click();
+  };
+
+  const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = ""; // allow retrying the same file
+    const doc = pendingUploadDocRef.current;
+    pendingUploadDocRef.current = null;
+    if (!file || !doc) return;
+
     setUploadingId(doc.id);
     try {
+      const uploadResult = await uploadVaultDocument(file);
+      if (!uploadResult.ok) {
+        setUploadError(
+          uploadResult.reason === "too_big"
+            ? "That file is over 10 MB. Try a smaller file."
+            : uploadResult.reason === "bad_type"
+              ? "That file type is not supported. Use PDF, PNG, JPG, or HEIC."
+              : "We could not upload that file. Try again from your vault."
+        );
+        return;
+      }
       await updateDocumentStatus(doc.id, "submitted");
     } catch {
-      // Surface nothing raw; the hook already logs. Row simply stays put.
+      setUploadError("We could not update this document after upload. Check your vault before trying again.");
     } finally {
       setUploadingId(null);
     }
@@ -253,6 +281,18 @@ export function TasksScreen() {
       )}
 
       <SectionTitle>Your documents</SectionTitle>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.heic"
+        onChange={(e) => void handleFilePicked(e)}
+        style={{ display: "none" }}
+      />
+      {uploadError && (
+        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--coral-600)", margin: "-4px 2px 12px" }}>
+          {uploadError}
+        </p>
+      )}
       <div className="stagger-children" style={columnStyle}>
         {displayDocuments.length === 0 ? (
           <EmptyState message="No documents requested yet." />
