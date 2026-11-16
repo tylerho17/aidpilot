@@ -7,6 +7,7 @@ const USER_TABLES = [
   "scholarship_matches",
   "aid_recommendations",
   "weekly_reports",
+  "feedback",
   "aid_letters",
   "user_aid_offers",
   "deadlines",
