@@ -18,8 +18,6 @@ export type AidPathGuidance = {
   parentLine: string | null;
   /** What to do now, based on timeline. */
   timelineLine: string | null;
-  /** Compact context string handed to the AI so answers are tailored. */
-  aiContext: string;
 };
 
 const en = {
@@ -50,33 +48,11 @@ const en = {
   } as Record<Timeline, string>,
 };
 
-const FORM_CONTEXT: Record<AidForm, string> = {
-  fafsa: "on the FAFSA path (files the FAFSA for federal/state/college aid)",
-  cadaa: "on the CADAA path (an undocumented California student who files the California Dream Act Application, not the FAFSA)",
-  unsure: "still deciding between the FAFSA and the CADAA",
-};
-const PARENT_CONTEXT: Record<ParentSituation, string> = {
-  together: "parents are married or living together",
-  divorced: "parents are divorced or separated and not living together",
-  single: "has one parent contributor",
-  cant_provide: "cannot provide parent information",
-};
-const TIMELINE_CONTEXT: Record<Timeline, string> = {
-  senior: "a high school senior applying now",
-  junior: "a high school junior planning ahead",
-  underclass: "a high school underclassman",
-  college: "already in college",
-};
-
 export function describeAidPath(p: AidPathProfile): AidPathGuidance {
   const form: AidForm = p.form ?? "unsure";
   // ES falls back to EN (aid content is not machine-translated).
   const parentLine = p.parents ? en.parentLine[p.parents] : null;
   const timelineLine = p.timeline ? en.timelineLine[p.timeline] : null;
-
-  const contextParts = [`is ${FORM_CONTEXT[form]}`];
-  if (p.parents) contextParts.push(PARENT_CONTEXT[p.parents]);
-  if (p.timeline) contextParts.push(TIMELINE_CONTEXT[p.timeline]);
 
   return {
     form,
@@ -84,6 +60,5 @@ export function describeAidPath(p: AidPathProfile): AidPathGuidance {
     pathLine: en.pathLine[form],
     parentLine,
     timelineLine,
-    aiContext: `The student ${contextParts.join("; ")}. Tailor the answer to this situation.`,
   };
 }
