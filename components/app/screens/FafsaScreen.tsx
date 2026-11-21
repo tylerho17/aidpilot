@@ -35,6 +35,13 @@ const STRINGS = {
     nextStepFallback: "Your next step",
     start: "Start",
     nextBodyFallback: "Take it one step at a time. We never ask for your login or documents.",
+    signedOutTitle: "Sign in to build your FAFSA plan",
+    signedOutBody: "Your FAFSA checklist saves progress to your account. Sign in or create a free account to start.",
+    signIn: "Sign in",
+    createAccount: "Create account",
+    emptyTitle: "We couldn't load your FAFSA steps.",
+    emptyBody: "Try again in a moment. If this keeps happening, contact support and we'll help restore your checklist.",
+    tryAgain: "Try again",
   },
   es: {
     title: "Plan FAFSA",
@@ -55,6 +62,13 @@ const STRINGS = {
     nextStepFallback: "Tu siguiente paso",
     start: "Comenzar",
     nextBodyFallback: "Ve paso a paso. Nunca pedimos tu contraseña ni tus documentos.",
+    signedOutTitle: "Inicia sesión para crear tu plan FAFSA",
+    signedOutBody: "Tu lista FAFSA guarda el progreso en tu cuenta. Inicia sesión o crea una cuenta gratis para empezar.",
+    signIn: "Iniciar sesión",
+    createAccount: "Crear cuenta",
+    emptyTitle: "No pudimos cargar tus pasos FAFSA.",
+    emptyBody: "Inténtalo de nuevo en un momento. Si sigue pasando, contacta a soporte y te ayudaremos a restaurar tu lista.",
+    tryAgain: "Intentar de nuevo",
   },
 };
 
@@ -104,8 +118,15 @@ function FafsaSkeleton() {
 }
 
 export default function FafsaScreen() {
-  const { authReady, loading, userFafsaSteps, workflowSteps, ensureUserFafsaSteps, updateFafsaStepStatus } =
-    useUserData();
+  const {
+    authReady,
+    loading,
+    user,
+    userFafsaSteps,
+    workflowSteps,
+    ensureUserFafsaSteps,
+    updateFafsaStepStatus,
+  } = useUserData();
   const { t } = useLanguage();
   const s = t(STRINGS);
   const demo = useDemoMutations();
@@ -113,16 +134,32 @@ export default function FafsaScreen() {
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [seedingSteps, setSeedingSteps] = useState(false);
+  const [seededUserId, setSeededUserId] = useState<string | null>(null);
 
   const ready = authReady && !loading;
   const hasSteps = userFafsaSteps.length > 0;
+  const userId = user?.id ?? null;
+  const shouldSeedSteps = ready && !!userId && !hasSteps && seededUserId !== userId;
 
   // If we're signed in with data loaded but no real steps yet, seed them.
   useEffect(() => {
-    if (ready && !hasSteps) {
-      void ensureUserFafsaSteps();
-    }
-  }, [ready, hasSteps, ensureUserFafsaSteps]);
+    if (!shouldSeedSteps || !userId) return;
+
+    let cancelled = false;
+    void (async () => {
+      setSeededUserId(userId);
+      setSeedingSteps(true);
+      try {
+        await ensureUserFafsaSteps();
+      } finally {
+        if (!cancelled) setSeedingSteps(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldSeedSteps, userId, ensureUserFafsaSteps]);
 
   // Real rows win; fixtures fill in only when demo mode is on and Supabase is empty.
   const effectiveSteps = useMemo(() => demoFallback(userFafsaSteps, makeDemoFafsaSteps), [userFafsaSteps]);
@@ -144,8 +181,67 @@ export default function FafsaScreen() {
     };
   }, []);
 
-  if (!ready || hydratedSteps.length === 0) {
+  if (!ready || seedingSteps || shouldSeedSteps) {
     return <FafsaSkeleton />;
+  }
+
+  if (!user && hydratedSteps.length === 0) {
+    return (
+      <div>
+        <Greeting title={s.title} subtitle={s.subtitle} />
+        <Card variant="clay" padding={24} style={{ maxWidth: 560 }}>
+          <div className="font-display" style={{ fontSize: 17, fontWeight: 800, color: "var(--ink-900)", marginBottom: 8 }}>
+            {s.signedOutTitle}
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--gray-500)", lineHeight: 1.65, margin: "0 0 18px" }}>
+            {s.signedOutBody}
+          </p>
+          <span style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/login" style={{ textDecoration: "none" }}>
+              <Button variant="secondary" iconRight="arrow-right">
+                {s.signIn}
+              </Button>
+            </Link>
+            <Link href="/signup" style={{ textDecoration: "none" }}>
+              <Button variant="clay" iconRight="arrow-right">
+                {s.createAccount}
+              </Button>
+            </Link>
+          </span>
+        </Card>
+      </div>
+    );
+  }
+
+  if (hydratedSteps.length === 0) {
+    return (
+      <div>
+        <Greeting title={s.title} subtitle={s.subtitle} />
+        <StatusPanel
+          tone="amber"
+          icon="shield"
+          title={s.emptyTitle}
+          style={{ borderRadius: "var(--radius-clay)", border: "none", boxShadow: "var(--shadow-clay)" }}
+          trailing={
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={seedingSteps}
+              onClick={() => {
+                if (!userId) return;
+                setSeededUserId(userId);
+                setSeedingSteps(true);
+                void ensureUserFafsaSteps().finally(() => setSeedingSteps(false));
+              }}
+            >
+              {s.tryAgain}
+            </Button>
+          }
+        >
+          {s.emptyBody}
+        </StatusPanel>
+      </div>
+    );
   }
 
   // Effective done-state: fixture/row status XOR a local demo toggle.
