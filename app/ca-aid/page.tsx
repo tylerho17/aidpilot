@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 /**
  * Loads the California aid programs from the live scholarship_sources catalog
  * (tagged 'california'), falling back to the static CA_PROGRAM_FALLBACK when
- * Supabase is unconfigured, errors, or hasn't been seeded (025) yet — so the
- * screen always renders the real programs.
+ * Supabase is unconfigured, errors, or has no active California-tagged rows —
+ * so the screen always renders the real programs.
  */
 async function loadCaPrograms(): Promise<ScholarshipSource[]> {
   try {
@@ -23,10 +23,9 @@ async function loadCaPrograms(): Promise<ScholarshipSource[]> {
     const { data, error } = await loadScholarshipSources(supabase);
     if (error) return CA_PROGRAM_FALLBACK;
     const ca = data.filter((source) => (source.tags ?? []).includes(CA_AID_TAG));
-    // Show the live catalog once the curated CA set (025) has been seeded;
-    // until then fall back to the full static set rather than a sparse list.
-    const seeded = ca.some((source) => source.source === "ca_aid_v1");
-    return seeded ? ca : CA_PROGRAM_FALLBACK;
+    // Admin-managed catalog rows may use any source marker; the tag is the
+    // stable contract for this screen. Fall back only when the catalog is empty.
+    return ca.length > 0 ? ca : CA_PROGRAM_FALLBACK;
   } catch {
     return CA_PROGRAM_FALLBACK;
   }
